@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "teszterteams",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/l/app/daa02876-72bf-4e50-94c5-5aeb984e8ff1?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
+      "serviceActions": {
+        "teszterteams": "StartDebugging"
+      }
+    }
+  }
+}

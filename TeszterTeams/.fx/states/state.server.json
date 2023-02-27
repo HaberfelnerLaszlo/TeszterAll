@@ -1,0 +1,26 @@
+{
+    "solution": {
+        "provisionSucceeded": true,
+        "teamsAppTenantId": "e635a9ff-0111-4671-b02d-1a544fc50ecf"
+    },
+    "fx-resource-appstudio": {
+        "tenantId": "e635a9ff-0111-4671-b02d-1a544fc50ecf",
+        "teamsAppId": "daa02876-72bf-4e50-94c5-5aeb984e8ff1"
+    },
+    "fx-resource-frontend-hosting": {
+        "indexPath": "/",
+        "endpoint": "https://teams.haberfelner.eu",
+        "domain": "localhost"
+    },
+    "fx-resource-aad-app-for-teams": {
+        "clientId": "d81d5f8a-0e1f-47ba-a748-1274e6aee179",
+        "clientSecret": "",
+        "objectId": "2d6e5ab6-2ac1-4b56-85b7-9ed925bbd51c",
+        "oauth2PermissionScopeId": "f26ec2d6-0354-4e82-945c-5f8cb625d97a",
+        "tenantId": "e635a9ff-0111-4671-b02d-1a544fc50ecf",
+        "oauthHost": "https://login.microsoftonline.com",
+        "oauthAuthority": "https://login.microsoftonline.com/e635a9ff-0111-4671-b02d-1a544fc50ecf",
+        "applicationIdUris": "api://localhost/d81d5f8a-0e1f-47ba-a748-1274e6aee179",
+        "frontendEndpoint": "https://teams.haberfelner.eu"
+    }
+}

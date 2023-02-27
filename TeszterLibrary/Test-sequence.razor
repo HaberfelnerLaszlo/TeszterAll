@@ -1,0 +1,165 @@
+﻿@if (Question is not null)
+{
+    <div class="container-fluid text-center">
+        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
+    </div>
+@*    <form>*@
+        <div class="container">
+            <ul dropzone="true">
+                @foreach (var item in Items)
+                {
+                    <li draggable="true"
+                        class="@(DragEnter==item?"inserting":"") answer"
+                        @key=@item.AnswerId
+                        id="@item.AnswerId"
+                        ondragover="event.preventDefault();"
+                        @ondragstart="@( (e) => hondragstart(e, item))"
+                        @ondrop="@( () => hondropOverAFriend(item))"
+                        @ondragenter="@( ()=> hondragenter(item) )"
+                        @ondragend="@( ()=> hondragend() )">
+                    <span class="szoveg"> @(item.Sequence). @item.Text</span>
+                    @if (IsChecked)
+                    {
+                        if (item.Result)
+                        {
+                            <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                        }
+                        else
+                        {
+                            <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                        }
+                    }
+                    @if (Next.HasDelegate)
+                    {
+                     <div class="nyilak">
+                        <a class="up" onclick="@(()=>Up(item.Sequence))"><i class="oi oi-arrow-thick-top"> </i></a>
+                        <a class="down" onclick="@(()=>Down(item.Sequence))"><i class="oi oi-arrow-thick-bottom"></i></a>
+                    </div>
+                    }
+                </li>
+                }
+                <div style="height: 1.5em;"
+                 ondragover="event.preventDefault();"
+                 @ondrop="hondropBotton"
+                 @ondragenter="hondragenterBotton">@row</div>
+            </ul>
+        </div>
+@*    </form>
+*@    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
+                Ellenőrzés
+            </button>      
+        }
+        @if (Next.HasDelegate)
+        {
+            <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
+                Következő
+            </button>
+        }
+    </div>
+}
+@code {
+    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<QuestionView> Next { get; set; }
+    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    bool first = true;
+    string row = string.Empty;
+    void Send() =>Next.InvokeAsync(Question);
+    protected override void OnInitialized()
+    {
+        if (first)
+        {
+            if (Question is not null)
+            {
+                if (Question.Answers is not null)
+                {
+                    Question.Answers.Shuffle();
+                    for (int i = 0; i < Question.Answers.Count; i++)
+                    {
+                        Question.Answers[i].Sequence=i+1;
+                    }
+                    Items = Question.Answers;
+                }   
+            }
+            first = false;
+        }
+        base.OnInitialized();
+    }
+    void Up(int id)
+    {
+        row = "Fel: "+id.ToString();
+        if (id>1)
+        {
+            Items[id-1].Sequence = id - 1;
+            Items[id - 2].Sequence = id;
+            Items=Items.OrderBy(i=>i.Sequence).ToList();
+        }
+        StateHasChanged();
+    }
+    void Down(int id)
+    {
+        row = "Le: "+id.ToString();
+        if (id<Items.Count)
+        {
+            Items[id-1].Sequence = id + 1;
+            Items[id].Sequence = id;
+            Items=Items.OrderBy(i=>i.Sequence).ToList();
+        }
+        StateHasChanged();
+    }
+    //public class Item
+    //{
+    //    public int Id { get; set; }
+    //    public string Label { get; set; } = default!;
+    //}
+    //public List<Item> Items = new() {
+    //     new Item(){Id= 0, Label = "Move me!"},
+    //   new Item(){Id= 1, Label = "hi 1"},
+    //    new Item(){Id= 2, Label = "hi 2"},
+    //    new Item(){Id= 3, Label = "hi 3"},
+    //};
+    public List<AnswerView> Items = new();
+    public void hondropOverAFriend(AnswerView friend)
+    {
+        DragEnter = null;
+        if (DraggedItem == null) return;
+        if (DraggedItem == friend) return;
+        var friendposition = Items.IndexOf(friend);
+        Items.Insert(friendposition, DraggedItem!);
+        DraggedItem = null;
+    }
+    public void hondropBotton()
+    {
+        DragEnter = null;
+        if (DraggedItem == null) return;
+        Items.Add(DraggedItem!);
+        DraggedItem = null;
+    }
+    public void hondragstart(DragEventArgs e, AnswerView item)
+    {
+        e.DataTransfer.EffectAllowed = "move"; //does't run
+        DraggedItem = item;
+        DraggedItemPosition = Items.IndexOf(item);
+        Items.Remove(DraggedItem!);
+    }
+    public void hondragenter(AnswerView item)
+        =>
+        DragEnter = item;
+    public void hondragenterBotton()
+        =>
+        DragEnter = null;
+    public void hondragend()
+    {
+        // never fired IDK why
+        if (DraggedItem == null) return;
+        DragEnter = null;
+        Items.Insert(DraggedItemPosition, DraggedItem!);
+    }
+    private AnswerView? DraggedItem;
+    private int DraggedItemPosition;
+    private AnswerView? DragEnter;
+}

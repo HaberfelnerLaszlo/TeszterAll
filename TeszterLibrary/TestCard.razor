@@ -1,0 +1,60 @@
+﻿@using TeszterLibrary.ViewModel;
+@if (Test is not null)
+{
+    <div class="container" >
+        <div class="sor" >
+            <div class="oszlop-bal">
+                <h3>
+                    @Test.Title
+                </h3>
+            </div>
+            <div class="oszlop-jobb">
+                <i class="fas fa-check-double text-primary" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="check" title="Ellenőrizhető" hidden="@(!Test.IsCheck)"></i>
+                <i class="fas fa-pencil-ruler text-success" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="practice"  title="Gyakorlás" hidden="@(!Test.IsPractice)"></i>
+                <i class="fas fa-user-clock text-danger" data-bs-toggle="tooltip" data-bss-tooltip="" id="timer" title="Idő korlátos" hidden="@(!Test.IsTimer)"><span id="time" class="time"> @TimeSpan.FromSeconds(Test.Time)</span></i>
+            </div>
+        </div>
+        <div class="sor">
+            <div class="oszlop-bal">
+                <p id="date" class="end_date" style="margin: 10px;">
+                    Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}",Test.EndTime)</strong>
+                </p>
+            </div>
+            <div class="oszlop-jobb">
+                <span>Ismétlések száma</span><wbr>
+                <i class="fas fa-recycle text-primary" id="replace_icon"></i>
+                <span style="padding: 5px;">@Test.UserReplaceNumber/@Test.TestReplaceNumber</span>
+            </div>
+        </div>
+        <div class="sor">
+            <div class="oszlop-bal">
+                <p style="padding-top: 5px;padding-right: 5px;padding-bottom: 5px;padding-left: 5px;margin-bottom: 0px;">
+                    Tantárgy:&nbsp<wbr><strong>@Test.Subject</strong>
+                </p>
+            </div>
+            <div class="oszlop-jobb">
+                <p style="padding: 5px 12px;margin-bottom: 0px;">
+                    Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@Test.Summa pont</strong>
+                </p>
+            </div>
+        </div>
+        <div class="sor">
+            <div class="col align-self-center" style="text-align: center;">
+                <button class="btn btn-primary" type="button" @onclick="@(_=>OnStart(Test))">
+                    Indítás
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code{
+    [Parameter]
+    public RenderFragment? Content { get; set; }
+
+    [Parameter]
+    public TestView? Test { get; set; }
+    [Parameter]
+    public EventCallback<TestView> Start { get; set; }
+    void OnStart(TestView test) => Start.InvokeAsync(test);
+}

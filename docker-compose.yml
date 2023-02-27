@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  teszterteams:
+    image: ${DOCKER_REGISTRY-}teszterteams
+    build:
+      context: .
+      dockerfile: TeszterTeams/Dockerfile

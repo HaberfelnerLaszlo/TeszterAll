@@ -1,0 +1,22 @@
+{
+  "profiles": {
+    "Microsoft Teams (browser)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "https://teams.microsoft.com/l/app/daa02876-72bf-4e50-94c5-5aeb984e8ff1?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": "true",
+      "applicationUrl": "https://localhost:44302;http://localhost:2544",
+      "hotReloadProfile": "aspnetcore"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/l/app/daa02876-72bf-4e50-94c5-5aeb984e8ff1?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  }
+}

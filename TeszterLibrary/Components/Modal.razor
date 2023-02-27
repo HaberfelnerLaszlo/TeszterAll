@@ -1,0 +1,38 @@
+﻿@if (Show)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">  
+        <div class="modal-dialog" role="document">  
+            <div class="modal-content">  
+                @if (HeaderContent is not null)
+                {
+                    <div class="modal-header">
+                        @HeaderContent
+                    </div>  
+                }
+                <div class="modal-body">  
+                    @BodyContent
+                </div>  
+                <div class="modal-buttom">
+                    @if (AcceptButtom is not null)
+                    {
+                        <button class="btn btn-primary" @onclick="@(()=>Accept.InvokeAsync())">@AcceptButtom</button>
+                    }
+                    @if (CancelButtom is not null)
+                    {
+                       <button class="btn btn-secondary" @onclick="@(()=>Cancel.InvokeAsync())">@CancelButtom</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>  
+}
+
+@code {
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? BodyContent { get; set; }
+    [Parameter] public EventCallback Accept { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+    [Parameter] public string? AcceptButtom { get; set; }
+    [Parameter] public string? CancelButtom { get; set; }
+    [Parameter] public bool Show { get; set; }
+}
