@@ -1,0 +1,48 @@
+﻿@if (Question is not null)
+{
+
+    <div class="container-fluid text-center">
+        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
+    </div>
+    <form>
+        <div class="container">
+            @foreach (var answer in Question.Answers)
+            {
+                <input type="text" @bind-value=answer.Text readonly="@(!Next.HasDelegate)">
+                @if (IsChecked)
+                {
+                            if (answer.Result)
+                            {
+                                <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                            }
+                            else
+                            {
+                                <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                            }
+                }
+            }
+        </div>
+    </form>
+    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
+                Ellenőrzés
+            </button>
+        }
+        @if (Next.HasDelegate)
+        {
+             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
+                Következő
+             </button>
+        }
+    </div>
+}
+@code {
+    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<QuestionView> Next { get; set; }
+    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    void Send() => Next.InvokeAsync(Question);
+}

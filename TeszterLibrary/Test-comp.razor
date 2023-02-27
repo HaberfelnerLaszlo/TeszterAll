@@ -1,0 +1,65 @@
+﻿@if (Question is not null)
+{
+
+    <div class="container-fluid text-center">
+        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">Egészítsd ki a szöveget!</textarea>
+    </div>
+    <form>
+        <div class="container">
+        @if (texts is not null)
+        {
+            @foreach (string t in texts)
+            {
+                if (t.All(char.IsNumber))
+                {
+                    int Number = Convert.ToInt32(t)-1;
+                    <input type="text" class="answer" placeholder="@t. válasz" @bind-value="Question.Answers[Number].Text" readonly="@(!Next.HasDelegate)" />
+                    @if (IsChecked)
+                    {
+                        if (Question.Answers[Number].Result)
+                        {
+                            <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                        }
+                        else
+                        {
+                            <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                        }
+                    }
+                }
+                else{ <span>@t</span>}
+            }
+        }
+        </div>
+    </form>
+    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
+                Ellenőrzés
+            </button>
+        }
+        @if (Next.HasDelegate)
+        {
+             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
+                Következő
+             </button>
+        }
+    </div>
+}
+@code {
+    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<QuestionView> Next { get; set; }
+    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    string[] texts;
+    //string[] ans = new string[10];
+
+    void Send() => Next.InvokeAsync(Question);
+    protected override void OnInitialized()
+    {
+        texts = Question.QuestionText.Split('{', '}');
+
+        base.OnInitialized();
+    }
+}

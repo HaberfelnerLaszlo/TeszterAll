@@ -1,0 +1,122 @@
+﻿@if (Question is not null)
+{
+
+    <div class="container-fluid text-center">
+        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
+    </div>
+    <div class="container">
+        <form>
+        
+        @if (list is not null)
+        {
+            <ul class="list-group" id="answers">
+                @foreach (var answer in list)
+                {
+                    <li class="list-group-item answer">
+                    <span>@answer.Text</span><i class="oi oi-arrow-thick-right fs-4 text-info"></i>
+                    @if (Next.HasDelegate)
+                    {
+                        <select @onchange="@((e)=>Changed(e,answer.AnswerId))">
+                            <option value="-1" selected >Válasz egyet!</option>
+                            @foreach (var item in selectList)
+                            {
+                                <option value="@item.AnswerId">@item.Text</option>
+                            }
+                        </select>
+                    }else { 
+                        <input type="text" @bind-value=@selectList.First(i=>i.AnswerId==answer.Sequence).Text readonly>
+                        
+                    }
+                        @if (IsChecked)
+                        {
+                            if (answer.Result)
+                            {
+                                <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                            }
+                            else
+                            {
+                                <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                            }
+                        }
+                    </li>
+                }
+            </ul>
+        }
+       
+    </form>
+</div>
+    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>{
+                foreach (var p in pairs)
+                {
+                    (Question.Answers??=new()).FirstOrDefault(a => a.AnswerId == p.Key).Sequence = p.Value;
+                    (Question.Answers??=new()).FirstOrDefault(a => a.AnswerId == p.Key).Sign=true;
+                } 
+                CallCheck.InvokeAsync(Question);
+            })">
+                Ellenőrzés
+            </button>      
+        }
+        @if (Next.HasDelegate)
+        {
+             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
+                Következő
+             </button>
+        }
+    </div>
+}
+@code {
+    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<QuestionView> Next { get; set; }
+    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    List<AnswerView> selectList = new();
+    List<AnswerView> list = new();
+    Dictionary<int, int> pairs = new();
+    protected override void OnInitialized()
+    {
+        foreach (var item in Question.Answers)
+        {
+            if (item.Sequence == -1)
+            {
+                selectList.Add(item);
+            }
+            else
+            {
+                list.Add(item);
+                pairs.Add(item.AnswerId, -1);
+            }
+        }
+        selectList.Shuffle();
+        base.OnInitialized();
+    }
+    void Send()
+    {
+        int i = 0;
+        foreach (var p in pairs)
+        {
+            var ans = (Question.Answers ??= new()).FirstOrDefault(a => a.AnswerId == p.Key);
+            ans.Sequence = p.Value;
+            if (p.Value>=0)
+            {
+                ans.Sign = true;
+                i++;
+            }
+        }
+        if (i>0)
+        {
+            Next.InvokeAsync(Question);
+        }
+    }
+    private void Changed(ChangeEventArgs e, int s)
+    {
+        int v = Convert.ToInt16((e.Value??=-1).ToString());
+        if (v > 0)
+        {
+            pairs[s] = v;
+        }
+    }
+}

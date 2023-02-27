@@ -1,0 +1,34 @@
+﻿table {
+    background-color: white;
+    font-size: 2.5ex;
+    margin: 10px auto;
+}
+#right{
+    color:green;
+}
+#wrong{
+    color:red;
+}
+.send {
+    background-color: #009d1fa8;
+    padding: 10px;
+    border-radius: 20px;
+    color: #fff934;
+    font-size: 2ex;
+    margin: 10px auto;
+}
+.next {
+    background-color: #ff51066e;
+    padding: 10px;
+    border-radius: 20px;
+    color: #0014ff;
+    font-size: 2ex;
+    margin: 10px auto;
+}
+.valasz {
+    font-size: 1.5ex;
+    width: 130px;
+    border: 1px solid #1d1889;
+    border-radius: 8px;
+    padding: 5px;
+}
