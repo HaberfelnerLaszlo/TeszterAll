@@ -13,7 +13,7 @@ namespace TeszterLibrary.Services
 		//protected static string URI = "https://teszter-api.haberfelner.eu/";
 		//protected static string URI = "http://localhost:7025/";
 		//protected static string URI = "https://localhost:44308/"; //ISS
-		protected static string URI = "https://tv0d1c6j-7026.euw.devtunnels.ms"; //távoli
+		protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
 		public async Task<Tv> Get<Tv>(string uri)
 		{
 			var valasz = string.Empty;
