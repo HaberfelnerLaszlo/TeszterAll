@@ -1,10 +1,57 @@
 ﻿@page "/"
 @page "/tab"
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
 @using TeszterTeams.Components;
+@if(isLoading)
+{
+	<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+		<FluentProgressRing/>
+	</div>
+}
+else if (role.Equals("Teacher"))
+{
+	<div>
+		<WelcomeTeacher UserId="@clientId"/>
+	</div>
+}
+else
+{
+	<div>
+		<Welcome />
+	</div>
+}
+@code{
+	string userName, clientId, role;
+	string errorMessage;
+	bool isInTeams;
+	bool isLoading = true;
 
-<div>
-    <Welcome />
-</div>
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await base.OnAfterRenderAsync(firstRender);
 
+		if (firstRender)
+		{
+			isInTeams = await MicrosoftTeams.IsInTeams();
 
+			if (isInTeams)
+			{
+				var user = await teamsUserCredential.GetUserInfoAsync();
+				userName = user.DisplayName;
+				clientId = user.ObjectId;
+				var context = await MicrosoftTeams.GetTeams_2_ContextAsync();
+				role = context.User.LicenseType;
+			}
+			else
+			{
+				errorMessage = "Nem a Microsoft Teams-ben lett elindítva.";
+			}
+
+			isLoading = false;
+			StateHasChanged();
+		}
+	}
+
+}
 

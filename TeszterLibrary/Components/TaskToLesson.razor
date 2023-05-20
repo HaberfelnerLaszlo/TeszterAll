@@ -50,11 +50,11 @@ else
 		<EditForm Model="sablon">
 			<div class="input-group">
 				<label for="max" class="form-label">Legfeljebb ennyi feladatot oldjon meg: </label>
-				<input class="sablon form-control" type="number" id="max" name="max" @bind-value=sablon.MaxCount />
+				<input class="sablon form-control" type="number" id="max" name="max" @bind-value=sablon.MaxCount max="30" />
 			</div>
 				<div class="input-group">
 					<label for="min" class="form-label">Legalább ennyi feladatot oldjon meg: </label>
-					<input class="sablon form-control" type="number" id="min" name="min" @bind-value=sablon.MinCount />
+					<input class="sablon form-control" type="number" id="min" name="min" @bind-value=sablon.MinCount max="30" />
 				</div>
 				<p>Visszalépéshez szükséges értékek közül amelyik előbb teljesül - 0 érték esetén nem veszi figyelembe a gép. </p>
 				<div class="input-group">
@@ -97,6 +97,7 @@ else
 	protected override void OnInitialized()
 	{
 		lessons.Clear();
+		completLessons.Clear();
 		foreach (var item in TaskList)
 		{
 			listTasks.Add(new() { Id = item.Id, Description = item.Description, Sablon = item.Sablon, Topic=item.Topic, HasCompleted = false });
@@ -107,6 +108,7 @@ else
 	protected override void OnParametersSet()
 	{
 		lessons.Clear();
+		completLessons.Clear();
 		if (Lessons !=null && Lessons.Count>0)
 		{
 			foreach (var item in Lessons)

@@ -66,6 +66,8 @@ else
 				var user = await teamsUserCredential.GetUserInfoAsync();
 				userName = user.DisplayName;
 				objectId = user.ObjectId;
+				var context = await MicrosoftTeams.GetTeams_2_ContextAsync();
+				userName = context.User.LicenseType;
 			}
 			else
 			{

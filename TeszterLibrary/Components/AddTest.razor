@@ -1,0 +1,90 @@
+﻿<Modal Show=showQDetail Accept="CloseModal" AcceptButtom="Bezár">
+    <HeaderContent>
+        A kérdés részletei
+    </HeaderContent>
+    <BodyContent>
+        <QAView question="detailQuestion"/>
+    </BodyContent>
+</Modal>
+<div class="row">
+    <div id="Test" class="col border border-secondary overflow-auto">
+        <label for="title">Teszt címe: </label>
+        <input id="title" @bind-value="newTest.Title" placeholder="Teszt címe" />
+        <select id="Subject" @onchange="SelectedSubject" class="mx-3">
+            @if (subjects.Count > 0)
+            {
+                <option value="0">Tantárgyak ...</option>
+                foreach (var item in subjects)
+                {
+                    <option value="@item.Name">@item.Name</option>
+                }
+            }
+        </select>
+        @if (TesztQ.Count != 0)
+        {
+            foreach (var tq in TesztQ)
+            {
+                <QAView question="tq" Delete="DeleteQ"></QAView>
+            }
+        }
+    </div>
+    <div id="Questions" class="col-sm-4 bg-light overflow-auto" style="max-height:800px; min-width:200px">
+        @foreach (var question in questions)
+        {
+            <Qview question="question"></Qview>
+            <div class="row justify-content-center">
+                <button class="m-2 btn btn-info" @onclick="(()=>ModalOpen(question))">Betekint</button>
+                <button class="m-2 btn btn-outline-primary" @onclick="() => AddQuestion(question)">Hozzáad</button>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Question> questions { get; set; } = new();
+    [Parameter] public List<Subject> subjects { get; set; } = new();
+    [Parameter] public List<Question> TesztQ { get; set; } = new();
+    private Test newTest = new();
+    private bool showQDetail = false;
+    private Question detailQuestion = new();
+
+    private void ModalOpen(Question q)
+    {
+        detailQuestion = q;
+        showQDetail = true;
+    }
+    private void CloseModal()
+    {
+        showQDetail = false;
+    }
+    private void AddQuestion(Question q)
+    {
+        questions.Remove(q);
+        TesztQ.Add(q);
+    }
+
+    private async Task DeleteQ(Question question)
+    {
+        //var index = testQuestions.FindIndex(t => t.QuestionId == question.Id);
+        //if (index != -1)
+        //{
+        //    testQuestions.RemoveAt(index);
+        //    if (IsSaved)
+        //    {
+        //        await tqservice.DeleteTestQuestionAsync(question.Id, newTest.Id);
+        //    }
+        //}
+        TesztQ.Remove(question);
+        questions.Add(question);
+    }
+    private async Task SelectedSubject(ChangeEventArgs e)
+    {
+        
+        if (e.Value != null)
+        {
+            newTest.Subject = e.Value.ToString()??string.Empty;
+        }
+    }
+
+}

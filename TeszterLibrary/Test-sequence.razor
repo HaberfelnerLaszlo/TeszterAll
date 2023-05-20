@@ -1,4 +1,5 @@
-﻿@if (Question is not null)
+﻿@using TeszterLibrary.Extensions;
+@if (Question is not null)
 {
     <div class="container-fluid text-center">
         <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>

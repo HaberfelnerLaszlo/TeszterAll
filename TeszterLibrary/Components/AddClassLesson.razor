@@ -1,5 +1,4 @@
-﻿<h3>AddClassLesson</h3>
-<p>Kiválasztott feladatok száma összesen: @sum darab</p>
+﻿<p>Kiválasztott feladatok száma összesen: @sum darab</p>
 <table class="table table-hover table-sm">
 	<thead>
 		<tr>
@@ -114,7 +113,7 @@
 		</tr>
 	</tbody>
 </table>
-<button type="button" @onclick="Save">Mentés</button>
+<button type="button" class="btn btn-success text-center" @onclick="Save">Mentés</button>
 @code {
 	[Parameter] public EventCallback<List<Lesson>> SaveTask { get; set; }
 	[Parameter] public List<Lesson> Lessons { get; set; } = new();
@@ -128,17 +127,20 @@
 			taskIds[i] = 0;
 		}
 		sum = 0;
-		foreach (var item in Lessons)
+		if (Lessons is not null)
 		{
-			taskIds[item.TaskId - 42] = item.MaxCount;
-			sum += item.MaxCount;
+			foreach (var item in Lessons) //TODO null ellenőrzés
+			{
+				taskIds[item.TaskId - 62] = item.MaxCount;
+				sum += item.MaxCount;
+			}
 		}
 	}
 	private void Save()
 	{
 		for (int i = 0; i < taskIds.Length; i++)
 		{
-			var lesson = Lessons.FirstOrDefault(l => l.TaskId == i + 42);
+			var lesson = Lessons.FirstOrDefault(l => l.TaskId == i + 62);
 			if (lesson != null)
 			{
 				if (taskIds[i] == 0)
@@ -154,7 +156,7 @@
 			}
 			else if (taskIds[i]>0)
 			{
-				Lessons.Add(new() { TaskId = i + 42, MaxCount = taskIds[i], StudentId=ClassId });
+				Lessons.Add(new() { TaskId = i + 62, MaxCount = taskIds[i], StudentId=ClassId });
 			}
 		}
 		SaveTask.InvokeAsync(Lessons);

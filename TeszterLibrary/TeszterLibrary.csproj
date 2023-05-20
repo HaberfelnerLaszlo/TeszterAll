@@ -13,9 +13,10 @@
 
   <ItemGroup>
     <PackageReference Include="blazor-dragdrop" Version="2.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.13" />
-    <PackageReference Include="Microsoft.Fast.Components.FluentUI" Version="2.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.16" />
+    <PackageReference Include="Microsoft.Fast.Components.FluentUI" Version="2.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="TinyMCE.Blazor" Version="1.0.4" />
   </ItemGroup>
 
 </Project>

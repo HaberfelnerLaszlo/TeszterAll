@@ -1,0 +1,25 @@
+﻿.NameTxt {
+    margin-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 22px;
+    font-weight: 700
+}
+
+.ScoreBadge {
+    display:inline-flex;
+    border-radius: 10px;
+    margin: 5px
+}
+
+#StudentResult {
+    border-radius: 10px;
+    border-width: 2px;
+    border-style: solid;
+    height: 70px;
+    margin: 5px 10px;
+    background: linear-gradient(90deg,#54d771 25%,#fff 100%);
+    max-width: 650px;
+    min-width: 300px
+}
+

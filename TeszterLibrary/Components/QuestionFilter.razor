@@ -1,0 +1,200 @@
+﻿<EditForm Model=filter>
+			<label>Tantárgy
+			<InputSelect DisplayName="Tantárgy" TValue="string" ValueChanged="SubjectChanged" 
+						ValueExpression=@(()=>filter.Subject) class="form-control">
+				<option value="@string.Empty">Összes tantárgy...</option>
+			@if (subjects.Count > 0)
+			{
+				foreach (var item in subjects)
+				{
+					if (item == filter.Subject)
+					{
+				<option value="@item" selected>@item</option>
+					}
+					else
+					{
+				<option value="@item">@item</option>}
+				}
+			}
+			</InputSelect></label>
+			<label>
+				Témakör
+			<InputSelect DisplayName="Témakör" TValue="string" ValueExpression=@(()=>filter.Title) 
+						ValueChanged="TitleChanged" class=form-control>
+				<option value="@string.Empty">Összes témakör...</option>
+			@if (titles.Count > 0)
+			{
+				foreach (var item in titles)
+				{
+					if (item == filter.Title)
+					{
+				<option value="@item" selected>@item</option>
+					}
+					else
+					{
+				<option value="@item">@item</option>}
+				}
+			}
+			</InputSelect>
+			</label>
+			<label>Kérdés típusa
+				<InputSelect id="qType" ValueChanged="qTypeChanged" TValue="QuestionType" 
+							ValueExpression="@(()=>filter.QType)" class=form-control>
+				<option value="All" selected>Kérdéstípus...</option>
+				<option value="SC">@((MarkupString)"\U0001F518") Felelet választás</option>
+				<option value="MC">@((MarkupString)"\U00002705") Több válaszos</option>
+				<option value="TF">@((MarkupString)"\U000023F3") Igaz-Hamis</option>
+				<option value="Open">@((MarkupString)"\U0001F4DD") Nyílt végű</option>
+				<option value="Seq"><img src="./rendez.svg" height="16" width="16"/> Sorbarendezés</option>
+				<option value="Pair"><img src="./pair.svg" height="16" width="16" />Párosítás</option>
+				<option value="Comp"><img src="./kieg.svg" height="16" width="16" />Kiegészítés</option>
+			</InputSelect>
+			</label>
+			<div class="d-inline">
+			<label>Évfolyam @filter.MinGrade-től @filter.MaxGrade-ig
+				<FluentSlider Min="1" Max="12" Step="1" ValueChanged="@((int v)=>GradeChanged(v,true))" ValueExpression="@(()=>filter.MinGrade)">
+@*					<FluentSliderLabel Position="1">1</FluentSliderLabel>
+					<FluentSliderLabel Position="5">5</FluentSliderLabel>
+					<FluentSliderLabel Position="9">9</FluentSliderLabel>
+					<FluentSliderLabel Position="12">12</FluentSliderLabel>*@
+				</FluentSlider>
+					<FluentSlider Min="1" Max="12" Step="1" ValueChanged ="@((int v)=>GradeChanged(v,false))" ValueExpression="@(()=>filter.MaxGrade)">
+@*						<FluentSliderLabel Position="1">1</FluentSliderLabel>
+						<FluentSliderLabel Position="5">5</FluentSliderLabel>
+						<FluentSliderLabel Position="9">9</FluentSliderLabel>
+						<FluentSliderLabel Position="12">12</FluentSliderLabel>*@
+					</FluentSlider>
+		</label>
+	</div>
+	<div id="Search" class="d-inline">
+		<input value=@filter.SearchText @onchange="@((e)=>SearchChanged(e.Value?.ToString()??string.Empty))" placeholder="Keresés a szövegben..." />
+	</div>
+
+</EditForm>
+@code {
+	[Parameter] public List<Question> Questions { get; set; } = new();
+	[Parameter] public EventCallback<List<Question>> QuestionsChanged { get; set; }
+	private List<Question> allQuestions = new();
+	QFilter filter = new();
+	private List<string> subjects = new List<string>();
+	private List<string> titles = new();
+	IEnumerable<int> Grades = new int[2] { 1, 12 };
+	Dictionary<string, string> valuePairs = new();
+
+	protected override void OnAfterRender(bool firstRender)
+	{
+		if (firstRender && Questions is not null)
+		{
+			allQuestions = Questions.ToList();
+			foreach (var item in Questions) 
+			{
+				if (!subjects.Contains(item.Subject))
+				{
+					subjects.Add(item.Subject);
+				}
+				if (!titles.Contains(item.Title))
+				{
+					valuePairs.Add(item.Title, item.Subject);
+					titles.Add(item.Title);
+				}
+			}
+		}
+		base.OnAfterRender(firstRender);
+	}
+	private async Task NewFilter()
+	{
+		if (filter.Subject != string.Empty)
+		{
+			Questions = allQuestions.Where(q => q.Subject == filter.Subject).ToList();
+		}
+		else Questions = allQuestions.ToList();
+		if (filter.QType != 0)
+		{
+			Questions = Questions.Where(q => q.QType == filter.QType).ToList();
+		}
+		//else Questions = allQuestions.ToList();
+		if (filter.Title != string.Empty)
+		{
+			Questions = Questions.Where(q => q.Title == filter.Title).ToList();
+		}
+		if (filter.MinGrade > 1)
+		{
+			Questions = Questions.Where(q => q.MinGrade >= filter.MinGrade).ToList();
+		}
+		if (filter.MaxGrade < 12)
+		{
+			Questions = Questions.Where(q => q.MaxGrade <= filter.MaxGrade).ToList();
+		}
+		if (filter.SearchText.Length>0)
+		{
+			await SearchChanged(filter.SearchText);
+			return;
+		}
+		await QuestionsChanged.InvokeAsync(Questions);
+	}
+	private async Task SearchChanged(string args)
+	{
+		if (args!=null)
+		{
+			filter.SearchText = args;
+			if (filter.SearchText.Length>0)
+			{
+				Questions = Questions.Where(q => q.Title.Contains(filter.SearchText) || q.Text.Contains(filter.SearchText)).ToList();
+			}
+			else
+			{
+				Questions = allQuestions.ToList();
+			}
+			await QuestionsChanged.InvokeAsync(Questions);
+		}
+	}
+	private async void SubjectChanged(string arg)
+	{
+		filter.Subject = arg;
+		titles.Clear();
+		foreach (var item in valuePairs)
+		{
+			if (item.Value == arg || arg == string.Empty)
+			{
+				titles.Add(item.Key);
+			}
+		}
+		//page = 1;
+		await NewFilter();
+	}
+	private async void TitleChanged(string t)
+	{
+		filter.Title = t;
+		//page = 1;
+		await NewFilter();
+	}
+	async void GradeChanged(int v,bool isMin)
+	{
+		if (isMin)
+		{
+			if (v > filter.MaxGrade)
+			{
+				filter.MinGrade = filter.MaxGrade;
+				filter.MaxGrade = v;
+			}
+			else filter.MinGrade = v;	
+		}
+		else
+		{
+			if (v < filter.MinGrade)
+			{
+				filter.MaxGrade = filter.MinGrade;
+				filter.MinGrade = v;
+			}
+			else filter.MaxGrade = v;	
+		}
+		//page = 1;
+		await NewFilter();
+	}
+	async void qTypeChanged(QuestionType qType)
+	{
+		filter.QType = qType;
+		//page = 1;
+		await NewFilter();
+	}
+}

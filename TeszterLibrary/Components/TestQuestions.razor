@@ -1,0 +1,129 @@
+﻿<table class="table table-sm table-bordered">
+	<thead class="thead-dark">
+		<tr>
+			<th>Cím/Témakör</th>
+			<th>Kérdés</th>
+			<th>Pontszám</th>
+			<th>Időtartam</th>
+			<th>Műveletek</th>
+		</tr>
+	</thead>
+	<tbody>
+		@if (questions.Any())
+		{
+			@foreach (var question in questions)
+			{
+				<tr >
+					<td>@question.Subject <br> @question.Title</td>
+					<td style="position:relative">
+						<div style="max-height:3rem; overflow-y:hidden;width:97%;overflow-x:clip">@((MarkupString)question.Text)</div>
+						@switch (question.QType)
+						{
+							case QuestionType.SC:
+								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
+								data-placement="top" title="Egyválasztásos kérdés">@((MarkupString)"\U0001F518")</div>
+								break;
+							case QuestionType.MC:
+								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
+								data-placement="top" title="Többválasztásos kérdés">@((MarkupString)"\U00002705")</div>
+								break;
+							case QuestionType.Comp:
+								<img src="./kieg.svg" style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
+								data-placement="top" title="Kiegészítendő kérdés" height=16 width=16/>
+								break;
+							case QuestionType.TF:
+								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
+								data-placement="top" title="Igaz/Hamis kérdés">@((MarkupString)"\U000023F3")</div>
+								break;
+							case QuestionType.Open:
+								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
+								data-placement="top" title="Nyilt kérdés">@((MarkupString)"\U0001F4DD")</div>
+								break;
+							case QuestionType.Seq:
+							<img src=./rendez.svg style="position: absolute; right:0;top:10px;" height=16 width=16 
+							data-toggle="tooltip" data-placement="top" title="Sorbarendező kérdés"/>	
+								break;
+							case QuestionType.Pair:
+							<img src=./Pair.svg style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
+							data-placement="top" title="Párosító kérdés"/>
+								break;
+							default:
+								break;
+						}
+					</td>
+					<td style="text-align:center">@question.Score</td>
+					<td class="ido-sec">@question.Time</td>
+					<td>
+						<div class="row">
+@*										<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
+							<button class="btn btn-danger m-1" @onclick="(async () => await Delete.InvokeAsync(question))"><i class="oi oi-trash" /></button>
+							<button class="btn btn-info m-1" @onclick="(() => SetQuestionForUpdate(question))"><i class="oi oi-pencil" /></button>
+							<button class="btn btn-success m-1" @onclick="(() => AddTest.InvokeAsync(question))"><i class="oi oi-plus" /></button>
+						</div>
+					</td>
+				</tr>
+			}
+		}
+		else
+		{
+			<tr><td colspan="6"><strong>Nincs még kérdés felvéve...</strong></td></tr>
+		}
+	</tbody>
+	<tfoot>
+		<tr>
+			<td colspan = "4">
+				<Paging PI="pagingInfo" 
+						PageClassesEnabled="true" 
+						PageClass="Paging" 
+						PageClassSelected="active"></Paging>
+			</td>
+		</tr>
+	</tfoot>
+</table>
+@code {
+	[Parameter] public Guid UserId { get; set; }
+	[Parameter] public List<Question> questions { get; set;} = new List<Question>();
+	[Parameter] public int page { get; set; } = 1;
+	[Parameter] public EventCallback<Question> Delete { get; set; }
+	[Parameter] public EventCallback<Question> Update { get; set; }
+	[Parameter] public EventCallback<Question> AddTest { get; set; }
+
+	PagingInfo pagingInfo = new PagingInfo();
+	private List<Subject> subjects = new List<Subject>();
+	IEnumerable<int> Grades = new int[] { 1, 12 };
+	private bool updated = true;
+	//private Teszter.Shared.Components.AddSubject Modal { get; set; }
+	Question UpdateQuestion = new Question();
+	public List<Answer> Answers = new List<Answer>();
+	//Filter filter = new();
+
+	private void SetQuestionForUpdate(Question question)
+	{
+		Update.InvokeAsync(question);
+		//UpdateQuestion = question;
+		//updated = false;
+		////Answers = aservice.GetQuestionAnswer(question.Id);
+		//Answers = question.Answers;
+		//if (Answers.Count == 0)
+		//{
+		//	Answers.Add(new Answer() { QuestionId = question.Id, Sequence = 1 });
+		//}
+		//StateHasChanged();
+	}
+
+	public void CreatePagingInfo()
+	{
+		var AllQuestion = questions;
+
+		int PageSize = 4;
+		pagingInfo = new PagingInfo();
+		page = page == 0 ? 1 : page;
+		pagingInfo.CurrentPage = page;
+		pagingInfo.TotalItems = AllQuestion.Count();
+		pagingInfo.ItemsPerPage = PageSize;
+
+		var skip = PageSize * (Convert.ToInt32(page) - 1);
+		questions = AllQuestion.Skip(skip).Take(PageSize).ToList();
+	}
+
+}

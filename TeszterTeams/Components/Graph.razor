@@ -32,9 +32,10 @@
     public bool IsLoading { get; set; }
     public bool NeedConsent { get; set; }
     public User Profile { get; set; }
+    public EducationUser EduProfile { get; set; }
     public string UserPhotoUri { get; set; }
 
-    private readonly string _scope = "User.Read";
+    private readonly string _scope = "User.Read EduRoster.ReadBasic";
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,7 +50,7 @@
     {
         IsLoading = true;
         var graph = GetGraphServiceClient();
-
+        EduProfile=await graph.Education.Me.Request().GetAsync();
         Profile = await graph.Me.Request().GetAsync();
         UserPhotoUri = await GetPhotoAsync(graph);
 
