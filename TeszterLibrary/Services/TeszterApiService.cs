@@ -11,10 +11,11 @@ namespace TeszterLibrary.Services
 		static readonly HttpClient client = new();
 
 		//protected static string URI = "https://teszter-api.haberfelner.eu/";
-		//protected static string URI = "http://localhost:7025/";
+		protected static string URI = "http://localhost:7025/";
 		//protected static string URI = "https://localhost:44308/"; //ISS
-		protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
-		public async Task<Tv> Get<Tv>(string uri)
+		//protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
+		//protected static string URI = "http://192.168.1.69:7025"; //laptop
+		public async Task<Tv?> Get<Tv>(string uri)
 		{
 			var valasz = string.Empty;
 			try
@@ -31,18 +32,30 @@ namespace TeszterLibrary.Services
 				{
 					 valasz = await response.Content.ReadAsStringAsync();
 				}
-				else
+				else if (response.StatusCode==System.Net.HttpStatusCode.NotFound)
+				{
+					ErrorMessage = "Nem elérhető a szerver!";
+					return default;
+				} else
 				{
 					ErrorMessage = response.StatusCode.ToString()+" : "+response.RequestMessage;
+					return default;
 				}
 				return JsonConvert.DeserializeObject<Tv>(valasz);
+			}
+			catch (HttpRequestException e)
+			{
+				//client.CancelPendingRequests();
+				//client.Dispose();
+				ErrorMessage="Nem elérhető a szerver! Hibaüzenet: "+ e.Message;
+				return default;
 			}
 			catch (Exception e)
 			{
 				client.CancelPendingRequests();
 				client.Dispose();
-				ErrorMessage=e.Message;
-				throw;
+				ErrorMessage="Hiba történt! Az üzenet: "+ e.Message;
+				return default;
 			}
 		}
 		public async Task<T> Post<T>(string uri, T t)

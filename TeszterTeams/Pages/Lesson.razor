@@ -21,21 +21,23 @@ else
 	{
 		<h4 id="error"> @errorMessage</h4>
 	}
-	<select @onchange="(e)=>NewUserId(e)">
+@*	<select @onchange="(e)=>NewUserId(e)">
 		<option selected disabled>Válasz...</option>
 		<option value="ad23c929-7c72-4512-93d1-1877fe290b8a">Péterfy's diák'</option>
 		<option value="6392352e-69b8-42ac-8f9c-3f92297e54c8">Péterfy diák'</option>
 	</select>
-	<div class="center">
-		@if (currentOperation.OperationId!=0)
+*@	<div class="center">
+		@if (taskView!=null && currentOperation.OperationId!=0)
 		{
 			<p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
 			<MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction"/>
 	
 		} else
 		{
-			<p>Betöltés</p>
-			<FluentProgressRing/>
+			<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+				<p>Betöltés</p>
+				<FluentProgressRing/>
+			</div>
 		}
 	</div>
 }
@@ -61,16 +63,21 @@ else
 				var user = await teamsUserCredential.GetUserInfoAsync();
 				userName = user.DisplayName;
 				UserId = Guid.Parse(user.ObjectId);
-				//taskView = await mService.Start(UserId);
-				//if (taskView is not null)
-				//{
-				//	if (taskView.Operations.Count > 0)
-				//	{
-				//		currentOperation = taskView.Operations[0];
-				//	}
-				//	else errorMessage = $"Nincs művelet! {taskView.TaskId}";
-				//	StateHasChanged();
-				//	timer.Elapsed += (s, e) => { time += 1; };
+				taskView = await mService.Start(UserId);
+				if (taskView is not null)
+				{
+					if (taskView.Operations.Count > 0)
+					{
+						currentOperation = taskView.Operations[0];
+					}
+					else errorMessage = $"Nincs művelet! {taskView.TaskId}";
+					StateHasChanged();
+					timer.Elapsed += (s, e) => { time += 1; };
+				}
+				else
+				{
+					message = "Nincs feladat kiadva számodra!";
+				}
 			}
 			else
 			{

@@ -1,0 +1,119 @@
+﻿
+<EditForm Model="@newAnswer">
+    @switch (questionType)
+    {
+        case QuestionType.SC:
+        case QuestionType.MC:
+            {
+                <div class="mt-2" style="border: 2px solid blue">
+                    <table class="table-bordered" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Válasz</th>
+                                <th>Helyes?</th>
+                                <th>Törlés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr>
+                                <td>
+                                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%" />
+                                </td>
+                                <td align="center">
+                                    <input type="checkbox" id="Right" @bind-value="newAnswer.Right" onchanged="OnAnswerChanged" checked="@newAnswer.Right" />
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+            break;
+        case QuestionType.TF:
+            {
+                <div class="mt-2" style="border: 2px solid blue">
+                    <table class="table-bordered" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Állítások</th>
+                                <th>Igaz?</th>
+                                <th>Törlés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr>
+                                <td>
+                                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%"/>
+                                </td>
+                                <td align="center">
+                                    <input type="checkbox" id="Right" @bind-value="newAnswer.Right" onchanged="OnAnswerChanged" checked="@newAnswer.Right" />
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+            break;
+        case QuestionType.Open://Todo: formázni a szöveget.
+            {
+                <div class="mt-2" style="border: 2px solid blue">
+
+                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%" />
+
+                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
+                </div>
+            }
+            break;
+        case QuestionType.Seq:
+            {
+                <div class="mt-2" style="border: 2px solid blue">
+                    <label for="Text">@newAnswer.Sequence. válasz: </label>
+                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:85%"/>
+                </div>
+            }
+            break;
+        case QuestionType.Pair:
+            {
+                <input type="text" class="form-inline" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:85%"/>
+            }
+            break;
+        case QuestionType.Comp:
+            {
+<div class="mt-2" style="border: 2px solid blue">
+    <label for="Text">@newAnswer.Sequence. helyre: </label>
+    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:75%"/>
+    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
+</div>
+            }
+            break;
+        default:
+            break;
+    }
+</EditForm>
+@code {
+    [Parameter]
+    public Answer newAnswer { get; set; } = new();
+    [Parameter]
+    public EventCallback<Answer> newAnswerChanged { get; set; }
+    [Parameter]
+    public QuestionType questionType { get; set; }
+    [Parameter]
+    public EventCallback<Answer> DeleteAnswer { get; set; }
+
+    private Task OnAnswerChanged(ChangeEventArgs e)
+    {
+        return newAnswerChanged.InvokeAsync(newAnswer);
+    }
+    private Task OnDeleteAnswer()
+    {
+        return DeleteAnswer.InvokeAsync(newAnswer);
+    }
+
+}

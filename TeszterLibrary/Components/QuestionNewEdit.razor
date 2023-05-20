@@ -1,0 +1,366 @@
+﻿@using Microsoft.JSInterop;
+@using Plk.Blazor.DragDrop;
+@inject IJSRuntime js
+
+<div class="row m-3">
+	<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
+		<HeaderContent>
+			<p>Figyelmeztetés!</p>
+		</HeaderContent>
+		<BodyContent>
+			<h4>@errorMessage</h4>
+		</BodyContent>
+	</Modal>
+	<div class="col-5 bg-light m-2 justify-content-start">
+		<div class="p-3 mb-3 bg-primary text-white text-center">@(New? "Új kérdés":"Kérdés módosítása")</div>
+		<EditForm Model="@newQuestion">
+			<DataAnnotationsValidator />
+			<ValidationSummary />
+			<div class="form-group">
+				<label for="qType">Kérdés típusa: </label>
+				<FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New>
+					<FluentOption Value="All">Válassza ki a kérdés fajtáját...</FluentOption>
+					<FluentOption Value="SC" Selected=@(QuestionType.SC==newQuestion.QType) >Felelet választás</FluentOption>
+					<FluentOption Value="MC" Selected=@(QuestionType.MC==newQuestion.QType)>Több válaszos</FluentOption>
+					<FluentOption Value="TF" Selected=@(QuestionType.TF==newQuestion.QType)>Igaz-Hamis</FluentOption>
+					<FluentOption Value="Open" selected="@(QuestionType.Open==newQuestion.QType)">Nyílt végű</FluentOption>
+					<FluentOption Value="Seq" selected="@(QuestionType.Seq==newQuestion.QType)">Sorbarendezés</FluentOption>
+					<FluentOption Value="Pair" selected="@(QuestionType.Pair==newQuestion.QType)">Párosítás</FluentOption>
+					<FluentOption Value="Comp" selected="@(QuestionType.Comp==newQuestion.QType)">Kiegészítő</FluentOption>
+				</FluentSelect>
+			</div>
+			<div class="form-group">
+				<label for="Subject">Tantárgy
+				<InputSelect id="Subject" class="form-control" @bind-Value="@newQuestion.Subject">
+					@if (subjects.Count > 0)
+					{
+						foreach (var item in subjects)
+						{
+							<option value="@item.Name">@item.Name</option>
+						}
+					}
+				</InputSelect>
+				<Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
+					<HeaderContent>
+						<p>Új tantárgy felvétele</p>
+					</HeaderContent>
+					<BodyContent>
+						<label for="Name">Tantárgy neve: </label>
+						<input type="text" id="Name" @bind-value="subjectName" />
+					</BodyContent>
+				</Modal>
+					<FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
+				</label>
+				<div class="form-group">
+					<label for="title">Kérdés címe / témaköre</label>
+					<input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
+				</div>
+				<div class="form-group">
+					<label for="subtitle">Kérdés alcím</label>
+					<input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
+				</div>
+				<div class="form-group">
+					<label for="name">Kérdés</label>
+					<TinyMCE.Blazor.Editor ApiKey="daoqhbmyha3b59wlsjs6wtqie6ty9scx3tjaxzxznnzzg4v9" JsConfSrc="editor" Conf="editorConf" @bind-Value="@newQuestion.Text" Field="()=>newQuestion.Text" />
+					<div hidden="@(newQuestion.QType!=QuestionType.Comp)">
+						<p >Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
+						<a @onclick="Insert">{@k} beszúrása</a>
+					</div>
+				</div>
+				<div class="form-group input-group">
+					<div class="row">
+						<div class="col">
+							<label for="score">Pontszám</label>
+							<InputNumber id="score" class="form-control" @bind-Value="@newQuestion.Score" />
+						</div>
+						<div class="col">
+							<label for="time">Időtartam /másodperc/</label>
+							<input type="number" id="time" class="form-control ido-sec" @bind="@newQuestion.Time" />
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="grade">Évfolyam</label>
+					<div class="input-group">
+						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" />
+						<span class="input-group-text"> -  </span>
+						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MaxGrade" style="width:100px; margin:0px" />
+					</div>
+				</div>
+
+			</div>
+		</EditForm>
+	</div>
+	<div class="col-6 bg-light m-2 justify-content-start">
+		<div class="p-3 mb-3 bg-primary text-white text-center">Válaszok</div>
+		@switch (newQuestion.QType)
+		{
+			case QuestionType.SC:
+			case QuestionType.MC:
+			case QuestionType.Comp:
+				{
+					@foreach (var item in newAnswers)
+					{
+						<NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+					}
+				}
+				break;
+			case QuestionType.TF:
+				{
+					<p class="bg-info text-center">Az eldöntendő állításokat írja le.</p>
+					@foreach (var item in newAnswers)
+					{
+						<NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+					}
+				}
+				break;
+			case QuestionType.Open:
+				{
+					foreach (var item in newAnswers)
+					{
+						<NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+					}
+				}
+				break;
+			case QuestionType.Seq:
+				{
+					<p class="bg-info text-center">A válaszokat a helyes sorrendbe állítsa be.</p>
+					<Dropzone Items="newAnswers" TItem="Answer" OnItemDrop="drop">
+						<NewAnswer newAnswer="@context" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+					</Dropzone>
+				}
+
+				break;
+			case QuestionType.Pair:
+				newAnswers[1].Sequence = 1;
+				for (int i = 0; i < newAnswers.Count; i = i + 2)
+				{
+					<label>@(i/2+1). pár:</label>
+					<div class="row">
+						<div class="col">
+							<NewAnswer newAnswer="newAnswers[i]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+						</div>
+						<div class="col">
+							<NewAnswer newAnswer="newAnswers[i+1]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+						</div>
+						<div class="col-1">
+							<button class="btn btn-danger" @onclick="()=>deletePairAnswers(i)"><i class="oi oi-trash"></i></button>
+						</div>
+					</div>
+						}
+				break;
+		   default:
+				break;
+		 }
+
+			<button class="m-3" @onclick="AddAnswer"><i class="oi oi-plus" /></button>
+		</div>
+	<div class="text-center p-3 mb-3">
+		<button type="submit" class="btn btn-info" @onclick="SaveQuestion">Kérdés mentése</button>
+		@*<button class="btn btn-info" @onclick="SaveNewQuestion">Kérdés mentése + új</button>*@
+		<button class="btn" @onclick="@(async ()=>await Cancel.InvokeAsync())">Mégsem</button>
+	</div>
+
+</div>
+@code {
+	[Parameter]
+	public bool New { get; set; } = true;
+	[Parameter] public Question newQuestion { get; set; } = new Question();
+	[Parameter] public List<Subject> subjects { get; set; }= new List<Subject>();
+	[Parameter] public EventCallback<Question> Save { get; set; }
+	[Parameter] public EventCallback<string> SubjectsSave { get; set; }
+	[Parameter] public EventCallback Cancel { get; set; }
+	string errorMessage = string.Empty,subjectName=string.Empty;
+	bool showModal = false;
+	private Dictionary<string, object> editorConf = new Dictionary<string, object>{
+   { "menubar", true },
+   { "plugins", "link image" },
+   { "toolbar", "undo redo | styleselect | forecolor | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | link image" }};
+	public Answer newAnswer { get; set; } = new Answer();
+	public List<Answer> newAnswers = new List<Answer>();
+
+	int k = 1; //Kiegészító feladatnál hányadik beszúrás kerül be.
+
+	protected override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			newAnswers.Add(new Answer() { Sequence = 1 });
+			newAnswers.Add(new Answer() { Sequence = 2 });
+		}
+		return base.OnAfterRenderAsync(firstRender);
+	}
+	protected override async Task OnParametersSetAsync()
+	{
+		if (subjects!=null && subjects.Count>0 && newQuestion.Subject.Equals(string.Empty))
+		{
+			newQuestion.Subject = subjects.First().Name; 
+		}
+		if (newQuestion.Answers != null)
+		{
+			newAnswers.Clear();
+			foreach (var item in newQuestion.Answers)
+			{
+				newAnswers.Add(new Answer() { Right = item.Right, Sequence = item.Sequence, Text = item.Text });
+			}
+		}
+	}
+	private async Task Insert()
+	{
+		string text = " {" + k + "}";
+		await js.InvokeVoidAsync("insertText", "name", text);
+		k++;
+	}
+	private void deletePairAnswers(int j)
+	{
+		newAnswers.RemoveRange(j, 2);
+
+		for (int i = 0; i < newAnswers.Count; i = i + 2)
+		{
+			newAnswers[i].Sequence = i / 2 + 1;
+			newAnswers[i + 1].Sequence = i / 2 + 1;
+		}
+		StateHasChanged();
+	}
+	private void deleteAnswer(Answer answer)
+	{
+		int j = answer.Sequence;
+		char[] vs = { '{', Convert.ToChar(j), '}' };
+		if (newQuestion.Text.Length>0)	j = newQuestion.Text.IndexOfAny(vs);
+		newAnswers.Remove(answer);
+		for (int i = 0; i < newAnswers.Count; i++) //A sequece újra írása.
+		{
+			newAnswers[i].Sequence = i + 1;
+		}
+	}
+@*	private async Task AddNewQuestion()
+	{
+	}
+*@	private async Task SaveQuestion()
+	{
+		if (newQuestion.QType == 0)
+		{
+			errorMessage = "Kérem állítson be egy kérdés típust!";
+		}
+		newQuestion.Answers=newAnswers.ToList();
+		//await AddNewQuestion();
+		await Save.InvokeAsync(newQuestion);
+	}
+	@*private async Task SaveNewQuestion()
+	{
+		await AddNewQuestion();
+	}*@
+	private void minGradeChange()
+	{
+		if (newQuestion.MaxGrade < newQuestion.MinGrade)
+		{
+			var v = newQuestion.MaxGrade;
+			newQuestion.MaxGrade = newQuestion.MinGrade;// + 1;
+			newQuestion.MinGrade = v;
+			StateHasChanged();
+		}
+	}
+	private string IsValidAnswer(QuestionType type)
+	{
+		int i = 0;
+		switch (type)
+		{
+			case QuestionType.SC:
+				{
+					foreach (var item in newAnswers)
+					{
+						if (item.Right)
+						{
+							i++;
+						}
+						if (item.Text == null)
+						{
+							errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+						}
+					}
+					if (i == 0 || i > 1)
+					{
+						errorMessage = errorMessage + "Pontosan egy helyes megoldás lehet! ";
+					}
+				}
+				break;
+			case QuestionType.MC:
+				{
+					foreach (var item in newAnswers)
+					{
+						if (item.Right)
+						{
+							i++;
+						}
+						if (item.Text == null)
+						{
+							errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+						}
+					}
+					if (i == 0)
+					{
+						errorMessage = "Legalább egy helyes válasz kell!";
+					}
+					break;
+				}
+			case QuestionType.TF:
+				break;
+			case QuestionType.Open:
+				foreach (var item in newAnswers)
+				{
+					if (item.Text == null)
+					{
+						errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+					}
+				}
+				break;
+			case QuestionType.Seq:
+				foreach (var item in newAnswers)
+				{
+					if (item.Text == null)
+					{
+						errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+					}
+				}
+				break;
+			case QuestionType.Pair:
+				break;
+			default:
+				break;
+		}
+		return errorMessage;
+	}
+	private void AddAnswer()
+	{
+		var i = newAnswers.Last().Sequence;
+		if (newQuestion.QType==QuestionType.Pair)
+		{
+			newAnswers.Add(new Answer() { Sequence = i + 1 });
+		}
+		newAnswers.Add(new Answer() { Sequence = i + 1 });
+		StateHasChanged();
+	}
+	private void qTypeChanged(string type)
+	{
+		QuestionType qt;
+		if (Enum.TryParse<QuestionType>(type, out qt))
+		{
+			newQuestion.QType = qt;
+			StateHasChanged();
+		}
+	}
+	private void drop()
+	{
+		foreach (var a in newAnswers)
+		{
+			a.Sequence = newAnswers.IndexOf(a) + 1;
+		}
+	}
+	private void CloseModal() => errorMessage = string.Empty;
+	private void SaveSubject()
+	{
+		showModal = false;
+		SubjectsSave.InvokeAsync(subjectName);
+	}
+	void CloseSubjectModal() => showModal = false;
+}

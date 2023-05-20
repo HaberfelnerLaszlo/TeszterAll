@@ -1,10 +1,10 @@
 ﻿.narrow {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 .page-padding {
-    padding: 4rem;
+    padding: 1rem;
 }
 
 .welcome.page > .narrow > img {

@@ -1,0 +1,62 @@
+﻿
+<div class="card bg-transparent rounded" style="border-color:@bgColor; border-width:medium">
+    <div class="card-header">
+        @question.Title
+        <p class="float-right"style="margin:0">@qType</p>
+    </div>
+    <div class="card-body">
+        <h5>@((MarkupString)question.Text)</h5>
+        <hr />
+        <div class="row">
+            <div class="col" style="padding-right:0">Idő: <b>@question.Time mp</b></div>
+            <div class="col">Érték: <b>@question.Score pont</b></div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col">Tantárgy:<br /><b>@question.Subject </b> </div>
+            <div class="col">Évfolyam:<br />@question.MinGrade ⇝ @question.MaxGrade</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Question question { get; set; } = new Question();
+    private ConsoleColor bgColor = ConsoleColor.Cyan;
+    private string qType;
+
+    protected override void OnParametersSet()
+    {
+        switch (question.QType)
+        {
+            case QuestionType.SC:
+                qType = "Feleletválasztó";
+                bgColor = ConsoleColor.Green;
+                break;
+            case QuestionType.MC:
+                qType = "Többválasztásos";
+                bgColor = ConsoleColor.DarkCyan;
+                break;
+            case QuestionType.TF:
+                qType = "Igaz-Hamis";
+                bgColor = ConsoleColor.Magenta;
+                break;
+            case QuestionType.Open:
+                qType = "Nyíltvégű";
+                bgColor = ConsoleColor.Yellow;
+                break;
+            case QuestionType.Seq:
+                qType = "Sorbarendezó";
+                bgColor = ConsoleColor.Red;
+                break;
+            case QuestionType.Pair:
+                qType = "Párválasztó";
+                bgColor = ConsoleColor.Blue;
+                break;
+            default:
+                qType = "Nem tudom";
+                bgColor = ConsoleColor.Black;
+                break;
+        }
+    }
+}

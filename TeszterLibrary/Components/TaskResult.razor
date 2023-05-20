@@ -1,0 +1,41 @@
+﻿<table class="table table-striped table-hover">
+	<thead>
+	<tr>
+		<th>Időpont</th>
+		<th>Feladat</th>
+		<th>Ráfordított idő</th>
+		<th>Válasz</th>
+		<th>Helyes?</th>
+		<th>Választotta?</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in taskViews)
+		{
+		<tr>
+			<td>@item.TimeStamp</td>
+			<td>@item.Sequence.Replace('#',' ')</td>
+			<td>@item.Time mp</td>
+			<td>@item.Answer @if (!item.IsCorrect)
+					{
+						<span>/ @item.Outcome</span>
+					}
+			</td>
+			<td>
+			@if (item.IsCorrect)
+			{
+				<i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+			}
+			else
+			{
+				<i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+			}
+			</td>
+			<td>@(item.IsTipp? "Igen": "Nem")</td>
+		</tr>
+		}
+	</tbody>
+</table>
+@code {
+	[Parameter] public List<ResultTaskView> taskViews { get; set; } = new();
+}

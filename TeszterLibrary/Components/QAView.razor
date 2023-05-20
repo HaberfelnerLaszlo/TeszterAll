@@ -1,0 +1,439 @@
+﻿@using Microsoft.JSInterop;
+@using Plk.Blazor.DragDrop
+@using System.Numerics;
+@using System.Text.RegularExpressions
+@*@inject IJSRuntime _js*@
+
+<EditForm Model="@question">
+    <div class="card bg-light rounded m-2" style="border-color: bisque; border-width:medium">
+        <div class="card-header justify-content-between">
+            <label for="Score">Pontszám: </label>
+            <input id="Score" type="number" style="width:50px" @bind-value="question.Score" />
+            <label for="Time">Idő: </label>
+            <input id="Time" type="number" style="width:50px" @bind-value="question.Time" />
+            <button class="btn btn-danger" style="position:absolute; top:5px; right:5px; margin:5px" @onclick="OnDelete"><span class="oi oi-trash"></span></button>
+        </div>
+        <div id="card-body" class="card-body">
+            <h5 class="card-title">@((MarkupString)question.Text)</h5>
+            <hr />
+            @switch (question.QType)
+            {
+                case QuestionType.SC:
+                    {
+                        <ul class="list-group" style="list-style-type:none">
+
+                            @foreach (var a in answers)
+                            {
+                                if (a.Right)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:@bgColor" @onclick="() => selected(a.Id, a.Right)">
+                                        @a.Text
+                                        <span class="oi oi-x" style="color:red" hidden="@IsWrong"></span>
+                                        <span class="oi oi-check" style="color:green" hidden="@IsRight"></span>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="list-group-item" @onclick="()=>selected(a.Id,a.Right)">
+                                        @a.Text
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    }
+                    break;
+                case QuestionType.MC:
+                    {
+                        <ul class="list-group" style="list-style-type:none">
+
+                            @foreach (var a in answers)
+                            {
+                                if (a.Right)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:@bgColor" @onclick="() => selected(a.Id, a.Right)">
+                                        @a.Text
+                                        @if (IsChecking)
+                                        {
+                                            <span class="oi oi-check" style="color:green"></span>
+                                        }
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="list-group-item" @onclick="()=>selected(a.Id,a.Right)">
+                                        @a.Text
+                                        @if (IsChecking)
+                                        {
+                                            <span class="oi oi-x" style="color:red"></span>
+                                        }
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    }
+                    break;
+                case QuestionType.TF:
+                    {
+                        @foreach (var a in answers)
+                        {
+                            <p></p>
+                            <div class="form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="True" name="TF+@a.Id" value="Igaz" @onchange="(e)=>selected(a.Id,(bool)e.Value)" />
+                                <label class="form-check-label" for="True">@a.Text</label>
+@*                            </div>
+                            <div class="form-check-inline">
+                                <input type="radio" class="form-check-input" id="False" name="TF+@a.Id" value="Hamis" @onchange="()=>selected(a.Id,false)" />
+                                <label class="form-check-label" for="False">Hamis</label>
+*@                                @if (IsChecking)
+                                {
+                                    <span class="oi oi-x" style="color:red" hidden="@a.Right"></span>
+                                    <span class="oi oi-check" style="color:green" hidden="@(!a.Right)"></span>
+                                }
+                            </div>
+                        }
+                    }
+                    break;
+                case QuestionType.Open:
+                    <input type="text" placeholder="Ide kerül a válasz..." @bind-value="ans[0]" />
+                    break;
+                case QuestionType.Seq:
+
+                    <Dropzone Items="answers" Context="a">
+                        <div class="mt-2 form-inline" style="border: 2px solid blue">
+                            <div class="p-3">@a.Text</div>
+                            @if (IsChecking)
+                            {
+                                <span class="oi oi-x" style="color:red" hidden="@a.Right"></span>
+                                <span class="oi oi-check" style="color:green" hidden="@(!a.Right)"></span>
+                            }
+                        </div>
+                    </Dropzone>
+                    break;
+                case QuestionType.Pair:
+
+                    @*<div class="d-flex flex-row">*@
+                    <div id="pair" class="drag-container">
+                        @for (int i = 0; i < Nodes.Count; i++)
+                        {
+                            Node node = Nodes[i];
+                            if (Nodes[i].PairId != -1)
+                            {
+                        <div style="@($"left: {Nodes[i].Position.X}px; top: {Nodes[i].Position.Y}px; border-color: red; ")" class="drag-pair" draggable="true"
+                             @ondragstart="@DragStart"
+                             @ondragend="@(e => DragEndPair(e, node))">
+                            <div>
+                                @Nodes[i].Text
+                                @if (IsChecking)
+                                {
+                                    <span class="oi-x" style="color:red" hidden="@node.IsPair"></span>
+                                    <span class="check oi oi-check" style="color:green" hidden="@(!node.IsPair)"></span>
+                                }
+                            </div>
+                            ------------
+                            <button @onclick="(()=>Separate(i))">
+                                <span class="oi oi-code"></span>
+                            </button>
+                            <span class="d-none">@(i++)</span>
+                            <div>@Nodes[i].Text</div>
+                        </div>
+                            }
+                            else
+                            {
+                                //node = Nodes[i];
+                                <div style="@($"left: {Nodes[i].Position.X}px; top: {Nodes[i].Position.Y}px; border-color:{Nodes[i].Color}; ")" class="drag-item" draggable="true"
+                                     @ondragstart="@DragStart"
+                                     @ondragend="@(e => DragEnd(e, node))">
+                                    @node.Text
+                                </div>
+
+                            }
+                        }
+                    </div>
+                    @*</div>*@
+                    break;
+                case QuestionType.Comp:
+                    @if (texts != null)
+                    {
+                        foreach (var t in Nodes)
+                        {
+                            if (t.Text.All(char.IsNumber)) 
+                            {
+                                t.Number = Convert.ToInt32(t.Text);
+                                <input type="text" placeholder="@t.Text" @bind-value="ans[t.Number-1]" />
+                                @if (IsChecking)
+                                {
+                                    <span class="oi oi-x" style="color:red" hidden="@t.IsPair"></span>
+                                    <span class="oi oi-check" style="color:green" hidden="@(!t.IsPair)"></span>
+                                }
+
+                            }
+                            else
+                            {
+                                @t.Text
+                            }
+                        }
+
+                    }
+                    break;
+                default:
+                    <p>Nem tudom mi történt!</p>
+                    break;
+            }
+        </div>
+    </div>
+</EditForm>
+<button class="btn btn-outline-secondary" @onclick="Check">Ellenőrzés</button>
+@code {
+    [Parameter]
+    public Question question { get; set; } = new Question();
+    [Parameter]
+    public EventCallback<Question> questionChanged { get; set; }
+    [Parameter]
+    public EventCallback<Question> Delete { get; set; }
+    private List<Answer> answers = new List<Answer>();
+    private string bgColor = System.Drawing.Color.GreenYellow.Name;
+    private bool IsChecking = false;
+    private bool IsWrong = true, IsRight = true;
+    private Vector2 _dragpositionstart;
+    private Dictionary<int, bool> originAnswer = new Dictionary<int, bool>();
+    private List<Node> Nodes = new List<Node>();
+    private int pairN = 1;
+    private BrowserDimension Dimension = new BrowserDimension() { Height = 400, Width = 400 };
+    private string[] texts;
+    private string[] ans= new string[10];
+
+    protected override async Task OnInitializedAsync()
+    {
+        //answers = aservice.GetQuestionAnswer(question.Id);
+        answers = question.Answers.ToList();
+        foreach (var a in answers)
+        {
+            originAnswer.Add(a.Id, a.Right);
+            if (a.Right)
+            {
+                a.Right = false;
+            }
+        }
+
+        var rand = new Random();
+  @*       var dimension = await _js.InvokeAsync<BrowserDimension>("getDimensions.comp", "card-body");
+   
+        if (dimension.Width>0)
+        {
+            Dimension = dimension;
+        } *@
+        if (question.QType == QuestionType.Pair)
+        {
+            Nodes.Clear();
+            for (int i = 0; i < answers.Count; i++)
+            {
+                Nodes.Add(new Node { ID = answers[i].Id, Position = new Vector2(rand.Next() % Dimension.Width, rand.Next() % Dimension.Height), Text = answers[i].Text, Number = answers[i].Sequence, Color = "Green" });
+            }
+        }
+        if (question.QType == QuestionType.Comp)
+        {
+            var Text = question.Text;
+            texts = Text.Split('{', '}');
+            Nodes.Clear();
+            foreach (var t in texts)
+            {
+                Nodes.Add(new Node { Text = t, IsPair = false, Number=0 });
+            }
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //var dimension = await _js.InvokeAsync<BrowserDimension>("getDimensions.comp", "pair");
+        //if (Dimension.Width != dimension.Width) // || (Dimension.Height != dimension.Height))
+        //{
+            Dimension.Width = 400; //dimension.Width;
+            Dimension.Height = 400;// dimension.Height;
+            NewPosition();
+        //}
+    }
+    private void selected(int ID, bool right)
+    {
+        if (bgColor != System.Drawing.Color.GreenYellow.Name)
+        {
+            bgColor = System.Drawing.Color.GreenYellow.Name;
+        }
+        switch (question.QType)
+        {
+            case QuestionType.SC:
+                {
+                    IsRight = true;
+                    IsWrong = true;
+                    foreach (var item in answers)
+                    {
+                        if (item.Id == ID)
+                        {
+                            item.Right = true;
+                        }
+                        else item.Right = false;
+                    }
+                }
+                break;
+            case QuestionType.MC:
+                {
+                    answers.Find(a => a.Id == ID).Right = (right) ? false : true;
+                }
+                break;
+            case QuestionType.TF:
+                {
+                    answers.Find(a => a.Id == ID).Right = right;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    private void Check()
+    {
+        IsChecking = true;
+        switch (question.QType)
+        {
+            case QuestionType.SC:
+                {
+                    foreach (KeyValuePair<int, bool> pair in originAnswer)
+                    {
+                        var Answ = answers.Find(a => a.Id == pair.Key);
+                        if (pair.Value)
+                        {
+                            if (Answ.Right) IsRight = false;
+                            else
+                            {
+                                IsWrong = false;
+                                bgColor = System.Drawing.Color.Transparent.Name;
+                            }
+                        }
+                    }
+                }
+                break;
+            case QuestionType.MC:
+                {
+                    foreach (KeyValuePair<int, bool> pair in originAnswer)
+                    {
+                        var Answ = answers.Find(a => a.Id == pair.Key);
+                        Answ.Right = (Answ.Right == pair.Value) ? true : false;
+                    }
+                }
+                break;
+            case QuestionType.TF:
+                {
+                    foreach (KeyValuePair<int, bool> pair in originAnswer)
+                    {
+                        var Answ = answers.Find(a => a.Id == pair.Key);
+                        Answ.Right = (Answ.Right == pair.Value) ? true : false;
+                    }
+                }
+                break;
+            case QuestionType.Open:
+                {
+                    if (answers[0].Equals(ans[0]))
+                    {
+                        answers[0].Right = true;
+                    }
+                }
+                break;
+            case QuestionType.Seq:
+                {
+                    foreach (var item in answers)
+                    {
+                        if (item.Sequence == (answers.IndexOf(item) + 1))
+                        {
+                            item.Right = true;
+                        }
+                    }
+                }
+                break;
+            case QuestionType.Pair: //Mozgatásnál megoldva.
+                break;
+            case QuestionType.Comp:
+                {
+                    foreach (var item in answers)
+                    {
+                        if (item.Text == ans[item.Sequence-1])
+                        {
+                            Nodes.Where(n => n.Number == item.Sequence).First().IsPair = true;
+                            item.Right = true;
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+
+    }
+    private Task OnDelete()
+    {
+        return Delete.InvokeAsync(question);
+    }
+
+    public void DragStart(DragEventArgs e)
+    {
+        _dragpositionstart = new Vector2(Convert.ToSingle(e.ClientX), Convert.ToSingle(e.ClientY));
+    }
+    public void DragEndPair(DragEventArgs e, Node node)
+    {
+        var newpos = new Vector2(Convert.ToSingle(e.ClientX), Convert.ToSingle(e.ClientY));
+
+        var newvalue = newpos - _dragpositionstart;
+        node.Position += newvalue;
+    }
+    public void DragEnd(DragEventArgs e, Node node)
+    {
+        var newpos = new Vector2(Convert.ToSingle(e.ClientX), Convert.ToSingle(e.ClientY));
+
+        var newvalue = newpos - _dragpositionstart;
+        node.Position += newvalue;
+        float x = node.Position.X;
+        float y = node.Position.Y;
+        foreach (var item in Nodes)
+        {
+            if (item.ID != node.ID)
+            {
+                if ((Math.Abs(item.Position.X - x) < 10) && (Math.Abs(item.Position.Y - y) < 10))
+                {
+                    item.PairId = node.ID;
+                    node.PairId = item.ID;
+                    node.Position = new Vector2(item.Position.X, item.Position.Y + 50);
+                    item.PairNumber = pairN;
+                    node.PairNumber = pairN;
+                    pairN++;
+                    if (item.Number == node.Number) //Ellenőrzés
+                    {
+                        item.IsPair = true;
+                        node.IsPair = true;
+                    }
+                }
+            }
+        }
+        Nodes.Sort((x, y) => x.PairNumber.CompareTo(y.PairNumber));
+    }
+    private void Separate(int id)
+    {
+        var node = Nodes.FirstOrDefault(n => n.ID == id);
+        var pairId = node.PairId;
+        node.PairId = -1;
+        node.IsPair = false;
+        node = Nodes.FirstOrDefault(n => n.PairId == pairId);
+        node.PairId = -1;
+        node.IsPair = false;
+        NewPosition();
+        StateHasChanged();
+    }
+    private void NewPosition()
+    {
+        var rand = new Random();
+        foreach (var item in Nodes)
+        {
+            item.Position = new Vector2(rand.Next() % (Dimension.Width-50), rand.Next() % (Dimension.Height-50));
+        }
+    }
+    class BrowserDimension
+    {
+        public int Width { get; set; }
+        public int Height { get; set; }
+    }
+}
