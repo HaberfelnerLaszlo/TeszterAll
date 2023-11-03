@@ -4,6 +4,9 @@
 @inject QuestionServices qService
 @inject SubjectServices sServive
 @inject ILogger<WelcomeTeacher> logger
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+
 
 <Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
 	<HeaderContent>
@@ -33,36 +36,36 @@ else
 	<div class="welcome page">
 		<div class="narrow page-padding">
 			<FluentTabs style="width: 90%; justify-content: space-between; margin: 1rem auto;">
-				<FluentTab style="font-size: 16px; min-height:36px;">Kérdések</FluentTab>
-				<FluentTab>Teszt készítés
+                <FluentTab style="font-size: 16px; min-height:36px;" Label="Kérdések">
+                    <div hidden="@(!newOrEdit)">
+                        <FluentAccordion>
+                            <FluentAccordionItem Heading="Szűrő">
+                                <QuestionFilter @bind-Questions="Questions" />
+                            </FluentAccordionItem>
+                        </FluentAccordion>
+                        <TestQuestions UserId=Guid.Parse(UserId) page=1 questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
+                        <button class="btn btn-outline-primary" @onclick=NewQuestion>Új kérdés</button>
+                    </div>
+                    <div hidden="@newOrEdit">
+                        <QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
+                    </div>
+
+                </FluentTab>
+                <FluentTab Label="Teszt készítés">
 					@if (TestQuestion.Count>0)
 					{
 						<span> _ </span>
 						<FluentBadge Circular=true> @TestQuestion.Count</FluentBadge>
 					}
+                    <AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="UserId" AuthProvider="msGraphAuthProvider" />
+
 				</FluentTab>
-				<FluentTab>Matematika gyakorló</FluentTab>
-				<FluentTabPanel>
-					<div hidden="@(!newOrEdit)">
-					<FluentAccordion>
-						<FluentAccordionItem Heading="Szűrő">
-							<QuestionFilter @bind-Questions="Questions" />
-						</FluentAccordionItem>
-					</FluentAccordion>
-					<TestQuestions UserId=Guid.Parse(UserId) page=1 questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
-					<button class="btn btn-outline-primary" @onclick=NewQuestion>Új kérdés</button>
-					</div>
-					<div hidden="@newOrEdit">
-						<QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true"/>
-					</div>
-				</FluentTabPanel>
-				<FluentTabPanel>
-					<AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion"/>
-					<Deploy/>
-				</FluentTabPanel>
-				<FluentTabPanel>
-					<Publish/>
-				</FluentTabPanel>
+                <FluentTab Label="Tesztek">
+
+				</FluentTab>
+                <FluentTab Label="Matematika gyakorló">
+                    <Deploy /><Publish />
+                </FluentTab>
 			</FluentTabs>
 		</div>
 	</div>
@@ -78,6 +81,8 @@ else
 	private List<string> titles = new();
 	private Question TempQuestion { get; set; } = new();
 	private List<Question> TestQuestion = new();
+	private readonly string _scope = "User.Read EduRoster.ReadBasic";
+	MsGraphAuthProvider msGraphAuthProvider;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -87,6 +92,7 @@ else
 			Subjects = await sServive.GetSubjects();
 			isLoading = false;
 			await base.OnAfterRenderAsync(firstRender);
+			msGraphAuthProvider = new MsGraphAuthProvider(teamsUserCredential, _scope);
 			StateHasChanged();
 		}
 	}

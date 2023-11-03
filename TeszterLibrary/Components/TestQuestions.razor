@@ -56,9 +56,9 @@
 					<td>
 						<div class="row">
 @*										<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
-							<button class="btn btn-danger m-1" @onclick="(async () => await Delete.InvokeAsync(question))"><i class="oi oi-trash" /></button>
-							<button class="btn btn-info m-1" @onclick="(() => SetQuestionForUpdate(question))"><i class="oi oi-pencil" /></button>
-							<button class="btn btn-success m-1" @onclick="(() => AddTest.InvokeAsync(question))"><i class="oi oi-plus" /></button>
+							<button class="btn btn-danger btn-sm m-1" @onclick="(async () => await Delete.InvokeAsync(question))"><i class="oi oi-trash" /></button>
+							<button class="btn btn-info btn-sm m-1" @onclick="(() => SetQuestionForUpdate(question))"><i class="oi oi-pencil" /></button>
+							<button class="btn btn-success btn-sm m-1" @onclick="(() => AddTest.InvokeAsync(question))"><i class="oi oi-plus" /></button>
 						</div>
 					</td>
 				</tr>

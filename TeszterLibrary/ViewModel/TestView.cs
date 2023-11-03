@@ -10,7 +10,7 @@ namespace TeszterLibrary.ViewModel
     public class TestView
     {
         public int Id { get; set; }
-        public string Title { get; set; }=String.Empty; 
+        public string Title { get; set; } = String.Empty;
         /// <summary>
         /// Teszt készítőjének azonosítója.
         /// </summary>

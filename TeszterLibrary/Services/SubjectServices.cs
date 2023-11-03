@@ -49,9 +49,9 @@ namespace TeszterLibrary.Services
 				throw;
 			}
 		}
-		//public bool Exits(string subjectName)
-		//{
-		//	return dbContext.Subjects.Any(s => s.Name == subjectName);
-		//}
+		public bool Exits(string subjectName)
+		{
+			return true; //TODO ezt meg kell oldani!! dbContext.Subjects.Any(s => s.Name == subjectName);
+		}
 	}
 }

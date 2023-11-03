@@ -1,90 +1,146 @@
-﻿<Modal Show=showQDetail Accept="CloseModal" AcceptButtom="Bezár">
-    <HeaderContent>
-        A kérdés részletei
-    </HeaderContent>
-    <BodyContent>
-        <QAView question="detailQuestion"/>
-    </BodyContent>
+﻿@using TeszterLibrary.Services;
+@using Microsoft.Kiota.Abstractions.Authentication;
+
+@inject TestServices tService
+
+<Modal Show=showQDetail Accept="CloseModal" AcceptButtom="Bezár">
+	<HeaderContent>
+		A kérdés részletei
+	</HeaderContent>
+	<BodyContent>
+		<QAView question="detailQuestion"/>
+	</BodyContent>
 </Modal>
+@if (publishing)
+{
+	<PublicTest AuthenticationProvider="AuthProvider" Test="newTest"></PublicTest>
+}
+else{
+<FluentAccordion>
+	<FluentAccordionItem Heading="Szűrő">
+		<QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
+	</FluentAccordionItem>
+</FluentAccordion>
+<label for="title">Teszt címe: </label>
+<input id="title" @bind-value="newTest.Title" placeholder="Teszt címe" />
+<select id="Subject" @onchange="SelectedSubject" class="mx-3">
+	@if (subjects.Count > 0)
+	{
+		<option value="0">Tantárgyak ...</option>
+		foreach (var item in subjects)
+		{
+			<option value="@item.Name">@item.Name</option>
+		}
+	}
+</select>
+<button class="btn btn-success btn-sm" @onclick=TestAdd>Mentés</button>
 <div class="row">
-    <div id="Test" class="col border border-secondary overflow-auto">
-        <label for="title">Teszt címe: </label>
-        <input id="title" @bind-value="newTest.Title" placeholder="Teszt címe" />
-        <select id="Subject" @onchange="SelectedSubject" class="mx-3">
-            @if (subjects.Count > 0)
-            {
-                <option value="0">Tantárgyak ...</option>
-                foreach (var item in subjects)
-                {
-                    <option value="@item.Name">@item.Name</option>
-                }
-            }
-        </select>
-        @if (TesztQ.Count != 0)
-        {
-            foreach (var tq in TesztQ)
-            {
-                <QAView question="tq" Delete="DeleteQ"></QAView>
-            }
-        }
-    </div>
-    <div id="Questions" class="col-sm-4 bg-light overflow-auto" style="max-height:800px; min-width:200px">
-        @foreach (var question in questions)
-        {
-            <Qview question="question"></Qview>
-            <div class="row justify-content-center">
-                <button class="m-2 btn btn-info" @onclick="(()=>ModalOpen(question))">Betekint</button>
-                <button class="m-2 btn btn-outline-primary" @onclick="() => AddQuestion(question)">Hozzáad</button>
-            </div>
-        }
+	<div id="Test" class="col border border-secondary overflow-auto" style="max-height:800px;">
+		@if (TesztQ.Count != 0)
+		{
+			foreach (var tq in TesztQ)
+			{
+				<QAView question="tq" Delete="DeleteQ"></QAView>
+			}
+		}
+	</div>
+	<div id="Questions" class="col-sm-4 bg-light overflow-auto" style="max-height:800px; min-width:200px">
+		@foreach (var question in questions)
+		{
+			<div style="position:relative; margin:10px 0">
+			<Qview question="question"></Qview>
+				<div style="position:absolute; top:-10px; right:-15px">
+					<button class="btn btn-primary btn-sm m-1" @onclick="() => AddQuestion(question)"><i class="oi oi-plus"/></button>
+					<br>
+					<button class="btn btn-info btn-sm m-1" @onclick="(()=>ModalOpen(question))"><i class="oi oi-eye"/></button>
+				</div>
+			</div>
+		}
 
-    </div>
+	</div>
 </div>
-
+}
 @code {
-    [Parameter] public List<Question> questions { get; set; } = new();
-    [Parameter] public List<Subject> subjects { get; set; } = new();
-    [Parameter] public List<Question> TesztQ { get; set; } = new();
-    private Test newTest = new();
-    private bool showQDetail = false;
-    private Question detailQuestion = new();
+	[Parameter] public List<Question> questions { get; set; } = new();
+	[Parameter] public List<Subject> subjects { get; set; } = new();
+	[Parameter] public List<Question> TesztQ { get; set; } = new();
+	[Parameter] public string UserId { get; set; } = string.Empty;
+	[Parameter] public IAuthenticationProvider? AuthProvider { get; set; }
 
-    private void ModalOpen(Question q)
-    {
-        detailQuestion = q;
-        showQDetail = true;
-    }
-    private void CloseModal()
-    {
-        showQDetail = false;
-    }
-    private void AddQuestion(Question q)
-    {
-        questions.Remove(q);
-        TesztQ.Add(q);
-    }
+	private Test newTest = new();
+	private bool showQDetail = false;
+	private Question detailQuestion = new();
+	bool isSaved = false;
+	bool publishing = false;
 
-    private async Task DeleteQ(Question question)
-    {
-        //var index = testQuestions.FindIndex(t => t.QuestionId == question.Id);
-        //if (index != -1)
-        //{
-        //    testQuestions.RemoveAt(index);
-        //    if (IsSaved)
-        //    {
-        //        await tqservice.DeleteTestQuestionAsync(question.Id, newTest.Id);
-        //    }
-        //}
-        TesztQ.Remove(question);
-        questions.Add(question);
-    }
-    private async Task SelectedSubject(ChangeEventArgs e)
-    {
-        
-        if (e.Value != null)
-        {
-            newTest.Subject = e.Value.ToString()??string.Empty;
-        }
-    }
+	private void ModalOpen(Question q)
+	{
+		detailQuestion = q;
+		showQDetail = true;
+	}
+	private void CloseModal()
+	{
+		showQDetail = false;
+	}
+	private void AddQuestion(Question q)
+	{
+		questions.Remove(q);
+		TesztQ.Add(q);
+	}
 
+	private async Task DeleteQ(Question question)
+	{
+		//var index = testQuestions.FindIndex(t => t.QuestionId == question.Id);
+		//if (index != -1)
+		//{
+		//    testQuestions.RemoveAt(index);
+		//    if (IsSaved)
+		//    {
+		//        await tqservice.DeleteTestQuestionAsync(question.Id, newTest.Id);
+		//    }
+		//}
+		TesztQ.Remove(question);
+		questions.Add(question);
+	}
+	private async Task SelectedSubject(ChangeEventArgs e)
+	{
+
+		if (e.Value != null)
+		{
+			newTest.Subject = e.Value.ToString()??string.Empty;
+		}
+	}
+	private async Task TestAdd()
+	{
+		try
+		{
+			newTest.CreatedBy = Guid.Parse(UserId);
+			if (newTest.TestQuestions is null)
+			{
+				newTest.TestQuestions = new();
+			}
+			else
+			{
+				newTest.TestQuestions.Clear();
+			}
+			foreach (var item in TesztQ)
+			{
+				newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
+			}
+			if (isSaved)
+			{
+				var responde = await tService.UpdateTestAsync(newTest);
+			}
+			else
+			{
+				newTest = await tService.AddTest(newTest);
+				isSaved = true;
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+			throw;
+		}
+	}
 }
