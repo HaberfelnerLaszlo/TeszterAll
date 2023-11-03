@@ -1,6 +1,6 @@
 ﻿<EditForm Model=filter>
 			<label>Tantárgy
-			<InputSelect DisplayName="Tantárgy" TValue="string" ValueChanged="SubjectChanged" 
+			<InputSelect DisplayName="Tantárgy" TValue="string" ValueChanged="SubjectlistChanged" 
 						ValueExpression=@(()=>filter.Subject) class="form-control">
 				<option value="@string.Empty">Összes tantárgy...</option>
 			@if (subjects.Count > 0)
@@ -53,16 +53,8 @@
 			<div class="d-inline">
 			<label>Évfolyam @filter.MinGrade-től @filter.MaxGrade-ig
 				<FluentSlider Min="1" Max="12" Step="1" ValueChanged="@((int v)=>GradeChanged(v,true))" ValueExpression="@(()=>filter.MinGrade)">
-@*					<FluentSliderLabel Position="1">1</FluentSliderLabel>
-					<FluentSliderLabel Position="5">5</FluentSliderLabel>
-					<FluentSliderLabel Position="9">9</FluentSliderLabel>
-					<FluentSliderLabel Position="12">12</FluentSliderLabel>*@
 				</FluentSlider>
-					<FluentSlider Min="1" Max="12" Step="1" ValueChanged ="@((int v)=>GradeChanged(v,false))" ValueExpression="@(()=>filter.MaxGrade)">
-@*						<FluentSliderLabel Position="1">1</FluentSliderLabel>
-						<FluentSliderLabel Position="5">5</FluentSliderLabel>
-						<FluentSliderLabel Position="9">9</FluentSliderLabel>
-						<FluentSliderLabel Position="12">12</FluentSliderLabel>*@
+			<FluentSlider Min="1" Max="12" Step="1" AfterBindValue="@((int v)=>GradeChanged(v,false))" @bind-Value="filter.MaxGrade">
 					</FluentSlider>
 		</label>
 	</div>
@@ -74,6 +66,9 @@
 @code {
 	[Parameter] public List<Question> Questions { get; set; } = new();
 	[Parameter] public EventCallback<List<Question>> QuestionsChanged { get; set; }
+	[Parameter] public string Subject { get; set; } = string.Empty;
+	[Parameter] public EventCallback<string> SubjectChanged { get; set; }
+
 	private List<Question> allQuestions = new();
 	QFilter filter = new();
 	private List<string> subjects = new List<string>();
@@ -99,6 +94,12 @@
 				}
 			}
 		}
+		if (Subject!= null && Subject!=string.Empty)
+		{
+			filter.Subject = Subject;
+			NewFilter().GetAwaiter();
+		}
+
 		base.OnAfterRender(firstRender);
 	}
 	private async Task NewFilter()
@@ -148,7 +149,7 @@
 			await QuestionsChanged.InvokeAsync(Questions);
 		}
 	}
-	private async void SubjectChanged(string arg)
+	private async void SubjectlistChanged(string arg)
 	{
 		filter.Subject = arg;
 		titles.Clear();

@@ -1,0 +1,12 @@
+﻿testcard{
+    width:200px;
+    background-color: lemonchiffon;
+    position:relative;
+    margin:5px;
+    padding:5px;
+}
+testsign{
+    position:absolute;
+    top:0px;
+    right:0px;
+}

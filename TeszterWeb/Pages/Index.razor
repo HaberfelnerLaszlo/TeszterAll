@@ -1,0 +1,51 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Identity.Web
+@using Microsoft.Graph.Models
+@inject Microsoft.Graph.GraphServiceClient GraphServiceClient
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+@inject EduUserServices uService
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+<AuthorizeView Roles="Teacher">
+    Tanárok látják.
+    <nav class="flex-lg-row">
+        <NavLink class="nav-link" href="counter">Új teszt készítése</NavLink>
+        <NavLink class="nav-link" href="counter">Nem aktívált tesztek</NavLink>
+        <NavLink class="nav-link" href="counter">Aktív tesztek</NavLink>
+        <NavLink class="nav-link" href=@closedHref>Befejezett tesztek</NavLink>
+        <NavLink class="nav-link" href="counter">Archivált tesztek</NavLink>
+
+    </nav>
+</AuthorizeView>
+@code{
+    EducationUser? user;
+    string closedHref=string.Empty;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                user = await GraphServiceClient.Education.Me.GetAsync();
+                if (user is not null)
+                {
+                    closedHref=$"closedtest{user.Id}";
+                    if (!(await uService.UserExits(Guid.Parse(user.Id))))
+                    {
+                        await uService.AddUser(new Student() { DisplayName = user.DisplayName, Id = Guid.Parse(user.Id), Role=user.PrimaryRole.Value.ToString()});
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsentHandler.HandleException(ex);
+            }
+        }
+    }
+}
