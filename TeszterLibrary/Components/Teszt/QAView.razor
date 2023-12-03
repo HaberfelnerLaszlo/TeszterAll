@@ -1,4 +1,4 @@
-﻿@using Microsoft.JSInterop;
+﻿@*using Microsoft.JSInterop;*@
 @using Plk.Blazor.DragDrop
 @using System.Numerics;
 @using System.Text.RegularExpressions
@@ -205,7 +205,7 @@
 	private string[] texts;
 	private string[] ans= new string[10];
 
-	protected override async Task OnInitializedAsync()
+	protected override Task OnInitializedAsync()
 	{
 		//answers = aservice.GetQuestionAnswer(question.Id);
 		answers = question.Answers.ToList();
@@ -243,16 +243,18 @@
 				Nodes.Add(new Node { Text = t, IsPair = false, Number=0 });
 			}
 		}
+		return base.OnInitializedAsync();
 	}
-	protected override async Task OnAfterRenderAsync(bool firstRender)
+	protected override Task OnAfterRenderAsync(bool firstRender)
 	{
 		//var dimension = await _js.InvokeAsync<BrowserDimension>("getDimensions.comp", "pair");
 		//if (Dimension.Width != dimension.Width) // || (Dimension.Height != dimension.Height))
 		//{
-			Dimension.Width = 400; //dimension.Width;
-			Dimension.Height = 400;// dimension.Height;
-			NewPosition();
+		Dimension.Width = 400; //dimension.Width;
+		Dimension.Height = 400;// dimension.Height;
+		NewPosition();
 		//}
+		return base.OnAfterRenderAsync(firstRender);
 	}
 	private void selected(int ID, bool right)
 	{

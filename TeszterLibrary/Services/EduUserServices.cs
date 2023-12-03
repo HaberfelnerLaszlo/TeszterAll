@@ -29,11 +29,11 @@ namespace TeszterLibrary.Services
             }
             return list?.Any(t => t.Id == id)?? false;
         }
-        public async Task<Student> AddUser(Student user)
+        public async Task<EduUser> AddUser(EduUser user)
         {
             try
             {
-                var v = await _service.Post<Student>("User",user);
+                var v = await _service.Post("User",user);
                 return v;
             }
             catch (Exception e)

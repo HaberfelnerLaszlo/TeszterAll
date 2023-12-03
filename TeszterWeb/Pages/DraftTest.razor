@@ -1,0 +1,54 @@
+﻿@page "/draft"
+@inject TestServices tService
+@inject GraphService gService
+@inject NavigationManager navi
+@inject GlobalData data
+<h3>DraftTest</h3>
+@if (ispublish)
+{
+    <PublicTest Test="test" UserId="@userId"></PublicTest>
+}
+
+@if (tests.Count>0)
+{
+   @*  <button class="btn btn-primary" @onclick=PublishTest>Próba</button> *@
+    <div class="d-flex flex-wrap">
+        @foreach (var item in tests)
+        {
+            <TestViewCard Test="item" Edit="PublishTest" BtnText="Közzétesz"/>
+        }
+    </div>
+}
+
+@code {
+    private List<Test> tests = new();
+    private Test test = new();
+    bool ispublish = false;
+    string userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (String.IsNullOrEmpty(data.UserId))
+        {
+            var me=await gService.GetMe();
+            data.UserId = me.Id.ToString();
+        }
+        userId = data.UserId;
+        tests = await tService.GetNoPublished(Guid.Parse(data.UserId));
+    }
+    private void PublishTest(Test test)
+    {
+        data.Test = test;
+        navi.NavigateTo("publish");
+        //ispublish = true;
+        //StateHasChanged();
+    }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         StateHasChanged();
+    //     }
+    // }
+}

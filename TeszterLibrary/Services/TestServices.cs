@@ -21,6 +21,11 @@ namespace TeszterLibrary.Services
             var t= await _service.Get<Test>($"Test/{id}");
             return t;
         }
+        public async Task<List<Test>> GetTests()
+        {
+            var t= await _service.Get<List<Test>>("Test");
+            return t;
+        }
         /// <summary>
         /// Egy publikus teszt visszaadása
         /// </summary>

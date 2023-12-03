@@ -68,11 +68,16 @@ namespace TeszterLibrary.Services
 			HttpResponseMessage response = await client.PostAsJsonAsync<T>(uri,t);
 			if (response.IsSuccessStatusCode)
 			{
-				 valasz = await response.Content.ReadAsStringAsync();
-				
+				valasz = await response.Content.ReadAsStringAsync();
+
 			}
-			else  ErrorMessage = response.StatusCode.ToString()+" : "+response.RequestMessage;
-			return JsonConvert.DeserializeObject<T>(valasz);
+			else
+			{
+				ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+				var message = await response.Content.ReadAsStringAsync();
+				ErrorMessage += message;
+			}
+				return JsonConvert.DeserializeObject<T>(valasz);
 
 		}
 		public async Task<T> Put<T>(string uri, T t)
@@ -85,9 +90,14 @@ namespace TeszterLibrary.Services
 			HttpResponseMessage response = await client.PutAsJsonAsync<T>(uri,t);
 			if (response.IsSuccessStatusCode)
 			{
-				 valasz = await response.Content.ReadAsStringAsync();
+				valasz = await response.Content.ReadAsStringAsync();
 			}
-			else  ErrorMessage = response.StatusCode.ToString()+" : "+response.RequestMessage;
+			else
+			{
+				ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+				var message = await response.Content.ReadAsStringAsync();
+				ErrorMessage += message;
+			}
 			return JsonConvert.DeserializeObject<T>(valasz);
 
 		}

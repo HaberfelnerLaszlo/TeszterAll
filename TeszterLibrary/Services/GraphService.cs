@@ -13,12 +13,15 @@ namespace TeszterLibrary.Services
 	public class GraphService
 	{
         private GraphServiceClient? client;
+		public GraphService(GraphServiceClient client) {
+			this.client = client;
 
-		public GraphServiceClient GetGraphServiceClient(IAuthenticationProvider authenticationProvider)
-		{
-			client = new GraphServiceClient(authenticationProvider);
-			return client;
 		}
+  //      public GraphServiceClient GetGraphServiceClient(GraphServiceClient graphServiceClient)
+		//{
+		//	client = graphServiceClient;
+		//	return client;
+		//}
 		public async Task<List<EducationUser>?> GetStudents(string Id)
 		{
 			//var graphServiceClient = Gsc();
@@ -48,7 +51,7 @@ namespace TeszterLibrary.Services
 				if (UserId != null&& client is not null)
 				{
 					var response = await client.Education.Users[UserId].Classes.GetAsync();
-					Groups = response.Value.ToList();
+					Groups = response.Value.Where(c => !c.DisplayName.Contains("Exp")).ToList();
 				}
 				return Groups;
 			}

@@ -1,0 +1,28 @@
+﻿@page "/active"
+
+@inject NavigationManager navi
+@inject GlobalData data
+@inject TestServices tService
+<h3>ActiveTests</h3>
+@if (tests.Count>0)
+{
+    <div>
+        @foreach (var item in tests)
+        {
+            <p>@item.Title</p>
+        }
+    </div>
+}
+else{
+<div>
+    <p>Tesztek betöltése...</p>
+</div>
+}
+@code {
+    private List<Test> tests = new();
+    protected override async Task OnInitializedAsync()
+    {
+        tests = await tService.GetActiveTests(Guid.Parse(data.UserId));
+        //return base.OnInitializedAsync();
+    }
+}

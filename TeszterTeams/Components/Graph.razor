@@ -96,11 +96,13 @@
 		IsLoading = false;
 		return false;
 	}
-	
+
 	private GraphServiceClient GetGraphServiceClient()
 	{
-		var msGraphAuthProvider = new MsGraphAuthProvider(teamsUserCredential, _scope);
-		var client = new GraphServiceClient(msGraphAuthProvider);
+		//var msGraphAuthProvider = new MsGraphAuthProvider(teamsUserCredential, _scope);
+		//var client = new GraphServiceClient(msGraphAuthProvider);
+		//var v = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scope);
+		var client = new GraphServiceClient(teamsUserCredential);
 		return client;
 	}
 

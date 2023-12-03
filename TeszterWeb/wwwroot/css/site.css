@@ -37,7 +37,22 @@ a, .btn-link {
 .validation-message {
     color: red;
 }
-
+.newtest-message {
+    background-color: mediumseagreen;
+    text-align:center;
+    width:60%;
+    right:50%;
+    z-index: 1070;
+}
+.nav-doboz{
+    display:flex;
+    justify-content:center;
+    width:200px;
+    height:auto;
+    background-color:goldenrod;
+    padding:5px;
+    margin:5px;
+}
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;

@@ -66,7 +66,7 @@
 @code {
 	[Parameter] public List<Question> Questions { get; set; } = new();
 	[Parameter] public EventCallback<List<Question>> QuestionsChanged { get; set; }
-	[Parameter] public string Subject { get; set; } = string.Empty;
+	[Parameter] public string Subject { get; set; } = string.Empty;//Erre a tantárgyra szűr.
 	[Parameter] public EventCallback<string> SubjectChanged { get; set; }
 
 	private List<Question> allQuestions = new();
@@ -75,22 +75,27 @@
 	private List<string> titles = new();
 	IEnumerable<int> Grades = new int[2] { 1, 12 };
 	Dictionary<string, string> valuePairs = new();
+	bool HasQuestion = false;
 
 	protected override void OnAfterRender(bool firstRender)
 	{
-		if (firstRender && Questions is not null)
+		if (firstRender || !HasQuestion)
 		{
-			allQuestions = Questions.ToList();
-			foreach (var item in Questions) 
+			if (Questions.Count>0)
 			{
-				if (!subjects.Contains(item.Subject))
+				HasQuestion = true;
+				allQuestions = Questions.ToList();
+				foreach (var item in Questions) 
 				{
-					subjects.Add(item.Subject);
-				}
-				if (!titles.Contains(item.Title))
-				{
-					valuePairs.Add(item.Title, item.Subject);
-					titles.Add(item.Title);
+					if (!subjects.Contains(item.Subject))
+					{
+						subjects.Add(item.Subject);
+					}
+					if (!titles.Contains(item.Title))
+					{
+						valuePairs.Add(item.Title, item.Subject);
+						titles.Add(item.Title);
+					}
 				}
 			}
 		}

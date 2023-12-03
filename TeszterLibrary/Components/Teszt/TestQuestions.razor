@@ -28,7 +28,7 @@
 								data-placement="top" title="Többválasztásos kérdés">@((MarkupString)"\U00002705")</div>
 								break;
 							case QuestionType.Comp:
-								<img src="./kieg.svg" style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
+                                <img src="_content/TeszterLibrary/kieg.svg" style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
 								data-placement="top" title="Kiegészítendő kérdés" height=16 width=16/>
 								break;
 							case QuestionType.TF:
@@ -40,25 +40,25 @@
 								data-placement="top" title="Nyilt kérdés">@((MarkupString)"\U0001F4DD")</div>
 								break;
 							case QuestionType.Seq:
-							<img src=./rendez.svg style="position: absolute; right:0;top:10px;" height=16 width=16 
+							<img src=_content/TeszterLibrary/rendez.svg style="position: absolute; right:0;top:10px;" height=16 width=16 
 							data-toggle="tooltip" data-placement="top" title="Sorbarendező kérdés"/>	
 								break;
 							case QuestionType.Pair:
-							<img src=./Pair.svg style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
-							data-placement="top" title="Párosító kérdés"/>
+                                <img src=_content/TeszterLibrary/Pair.svg style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
+                                     data-placement="top" title="Párosító kérdés"/>
 								break;
 							default:
 								break;
 						}
 					</td>
 					<td style="text-align:center">@question.Score</td>
-					<td class="ido-sec">@question.Time</td>
+					<td class="ido-sec">@question.Time <span> mp</span></td>
 					<td>
 						<div class="row">
 @*										<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
-							<button class="btn btn-danger btn-sm m-1" @onclick="(async () => await Delete.InvokeAsync(question))"><i class="oi oi-trash" /></button>
-							<button class="btn btn-info btn-sm m-1" @onclick="(() => SetQuestionForUpdate(question))"><i class="oi oi-pencil" /></button>
-							<button class="btn btn-success btn-sm m-1" @onclick="(() => AddTest.InvokeAsync(question))"><i class="oi oi-plus" /></button>
+							<button class="btn btn-danger btn-sm m-1" @onclick="(async () => await Delete.InvokeAsync(question))" style="width:25%" title="Törlés"><i class="oi oi-trash" /></button>
+							<button class="btn btn-info btn-sm m-1" @onclick="(() => SetQuestionForUpdate(question))" style="width:25%" title="Szerkesztés"><i class="oi oi-pencil" /></button>
+							<button class="btn btn-success btn-sm m-1" @onclick="(() => AddTest.InvokeAsync(question))" style="width:25%" title="Teszthez add"><i class="oi oi-plus" /></button>
 						</div>
 					</td>
 				</tr>
@@ -82,7 +82,7 @@
 </table>
 @code {
 	[Parameter] public Guid UserId { get; set; }
-	[Parameter] public List<Question> questions { get; set;} = new List<Question>();
+	[Parameter] public List<Question> questions { get; set;}
 	[Parameter] public int page { get; set; } = 1;
 	[Parameter] public EventCallback<Question> Delete { get; set; }
 	[Parameter] public EventCallback<Question> Update { get; set; }
@@ -95,8 +95,20 @@
 	//private Teszter.Shared.Components.AddSubject Modal { get; set; }
 	Question UpdateQuestion = new Question();
 	public List<Answer> Answers = new List<Answer>();
+	private List<Question> allQuestions = new();
 	//Filter filter = new();
-
+	protected override void OnParametersSet()
+	{
+		if (questions.Count==0 && allQuestions.Count>0 )
+		{
+			questions = allQuestions;
+		}
+		else if (questions.Count>0 && allQuestions.Count==0)
+		{
+			allQuestions = questions;
+		}
+		base.OnParametersSet();
+	}
 	private void SetQuestionForUpdate(Question question)
 	{
 		Update.InvokeAsync(question);
