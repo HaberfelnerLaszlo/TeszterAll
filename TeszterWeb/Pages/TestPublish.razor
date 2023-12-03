@@ -1,0 +1,16 @@
+﻿@page "/publish"
+@inject GlobalData data
+@inject NavigationManager navi
+<PublicTest Teszt="NewTest" UserId="@userId" Published="@(()=>navi.NavigateTo("/"))"></PublicTest>
+ 
+@code {
+	public Test NewTest { get; set; }
+	string userId = string.Empty;
+
+	protected override Task OnInitializedAsync()
+	{
+		NewTest = data.Test;
+		userId = data.UserId;
+		return base.OnInitializedAsync();
+	}
+}

@@ -1,4 +1,6 @@
-﻿@page "/Closedtest/{id}"
+﻿@page "/Closed"
+@inject GlobalData data
+@inject NavigationManager navi
 @inject TestServices tService
 <h3>Lezárt Tesztek</h3>
 @if (tests is null)
@@ -8,22 +10,22 @@
 }
 else
 {
-    <div class="flex-lg-row">
+    <div class="d-flex flex-wrap">
     @foreach (var item in tests)
     {
-        <TestViewCard Test="item">
-
-        </TestViewCard>
+        <TestViewCard Test="item" BtnText="Eredmények" Edit="TestResult"/>
     }
-
     </div>
 }
 @code {
-    [Parameter] public string Id { get; set; }
     List<Test> tests = new();
     protected override async Task OnInitializedAsync()
     {
-        tests = await tService.GetClosedTests(Guid.Parse(Id));
+        tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
         //return base.OnInitializedAsync();
+    }
+    private void TestResult(Test test)
+    {
+        data.Test = test;
     }
 }

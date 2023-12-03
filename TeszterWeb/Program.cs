@@ -1,8 +1,14 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Fast.Components.FluentUI;
+using Microsoft.Graph;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 
+using Plk.Blazor.DragDrop;
+
 using TeszterLibrary.Services;
+
+using TeszterWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +34,20 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor()
     .AddMicrosoftIdentityConsentHandler();
-    builder.Services.AddSingleton<TeszterApiService>();
+builder.Services.AddHttpClient();
+builder.Services.AddBlazorDragDrop();
+builder.Services.AddFluentUIComponents(options =>
+{
+	options.HostingModel = BlazorHostingModel.Server;
+});
+builder.Services.AddSingleton<TeszterApiService>();
 builder.Services.AddSingleton<EduUserServices>();
-
+builder.Services.AddSingleton<TestServices>();
+builder.Services.AddSingleton<QuestionServices>();
+builder.Services.AddSingleton<SubjectServices>();
+builder.Services.AddSingleton<TestUserServices>();
+builder.Services.AddScoped<GraphService>();
+builder.Services.AddScoped<GlobalData>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

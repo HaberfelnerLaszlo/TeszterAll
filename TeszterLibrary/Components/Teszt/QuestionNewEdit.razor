@@ -61,7 +61,7 @@
 				</div>
 				<div class="form-group">
 					<label for="name">Kérdés</label>
-					<TinyMCE.Blazor.Editor ApiKey="daoqhbmyha3b59wlsjs6wtqie6ty9scx3tjaxzxznnzzg4v9" JsConfSrc="editor" Conf="editorConf" @bind-Value="@newQuestion.Text" Field="()=>newQuestion.Text" />
+					<TinyMCE.Blazor.Editor ApiKey="daoqhbmyha3b59wlsjs6wtqie6ty9scx3tjaxzxznnzzg4v9" JsConfSrc="editor" Conf="editorConf" @bind-Value="@newQuestion.Text" Field="()=>newQuestion.Text"/>
 					<div hidden="@(newQuestion.QType!=QuestionType.Comp)">
 						<p >Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
 						<a @onclick="Insert">{@k} beszúrása</a>
@@ -82,9 +82,9 @@
 				<div class="form-group">
 					<label for="grade">Évfolyam</label>
 					<div class="input-group">
-						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" />
+						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12"/>
 						<span class="input-group-text"> -  </span>
-						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MaxGrade" style="width:100px; margin:0px" />
+						<input type="number" id="grade" class="form-control" @bind="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12"/>
 					</div>
 				</div>
 

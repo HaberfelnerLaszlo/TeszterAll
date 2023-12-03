@@ -1,0 +1,14 @@
+﻿.testcard {
+    width: 45%;
+    background-color: lemonchiffon;
+    position: relative;
+    margin: 5px;
+    padding: 5px;
+}
+
+.testsign {
+    position: absolute;
+    top: 0px;
+    left:75%;
+    width:25%;
+}

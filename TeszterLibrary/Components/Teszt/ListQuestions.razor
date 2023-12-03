@@ -1,0 +1,184 @@
+﻿<Modal AcceptButtom="Igen" Accept="DeleteQ" CancelButtom="Nem" Cancel="CloseModal" Show=showDelete>
+	<HeaderContent>
+		<p>Kérdés törlésére figyelmeztetés!</p>
+	</HeaderContent>
+	<BodyContent>
+		<h4>A következő kérdés törlésre kerül!</h4>
+		<p>@TempQuestion.Text</p>
+	</BodyContent>
+</Modal>
+@if (Questions is null)
+{
+	<Waiting/>
+}
+else{
+<div hidden="@(!newOrEdit)">
+    <FluentAccordion>
+        <FluentAccordionItem Heading="Szűrő">
+            <QuestionFilter @bind-Questions="Questions"/>
+        </FluentAccordionItem>
+    </FluentAccordion>
+    <TestQuestions UserId=@Guid.Parse(UserId) page=1 questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
+    <button class="btn btn-outline-primary" @onclick=NewQuestion>Új kérdés</button>
+    </div>
+}
+<div hidden="@newOrEdit">
+	<QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
+</div>
+@if (TestQuestion.Count>0)
+{
+	<div class="fixed-bottom newtest-message">
+		<span>A tesztben @TestQuestion.Count db kérdés van.</span>
+		<button class="btn" @onclick=@(()=>CreateTest.InvokeAsync(TestQuestion))>Teszt létrehozása</button>
+		<button class="btn" @onclick=@(()=>TestQuestion.Clear())>Mégsem</button>
+	</div>
+}
+
+@code {
+	[Parameter] public string UserId { get; set; }
+	[Parameter]	public List<Question> Questions { get; set; }= new();
+	[Parameter] public List<Subject> Subjects { get; set; }= new();
+	[Parameter] public EventCallback Refresh { get; set; }
+	[Parameter] public EventCallback<Question> New { get; set; }
+	[Parameter] public EventCallback<Question> Updete { get; set; }
+	[Parameter] public EventCallback<string> SaveSubject { get; set; }
+	[Parameter] public EventCallback<Question> Delete { get; set; }
+	[Parameter] public EventCallback<List<Question>> CreateTest { get; set; }
+	Dictionary<string, string> valuePairs = new();
+	//string errorMessage = string.Empty;
+	bool isLoading = true, newOrEdit = true, isNew = false, showDelete = false;
+	private List<string> titles = new();
+	private Question TempQuestion { get; set; } = new();
+	private List<Question> TestQuestion = new();
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await RefreshQuestions();
+			//Subjects = await sService.GetSubjects();
+			isLoading = false;
+			StateHasChanged();
+		}
+	}
+	private async Task RefreshQuestions()
+	{
+		await Refresh.InvokeAsync();
+		// if (UserId == null)
+		// {
+		// 	questions = await qService.GetQuestions();
+		// }
+		// else questions = await qService.GetQuestions(Guid.Parse(UserId));
+
+		// if (questions == null)
+		// {
+		// 	errorMessage = qService.Error;
+		// 	StateHasChanged();
+		// }
+	}
+	private void DeleteQuestion(Question question)
+	{
+		showDelete = true;
+		TempQuestion = question;
+		StateHasChanged();
+	}
+	private async Task DeleteQ()
+	{
+		await Delete.InvokeAsync(TempQuestion);
+		showDelete = false;
+		// try
+		// {
+		// 	await qService.DeleteQuestionAsync(TempQuestion);
+		// 	logger.LogInformation($"A következő kérdés törlésre került: {TempQuestion.Text}", TempQuestion);
+		// 	await RefreshQuestions();
+		// }
+		// catch (Exception ex)
+		// {
+		// 	logger.LogError(ex, ex.Message, ex.StackTrace);
+		// }
+	}
+	private void NewQuestion()
+	{
+		isNew = true;
+		newOrEdit = false;
+		TempQuestion = new();
+	}
+	private void Update(Question question)
+	{
+		isNew = false;
+		newOrEdit = false;
+		TempQuestion = question;
+	}
+	private void AddTestQ(Question question)
+	{
+		TestQuestion.Add(question);
+	}
+	private async Task Save(Question question)
+	{
+		if (isNew)
+		{
+			await New.InvokeAsync(question);
+			newOrEdit = true;
+			// 		try
+			// 		{
+			// 			question.Id = Guid.NewGuid();
+			// 			question.CreatedBy = Guid.Parse(UserId);
+			// 			foreach (var item in question.Answers)
+			// 			{
+			// 				item.QuestionId = question.Id;
+			// 			}
+			// 			var q = await qService.AddQuestionAsync(question);
+			// 			if (q == null)
+			// 			{
+			// 				errorMessage = "Nem sikerült elmenteni a kérdést!";
+			// 			}
+			// 			else
+			// 			{
+			// 				questions.Add(question);
+			// 				
+			// 				errorMessage = "Kérdés mentése sikerült!";
+			// 			}
+			// 			logger.LogInformation(errorMessage);
+			// 		}
+			// 		catch (Exception ex)
+			// 		{
+			// 			logger.LogError(ex, ex.Message, ex.StackTrace);
+			// 		}
+		}
+		else
+		{
+			await Updete.InvokeAsync(question);
+			newOrEdit = true;
+			// 		try
+			// 		{
+			// 			var q = await qService.UpdateQuestionAsync(question);
+			// 			if (q == null)
+			// 			{
+			// 				errorMessage = "Nem sikerült elmenteni a módosításokat!";
+			// 			}
+			// 			else
+			// 			{
+			// 				
+			// 				errorMessage = "Módosítások mentése sikerült!";
+			// 			}
+			// 			logger.LogInformation(errorMessage);
+			// 		}
+			// 		catch (Exception ex)
+			// 		{
+			// 			logger.LogError(ex, ex.Message, ex.StackTrace);
+			// 		}
+		}
+	}
+	private async Task SubjectSave(string name)
+	{
+		//Subjects.Add(new() { Name = name });
+		TempQuestion.Subject = name;
+		await SaveSubject.InvokeAsync(name);
+	}
+	private void CloseModal()
+	{
+		//errorMessage = string.Empty;
+		showDelete = false;
+		StateHasChanged();
+	}
+
+}

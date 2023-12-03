@@ -1,0 +1,26 @@
+﻿@foreach (var item in classViews)
+{
+	<div class="container row" id="StudentResult" @onclick="()=>Open(item.StudentId)">
+		<div class="col">
+			<span class="float-start d-sm-flex justify-content-sm-start align-items-sm-center NameTxt">@item.StudentName</span>
+		</div>
+		<div class="col-3">
+			<div class="row d-flex justify-content-end">
+				<span class="badge bg-success float-end d-sm-flex justify-content-sm-end ScoreBadge">@item.Complet</span>
+					<span class="badge bg-danger d-inline-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">@item.Back</span>
+					<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">@item.NoComplet</span>
+			</div>
+			<div class="row d-flex justify-content-end">
+				<span class="activeDate" style="margin: 5px 10px;margin-bottom: 4px;margin-top: 6px;margin-right: 10px;padding-top: 0px;">Aktív	volt @item.LastActive napja</span>
+			</div>
+		</div>
+	</div>
+}
+@code {
+	[Parameter] public List<ResultClassView> classViews { get; set; } = new();
+	[Parameter] public EventCallback<Guid> Click { get; set; }
+	private async Task Open(Guid id)
+	{
+		await Click.InvokeAsync(id);
+	}
+}

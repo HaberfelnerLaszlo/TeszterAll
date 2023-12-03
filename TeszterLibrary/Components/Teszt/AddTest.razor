@@ -1,4 +1,5 @@
 ﻿@using TeszterLibrary.Services;
+@using Microsoft.Graph;
 @using Microsoft.Kiota.Abstractions.Authentication;
 
 @inject TestServices tService
@@ -11,16 +12,16 @@
 		<QAView question="detailQuestion"/>
 	</BodyContent>
 </Modal>
-@if (publishing)
+@* @if (publishing)
 {
-	<PublicTest AuthenticationProvider="AuthProvider" Test="newTest"></PublicTest>
+<PublicTest Test="newTest"></PublicTest>
 }
-else{
+else{ 
 <FluentAccordion>
 	<FluentAccordionItem Heading="Szűrő">
 		<QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
 	</FluentAccordionItem>
-</FluentAccordion>
+</FluentAccordion>*@
 <label for="title">Teszt címe: </label>
 <input id="title" @bind-value="newTest.Title" placeholder="Teszt címe" />
 <select id="Subject" @onchange="SelectedSubject" class="mx-3">
@@ -65,13 +66,26 @@ else{
 	[Parameter] public List<Subject> subjects { get; set; } = new();
 	[Parameter] public List<Question> TesztQ { get; set; } = new();
 	[Parameter] public string UserId { get; set; } = string.Empty;
-	[Parameter] public IAuthenticationProvider? AuthProvider { get; set; }
+	[Parameter] public EventCallback<Test> Publish { get; set; }
 
 	private Test newTest = new();
 	private bool showQDetail = false;
 	private Question detailQuestion = new();
 	bool isSaved = false;
 	bool publishing = false;
+	private List<Question> allQuestions = new();
+	protected override void OnParametersSet()
+	{
+		if (questions.Count == 0 && allQuestions.Count > 0)
+		{
+			questions = allQuestions;
+		}
+		else if (questions.Count > 0 && allQuestions.Count == 0)
+		{
+			allQuestions = questions;
+		}
+		base.OnParametersSet();
+	}
 
 	private void ModalOpen(Question q)
 	{
@@ -115,27 +129,32 @@ else{
 		try
 		{
 			newTest.CreatedBy = Guid.Parse(UserId);
-			if (newTest.TestQuestions is null)
-			{
-				newTest.TestQuestions = new();
-			}
-			else
-			{
-				newTest.TestQuestions.Clear();
-			}
-			foreach (var item in TesztQ)
-			{
-				newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
-			}
-			if (isSaved)
-			{
-				var responde = await tService.UpdateTestAsync(newTest);
-			}
-			else
-			{
-				newTest = await tService.AddTest(newTest);
-				isSaved = true;
-			}
+			newTest.Id = 10;
+			// if (newTest.TestQuestions is null)
+			// {
+			// 	newTest.TestQuestions = new();
+			// }
+			// else
+			// {
+			// 	newTest.TestQuestions.Clear();
+			// }
+			// foreach (var item in TesztQ)
+			// {
+			// 	newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
+			// }
+			// if (isSaved)
+			// {
+			// 	var responde = await tService.UpdateTestAsync(newTest);
+			// }
+			// else
+			// {
+			// 	newTest = await tService.AddTest(newTest);
+			// 	isSaved = true;
+			// }
+			//TesztQ.Clear();
+			await Publish.InvokeAsync(newTest);
+			// publishing = true;
+			// StateHasChanged();
 		}
 		catch (Exception ex)
 		{

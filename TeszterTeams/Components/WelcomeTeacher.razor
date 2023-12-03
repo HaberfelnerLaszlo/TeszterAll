@@ -1,10 +1,11 @@
 ﻿@using Microsoft.Extensions.Configuration
+@using Microsoft.Graph;
 @inject IConfiguration Configuration
 @inject NavigationManager MyNavigationManager
 @inject QuestionServices qService
 @inject SubjectServices sServive
 @inject ILogger<WelcomeTeacher> logger
-@inject TeamsFx teamsfx
+@inject IJSRuntime _jsRuntime
 @inject TeamsUserCredential teamsUserCredential
 
 
@@ -51,18 +52,19 @@ else
                     </div>
 
                 </FluentTab>
+				<CascadingValue Value="GraphClient">
                 <FluentTab Label="Teszt készítés">
 					@if (TestQuestion.Count>0)
 					{
-						<span> _ </span>
 						<FluentBadge Circular=true> @TestQuestion.Count</FluentBadge>
 					}
-                    <AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="UserId" AuthProvider="msGraphAuthProvider" />
+                    <AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="@UserId" Publish="PublishTest"/>
 
 				</FluentTab>
-                <FluentTab Label="Tesztek">
-
-				</FluentTab>
+                <FluentTab Label="Tesztek" >
+					<TestViewer UserId="@UserId"/>
+                    </FluentTab>
+                </CascadingValue>
                 <FluentTab Label="Matematika gyakorló">
                     <Deploy /><Publish />
                 </FluentTab>
@@ -82,7 +84,7 @@ else
 	private Question TempQuestion { get; set; } = new();
 	private List<Question> TestQuestion = new();
 	private readonly string _scope = "User.Read EduRoster.ReadBasic";
-	MsGraphAuthProvider msGraphAuthProvider;
+	GraphServiceClient GraphClient;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -92,7 +94,7 @@ else
 			Subjects = await sServive.GetSubjects();
 			isLoading = false;
 			await base.OnAfterRenderAsync(firstRender);
-			msGraphAuthProvider = new MsGraphAuthProvider(teamsUserCredential, _scope);
+			GraphClient = new GraphServiceClient(teamsUserCredential);
 			StateHasChanged();
 		}
 	}
@@ -120,6 +122,7 @@ else
 		try
 		{
 			await qService.DeleteQuestionAsync(TempQuestion);
+			showDelete = false;
 			logger.LogInformation($"A következő kérdés törlésre került: {TempQuestion.Text}",TempQuestion);
 			await RefreshQuestions();
 		}
@@ -221,6 +224,10 @@ else
 		errorMessage = string.Empty;
 		showDelete = false;
 		StateHasChanged(); 
+	}
+	private async void PublishTest(Test newTest)
+	{
+		await _jsRuntime.InvokeVoidAsync("open", "lesson", "_blank");
 	}
 }
 

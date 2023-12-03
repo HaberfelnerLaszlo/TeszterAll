@@ -50,7 +50,12 @@ namespace TeszterLibrary.Services
 		{
 			try
 			{
-				var v = await _service.Post<Question>("Question",question);
+				var v = await _service.Post("Question",question);
+				if (v is null)
+				{
+					Error = _service.ErrorMessage;
+					return default;
+				}
 			}
 			catch (Exception)
 			{
@@ -67,7 +72,7 @@ namespace TeszterLibrary.Services
 		{
 			try
 			{
-				var q =await _service.Put<Question>($"Question/{question.Id}",question);
+				var q =await _service.Put($"Question/{question.Id}",question);
 				return q;
 			}
 			catch (Exception)
