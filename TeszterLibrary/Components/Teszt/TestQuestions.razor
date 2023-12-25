@@ -11,7 +11,7 @@
 	<tbody>
 		@if (questions.Any())
 		{
-			@foreach (var question in questions)
+			@foreach (var question in allQuestions)
 			{
 				<tr >
 					<td>@question.Subject <br> @question.Title</td>
@@ -58,7 +58,7 @@
 @*										<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
 							<button class="btn btn-danger btn-sm m-1" @onclick="(async () => await Delete.InvokeAsync(question))" style="width:25%" title="Törlés"><i class="oi oi-trash" /></button>
 							<button class="btn btn-info btn-sm m-1" @onclick="(() => SetQuestionForUpdate(question))" style="width:25%" title="Szerkesztés"><i class="oi oi-pencil" /></button>
-							<button class="btn btn-success btn-sm m-1" @onclick="(() => AddTest.InvokeAsync(question))" style="width:25%" title="Teszthez add"><i class="oi oi-plus" /></button>
+							<button class="btn btn-success btn-sm m-1" @onclick="(() => Add(question))" style="width:25%" title="Teszthez add" disabled="@question.SelectedTest"><i class="oi oi-plus" /></button>
 						</div>
 					</td>
 				</tr>
@@ -95,19 +95,33 @@
 	//private Teszter.Shared.Components.AddSubject Modal { get; set; }
 	Question UpdateQuestion = new Question();
 	public List<Answer> Answers = new List<Answer>();
-	private List<Question> allQuestions = new();
+	private List<QuestionListView> allQuestions = new();
 	//Filter filter = new();
 	protected override void OnParametersSet()
 	{
-		if (questions.Count==0 && allQuestions.Count>0 )
+		if (questions.Count>0 && allQuestions.Count==0)
 		{
-			questions = allQuestions;
+			foreach (var item in questions)
+			{
+				allQuestions.Add(new()
+				{
+						Answers = item.Answers,
+						CreatedBy = item.CreatedBy,
+						Id = item.Id,
+						MaxGrade = item.MaxGrade,
+						MinGrade = item.MinGrade,
+						QType = item.QType,
+						Score = item.Score,
+						Subject = item.Subject,
+						Subtitle = item.Subtitle,
+						Text = item.Text,
+						Time = item.Time,
+						Title = item.Title, 
+						SelectedTest=false
+				});
+			}
 		}
-		else if (questions.Count>0 && allQuestions.Count==0)
-		{
-			allQuestions = questions;
-		}
-		base.OnParametersSet();
+		
 	}
 	private void SetQuestionForUpdate(Question question)
 	{
@@ -127,7 +141,7 @@
 	{
 		var AllQuestion = questions;
 
-		int PageSize = 4;
+		int PageSize = 10;
 		pagingInfo = new PagingInfo();
 		page = page == 0 ? 1 : page;
 		pagingInfo.CurrentPage = page;
@@ -137,5 +151,22 @@
 		var skip = PageSize * (Convert.ToInt32(page) - 1);
 		questions = AllQuestion.Skip(skip).Take(PageSize).ToList();
 	}
-
+	private async Task Add(QuestionListView item)
+	{
+		item.SelectedTest = true;
+		await AddTest.InvokeAsync(new() {
+			Answers = item.Answers,
+			CreatedBy = item.CreatedBy,
+			Id = item.Id,
+			MaxGrade = item.MaxGrade,
+			MinGrade = item.MinGrade,
+			QType = item.QType,
+			Score = item.Score,
+			Subject = item.Subject,
+			Subtitle = item.Subtitle,
+			Text = item.Text,
+			Time = item.Time,
+			Title = item.Title
+		});
+	}
 }

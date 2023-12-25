@@ -1,9 +1,21 @@
-﻿<AuthorizeView>
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+
+@inject NavigationManager Navigation
+
+<AuthorizeView>
     <Authorized>
         Hello, @context.User.Identity?.Name!
-        <a href="MicrosoftIdentity/Account/SignOut">Kijelentkezés</a>
+        <button class="nav-link btn btn-link" @onclick="BeginLogout">Log out</button>
     </Authorized>
     <NotAuthorized>
-        <a href="MicrosoftIdentity/Account/SignIn">Belépés</a>
+        <a href="authentication/login">Log in</a>
     </NotAuthorized>
 </AuthorizeView>
+
+@code{
+    private async Task BeginLogout(MouseEventArgs args)
+    {
+        Navigation.NavigateTo("authentication/logout");
+    }
+}

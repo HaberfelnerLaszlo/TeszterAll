@@ -41,7 +41,7 @@ else
                     <div hidden="@(!newOrEdit)">
                         <FluentAccordion>
                             <FluentAccordionItem Heading="Szűrő">
-                                <QuestionFilter @bind-Questions="Questions" />
+                                @* <QuestionFilter @bind-Questions="Questions" /> *@
                             </FluentAccordionItem>
                         </FluentAccordion>
                         <TestQuestions UserId=Guid.Parse(UserId) page=1 questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>

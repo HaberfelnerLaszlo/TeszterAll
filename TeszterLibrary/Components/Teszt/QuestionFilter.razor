@@ -1,4 +1,5 @@
-﻿<EditForm Model=filter>
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+<EditForm Model=filter>
 			<label>Tantárgy
 			<InputSelect DisplayName="Tantárgy" TValue="string" ValueChanged="SubjectlistChanged" 
 						ValueExpression=@(()=>filter.Subject) class="form-control">
@@ -52,10 +53,16 @@
 			</label>
 			<div class="d-inline">
 			<label>Évfolyam @filter.MinGrade-től @filter.MaxGrade-ig
+            @*<FluentSlider Label="Select a temperature" Orientation="@orientation" Min="0" Max="100" Step="10" @bind-Value=value>
+        <FluentSliderLabel Position="0">0&#8451;</FluentSliderLabel>
+        <FluentSliderLabel Position="10">10&#8451;</FluentSliderLabel>
+        <FluentSliderLabel Position="90">90&#8451;</FluentSliderLabel>
+        <FluentSliderLabel Position="100">100&#8451;</FluentSliderLabel>
+    </FluentSlider> 
 				<FluentSlider Min="1" Max="12" Step="1" ValueChanged="@((int v)=>GradeChanged(v,true))" ValueExpression="@(()=>filter.MinGrade)">
-				</FluentSlider>
-			<FluentSlider Min="1" Max="12" Step="1" AfterBindValue="@((int v)=>GradeChanged(v,false))" @bind-Value="filter.MaxGrade">
-					</FluentSlider>
+				</FluentSlider>*@
+			<FluentSlider Min="1" Max="12" Step="1" AfterBindValue="@((int v)=>GradeChanged(v,false))" bind-value="@filter.MaxGrade">
+            </FluentSlider>
 		</label>
 	</div>
 	<div id="Search" class="d-inline">

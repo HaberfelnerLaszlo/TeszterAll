@@ -57,7 +57,6 @@ else{
 				</div>
 			</div>
 		}
-
 	</div>
 </div>
 }
@@ -130,28 +129,28 @@ else{
 		{
 			newTest.CreatedBy = Guid.Parse(UserId);
 			newTest.Id = 10;
-			// if (newTest.TestQuestions is null)
-			// {
-			// 	newTest.TestQuestions = new();
-			// }
-			// else
-			// {
-			// 	newTest.TestQuestions.Clear();
-			// }
-			// foreach (var item in TesztQ)
-			// {
-			// 	newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
-			// }
-			// if (isSaved)
-			// {
-			// 	var responde = await tService.UpdateTestAsync(newTest);
-			// }
-			// else
-			// {
-			// 	newTest = await tService.AddTest(newTest);
-			// 	isSaved = true;
-			// }
-			//TesztQ.Clear();
+			if (newTest.TestQuestions is null)
+			{
+				newTest.TestQuestions = new();
+			}
+			else
+			{
+				newTest.TestQuestions.Clear();
+			}
+			foreach (var item in TesztQ)
+			{
+				newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
+			}
+			if (isSaved)
+			{
+				var responde = await tService.UpdateTestAsync(newTest);
+			}
+			else
+			{
+				newTest = await tService.AddTest(newTest);
+				isSaved = true;
+			}
+			TesztQ.Clear();
 			await Publish.InvokeAsync(newTest);
 			// publishing = true;
 			// StateHasChanged();

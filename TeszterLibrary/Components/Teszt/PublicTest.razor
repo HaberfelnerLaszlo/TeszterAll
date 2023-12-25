@@ -140,7 +140,7 @@
 		bool active = true;
 		message = "Mentést elkezdtem";
 		Teszt.IsPublished = true;
-		if (DateTime.Compare(Teszt.StartTime,Teszt.EndTime)<0)
+		if (DateTime.Compare(Teszt.StartTime,Teszt.EndTime)>0)
 		{
 			var temp = Teszt.StartTime;
 			Teszt.StartTime = Teszt.EndTime;
