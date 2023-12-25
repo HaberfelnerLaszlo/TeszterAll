@@ -1,0 +1,80 @@
+﻿@*<FluentDataGrid Items="@FilteredItems" ResizableColumns=true Pagination="@pagination" GridTemplateColumns="0.2fr 1fr 0.2fr 0.2fr 0.2fr 0.2fr" RowClass="@rowClass" RowStyle="@rowStyle" Style="height: 405px; overflow:auto;">
+	<PropertyColumn Property="@(c => c.Title)" Sortable="true" Tooltip="true" Title="Cím/Témakör">
+		<ColumnOptions>
+			<div class="search-box">
+				<FluentSearch type="search" Autofocus=true @bind-Value=nameFilter @oninput="HandleCountryFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
+			</div>
+		</ColumnOptions>
+	</PropertyColumn>
+	<PropertyColumn Property="@(c => c.Text)" Sortable="true" Align="Align.Start" Tooltip="true" TooltipText="@(c => c.Text)" />
+	<PropertyColumn Property="@(c => c.Score)" Sortable="true" Align="Align.Center" Tooltip="true" Title="Pontszám"/>
+	<PropertyColumn Property="@(c => c.Time)" Sortable="true" Align="Align.End" title="Időtartam"/>
+	@* <PropertyColumn Property="@(c => c.Medals.Total)" Align="Align.End" Tooltip="true" /> *@
+@*</FluentDataGrid>
+
+
+<FluentPaginator State="@pagination" />*@
+
+ <FluentSwitch @bind-Value="@_clearItems" 
+			  @bind-Value:after="ToggleItemsAsync" 
+			  UncheckedMessage="Clear all results"
+			  CheckedMessage="Restore all results">
+</FluentSwitch>
+ 
+@code {
+	[Parameter] public Guid UserId { get; set; }
+	[Parameter] public List<Question> questions { get; set; }
+	//[Parameter] public int page { get; set; } = 1;
+	[Parameter] public EventCallback<Question> Delete { get; set; }
+	[Parameter] public EventCallback<Question> Update { get; set; }
+	[Parameter] public EventCallback<Question> AddTest { get; set; }
+
+	bool _clearItems = false;
+	IQueryable<Question>? items;
+	PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+	string nameFilter = string.Empty;
+
+	// GridSort<Question> rankSort = GridSort<Question>
+	// 	.ByDescending(x => x.Medals.Gold)
+	// 	.ThenDescending(x => x.Medals.Silver)
+	// 	.ThenDescending(x => x.Medals.Bronze);
+	
+	Func<Question, string?> rowClass = x => x.Title.StartsWith("A") ? "highlighted-row" : null;
+	Func<Question, string?> rowStyle = x => x.Title.StartsWith("Au") ? "background-color: var(--highlight-bg);" : null;
+
+	IQueryable<Question>
+	? FilteredItems => items?.Where(x => x.Title.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)).AsQueryable();
+
+	protected override async Task OnInitializedAsync()
+	{
+	items = questions.AsQueryable();
+	}
+
+	private void HandleCountryFilter(ChangeEventArgs args)
+	{
+	if (args.Value is string value)
+	{
+	nameFilter = value;
+	}
+	}
+
+	private void HandleClear()
+	{
+	if (string.IsNullOrWhiteSpace(nameFilter))
+	{
+	nameFilter = string.Empty;
+	}
+	}
+
+	private async Task ToggleItemsAsync()
+	{
+	if (_clearItems)
+	{
+	items = null;
+	}
+	else
+	{
+	items = FilteredItems;
+	}
+	}
+	}

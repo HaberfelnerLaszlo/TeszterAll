@@ -1,16 +1,14 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.Fast.Components.FluentUI;
-using Microsoft.Graph;
+using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-
+using TeszterWeb.Components;
 using Plk.Blazor.DragDrop;
-
 using TeszterLibrary.Services;
-
 using TeszterWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
 
@@ -20,26 +18,27 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
      .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
 .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
             .AddInMemoryTokenCaches()
-.AddDownstreamApi("DownstreamApi",builder.Configuration.GetSection("DownstreamApi"))
+.AddDownstreamApi("DownstreamApi", builder.Configuration.GetSection("DownstreamApi"))
             .AddInMemoryTokenCaches();
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
-
 builder.Services.AddAuthorization(options =>
 {
     // By default, all incoming requests will be authorized according to the default policy
     options.FallbackPolicy = options.DefaultPolicy;
 });
 
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor()
+// Add services to the container.
+builder.Services.AddControllersWithViews()
+    .AddMicrosoftIdentityUI();
+//builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddMicrosoftIdentityConsentHandler();
 builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
-builder.Services.AddFluentUIComponents(options =>
-{
-	options.HostingModel = BlazorHostingModel.Server;
-});
+builder.Services.AddFluentUIComponents();
+
 builder.Services.AddSingleton<TeszterApiService>();
 builder.Services.AddSingleton<EduUserServices>();
 builder.Services.AddSingleton<TestServices>();
@@ -48,28 +47,28 @@ builder.Services.AddSingleton<SubjectServices>();
 builder.Services.AddSingleton<TestUserServices>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();
+//builder.Services.AddSingleton<GlobalData>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
-
 app.UseRouting();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
+app.UseAntiforgery();
+app.UseStaticFiles();
 app.MapControllers();
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

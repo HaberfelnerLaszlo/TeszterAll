@@ -1,0 +1,14 @@
+﻿@page "/studentTests"
+@inject GlobalData data
+@inject NavigationManager navi
+@inject TestUserServices tuService
+<h3>StudentTests</h3>
+
+@code {
+	private List<TestUser> tests = new();
+	protected override async Task OnInitializedAsync()
+	{
+		tests = await tuService.GetTests(Guid.Parse(data.UserId));
+		//tests = await tuService.GetTests(Guid.Parse(""));
+	}
+}

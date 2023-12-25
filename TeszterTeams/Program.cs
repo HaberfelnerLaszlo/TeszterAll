@@ -3,6 +3,7 @@ using Microsoft.Identity.Web;
 using Plk.Blazor.DragDrop;
 using TeszterTeams;
 using TeszterTeams.Interop.TeamsSDK;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
@@ -18,7 +19,6 @@ builder.Services
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddBlazorDragDrop();
-
 var config = builder.Configuration.Get<ConfigOptions>();
 builder.Services.AddTeamsFx(config.TeamsFx.Authentication);
 builder.Services.AddScoped<MicrosoftTeams>();
@@ -30,6 +30,7 @@ builder.Services.AddSingleton<SubjectServices>();
 builder.Services.AddSingleton<TestServices>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient("WebClient", client => client.Timeout = TimeSpan.FromSeconds(600));
+builder.Services.AddFluentUIComponents();
 builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
