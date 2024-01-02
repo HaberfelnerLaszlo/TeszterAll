@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using TeszterWeb.Components;
+
 using Plk.Blazor.DragDrop;
+
 using TeszterLibrary.Services;
+
+using TeszterWeb.Components;
 using TeszterWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
 

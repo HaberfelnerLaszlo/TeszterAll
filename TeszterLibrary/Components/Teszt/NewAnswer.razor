@@ -24,7 +24,7 @@
                                     <input type="checkbox" id="Right" @bind-value="newAnswer.Right" onchanged="OnAnswerChanged" checked="@newAnswer.Right" />
                                 </td>
                                 <td>
-                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
+                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><FluentIcon Value="@(new Icons.Regular.Size24.Delete())" Color="Color.Error"/></button>
                                 </td>
                             </tr>
                         </tbody>

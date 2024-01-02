@@ -1,172 +1,225 @@
-﻿<table class="table table-sm table-bordered">
-	<thead class="thead-dark">
-		<tr>
-			<th>Cím/Témakör</th>
-			<th>Kérdés</th>
-			<th>Pontszám</th>
-			<th>Időtartam</th>
-			<th>Műveletek</th>
-		</tr>
-	</thead>
-	<tbody>
-		@if (questions.Any())
-		{
-			@foreach (var question in allQuestions)
-			{
-				<tr >
-					<td>@question.Subject <br> @question.Title</td>
-					<td style="position:relative">
-						<div style="max-height:3rem; overflow-y:hidden;width:97%;overflow-x:clip">@((MarkupString)question.Text)</div>
-						@switch (question.QType)
-						{
-							case QuestionType.SC:
-								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
-								data-placement="top" title="Egyválasztásos kérdés">@((MarkupString)"\U0001F518")</div>
-								break;
-							case QuestionType.MC:
-								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
-								data-placement="top" title="Többválasztásos kérdés">@((MarkupString)"\U00002705")</div>
-								break;
-							case QuestionType.Comp:
-                                <img src="_content/TeszterLibrary/kieg.svg" style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
-								data-placement="top" title="Kiegészítendő kérdés" height=16 width=16/>
-								break;
-							case QuestionType.TF:
-								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
-								data-placement="top" title="Igaz/Hamis kérdés">@((MarkupString)"\U000023F3")</div>
-								break;
-							case QuestionType.Open:
-								<div style="position: absolute; right:0;top:10px;" data-toggle="tooltip" 
-								data-placement="top" title="Nyilt kérdés">@((MarkupString)"\U0001F4DD")</div>
-								break;
-							case QuestionType.Seq:
-							<img src=_content/TeszterLibrary/rendez.svg style="position: absolute; right:0;top:10px;" height=16 width=16 
-							data-toggle="tooltip" data-placement="top" title="Sorbarendező kérdés"/>	
-								break;
-							case QuestionType.Pair:
-                                <img src=_content/TeszterLibrary/Pair.svg style="position: absolute; right:0;top:10px;" data-toggle="tooltip"
-                                     data-placement="top" title="Párosító kérdés"/>
-								break;
-							default:
-								break;
-						}
-					</td>
-					<td style="text-align:center">@question.Score</td>
-					<td class="ido-sec">@question.Time <span> mp</span></td>
-					<td>
-						<div class="row">
-@*										<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
-							<button class="btn btn-danger btn-sm m-1" @onclick="(async () => await Delete.InvokeAsync(question))" style="width:25%" title="Törlés"><i class="oi oi-trash" /></button>
-							<button class="btn btn-info btn-sm m-1" @onclick="(() => SetQuestionForUpdate(question))" style="width:25%" title="Szerkesztés"><i class="oi oi-pencil" /></button>
-							<button class="btn btn-success btn-sm m-1" @onclick="(() => Add(question))" style="width:25%" title="Teszthez add" disabled="@question.SelectedTest"><i class="oi oi-plus" /></button>
-						</div>
-					</td>
-				</tr>
-			}
-		}
-		else
-		{
-			<tr><td colspan="6"><strong>Nincs még kérdés felvéve...</strong></td></tr>
-		}
-	</tbody>
-	<tfoot>
-		<tr>
-			<td colspan = "4">
-				<Paging PI="pagingInfo" 
-						PageClassesEnabled="true" 
-						PageClass="Paging" 
-						PageClassSelected="active"></Paging>
-			</td>
-		</tr>
-	</tfoot>
-</table>
+﻿@inject IDialogService DialogService
+<FluentDataGrid Id="questiongrid" Items=@FilteredItems.AsQueryable() Pagination="pagination" GridTemplateColumns="1fr 1fr 2fr 30px 1fr 1fr 1fr" TGridItem=QuestionListView>
+    <PropertyColumn Title="Tantárgy" Property="@(c => c!.Subject)" Sortable="true" Align=Align.Center>
+        <ColumnOptions>
+            <div class="search-box">
+                <FluentSearch type="search" Autofocus=true @bind-Value=subjectFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <TemplateColumn Title="Témakör" Align="Align.Center" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <FluentSearch type="search" Autofocus=true @bind-Value=titleFilter @oninput="HandleTitleFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
+            </div>
+        </ColumnOptions>
+        <ChildContent>
+            @context.Title
+        </ChildContent>
+    </TemplateColumn>
+    <TemplateColumn Title="Kérdés" Align="Align.Start">
+        <ColumnOptions>
+            <div class="search-box">
+                <FluentSearch type="search" Autofocus=true @bind-Value=nameFilter @oninput="HandleCountryFilter" @bind-Value:after="HandleClear" Placeholder="Kérdés..." />
+            </div>
+        </ColumnOptions>
+        <ChildContent>
+            @((MarkupString)context.Text)
+        </ChildContent>
+    </TemplateColumn>
+    <TemplateColumn Sortable="true" Align="Align.Center">
+        @switch (context.QType)
+        {
+            case QuestionType.SC:
+                @((MarkupString)"\U0001F518")
+                break;
+            case QuestionType.MC:
+                @((MarkupString)"\U00002705")
+                break;
+            case QuestionType.Comp:
+                <img src="_content/TeszterLibrary/kieg.svg" data-toggle="tooltip"
+                     data-placement="top" title="Kiegészítendő kérdés" height=16 width=16 />
+                break;
+            case QuestionType.TF:
+                @((MarkupString)"\U000023F3")
+                break;
+            case QuestionType.Open:
+                @((MarkupString)"\U0001F4DD")
+                break;
+            case QuestionType.Seq:
+                <img src=_content/TeszterLibrary/rendez.svg height=16 width=16
+                     data-toggle="tooltip" data-placement="top" title="Sorbarendező kérdés" />
+                break;
+            case QuestionType.Pair:
+                <img src=_content/TeszterLibrary/Pair.svg data-toggle="tooltip"
+                     data-placement="top" title="Párosító kérdés" />
+                break;
+            default:
+                break;
+        }
+    </TemplateColumn>
+    <PropertyColumn Title="Pontszám" Property="@(c => c!.Score +" p")" Sortable="false" Align=Align.Center />
+    <PropertyColumn Title="Időtartam" Property="@(c => c!.Time +" mp")" Sortable="false" Align=Align.Center />
+    <TemplateColumn Title="Műveletek" Align="@Align.End">
+        @*<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
+        <FluentButton Title="Betekintés" IconEnd="@(new Icons.Regular.Size16.Search())" OnClick="@(()=>OpenAsync(context))"></FluentButton>
+        <FluentButton Title="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => SetQuestionForUpdate(context))" />
+        <FluentButton Title="Törlés" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@((async () => await Delete.InvokeAsync(context)))" />
+        <FluentButton Title="Teszthez add" IconEnd="@(new Icons.Regular.Size16.Add())" OnClick="@(() => Add(context))" />
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentPaginator State="@pagination" />
 @code {
-	[Parameter] public Guid UserId { get; set; }
-	[Parameter] public List<Question> questions { get; set;}
-	[Parameter] public int page { get; set; } = 1;
-	[Parameter] public EventCallback<Question> Delete { get; set; }
-	[Parameter] public EventCallback<Question> Update { get; set; }
-	[Parameter] public EventCallback<Question> AddTest { get; set; }
+    [Parameter] public Guid UserId { get; set; }
+    [Parameter] public List<Question> questions { get; set; }
+    [Parameter] public EventCallback<Question> Delete { get; set; }
+    [Parameter] public EventCallback<Question> Update { get; set; }
+    [Parameter] public EventCallback<Question> AddTest { get; set; }
+    PaginationState pagination = new PaginationState { ItemsPerPage = 8 };
+    string nameFilter = string.Empty, titleFilter = string.Empty, subjectFilter = string.Empty;
+    private List<Subject> subjects = new List<Subject>();
+    IEnumerable<int> Grades = new int[] { 1, 12 };
+    private bool updated = true;
+    Question UpdateQuestion = new Question();
+    public List<Answer> Answers = new List<Answer>();
+    private List<QuestionListView> allQuestions = new();
+    List<QuestionListView>? FilteredItems => allQuestions.Where(x => x.Text.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase) && x.Title.Contains(titleFilter, StringComparison.CurrentCultureIgnoreCase)).ToList();
 
-	PagingInfo pagingInfo = new PagingInfo();
-	private List<Subject> subjects = new List<Subject>();
-	IEnumerable<int> Grades = new int[] { 1, 12 };
-	private bool updated = true;
-	//private Teszter.Shared.Components.AddSubject Modal { get; set; }
-	Question UpdateQuestion = new Question();
-	public List<Answer> Answers = new List<Answer>();
-	private List<QuestionListView> allQuestions = new();
-	//Filter filter = new();
-	protected override void OnParametersSet()
-	{
-		if (questions.Count>0 && allQuestions.Count==0)
-		{
-			foreach (var item in questions)
-			{
-				allQuestions.Add(new()
-				{
-						Answers = item.Answers,
-						CreatedBy = item.CreatedBy,
-						Id = item.Id,
-						MaxGrade = item.MaxGrade,
-						MinGrade = item.MinGrade,
-						QType = item.QType,
-						Score = item.Score,
-						Subject = item.Subject,
-						Subtitle = item.Subtitle,
-						Text = item.Text,
-						Time = item.Time,
-						Title = item.Title, 
-						SelectedTest=false
-				});
-			}
-		}
-		
-	}
-	private void SetQuestionForUpdate(Question question)
-	{
-		Update.InvokeAsync(question);
-		//UpdateQuestion = question;
-		//updated = false;
-		////Answers = aservice.GetQuestionAnswer(question.Id);
-		//Answers = question.Answers;
-		//if (Answers.Count == 0)
-		//{
-		//	Answers.Add(new Answer() { QuestionId = question.Id, Sequence = 1 });
-		//}
-		//StateHasChanged();
-	}
+    //Filter filter = new();
+    protected override void OnParametersSet()
+    {
+        if (questions.Count > 0 && allQuestions.Count == 0)
+        {
+            foreach (var item in questions)
+            {
+                allQuestions.Add(new()
+                {
+                    Answers = item.Answers,
+                    CreatedBy = item.CreatedBy,
+                    Id = item.Id,
+                    MaxGrade = item.MaxGrade,
+                    MinGrade = item.MinGrade,
+                    QType = item.QType,
+                    Score = item.Score,
+                    Subject = item.Subject,
+                    Subtitle = item.Subtitle,
+                    Text = item.Text,
+                    Time = item.Time,
+                    Title = item.Title,
+                    SelectedTest = false
+                });
+            }
+        }
 
-	public void CreatePagingInfo()
-	{
-		var AllQuestion = questions;
+    }
+    private void SetQuestionForUpdate(Question question)
+    {
+        Update.InvokeAsync(question);
+        //UpdateQuestion = question;
+        //updated = false;
+        ////Answers = aservice.GetQuestionAnswer(question.Id);
+        //Answers = question.Answers;
+        //if (Answers.Count == 0)
+        //{
+        //	Answers.Add(new Answer() { QuestionId = question.Id, Sequence = 1 });
+        //}
+        //StateHasChanged();
+    }
+    public class StringLengthComparer : IComparer<string>
+    {
+        public static readonly StringLengthComparer Instance = new StringLengthComparer();
 
-		int PageSize = 10;
-		pagingInfo = new PagingInfo();
-		page = page == 0 ? 1 : page;
-		pagingInfo.CurrentPage = page;
-		pagingInfo.TotalItems = AllQuestion.Count();
-		pagingInfo.ItemsPerPage = PageSize;
+        public int Compare(string? x, string? y)
+        {
+            if (x is null)
+            {
+                return y is null ? 0 : -1;
+            }
 
-		var skip = PageSize * (Convert.ToInt32(page) - 1);
-		questions = AllQuestion.Skip(skip).Take(PageSize).ToList();
-	}
-	private async Task Add(QuestionListView item)
-	{
-		item.SelectedTest = true;
-		await AddTest.InvokeAsync(new() {
-			Answers = item.Answers,
-			CreatedBy = item.CreatedBy,
-			Id = item.Id,
-			MaxGrade = item.MaxGrade,
-			MinGrade = item.MinGrade,
-			QType = item.QType,
-			Score = item.Score,
-			Subject = item.Subject,
-			Subtitle = item.Subtitle,
-			Text = item.Text,
-			Time = item.Time,
-			Title = item.Title
-		});
-	}
+            if (y is null)
+            {
+                return 1;
+            }
+
+            return x.Length.CompareTo(y.Length);
+        }
+    }
+    private void HandleCountryFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            nameFilter = value;
+        }
+    }
+    private void HandleTitleFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            titleFilter = value;
+        }
+    }
+    private void HandleSubjectFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            subjectFilter = value;
+        }
+    }
+    private void HandleClear()
+    {
+        if (string.IsNullOrWhiteSpace(nameFilter))
+        {
+            nameFilter = string.Empty;
+        }
+        if (string.IsNullOrWhiteSpace(titleFilter))
+        {
+            titleFilter = string.Empty;
+        }
+        if (string.IsNullOrWhiteSpace(subjectFilter))
+        {
+            subjectFilter = string.Empty;
+        }
+    }
+    private async Task Add(QuestionListView item)
+    {
+        item.SelectedTest = true;
+        await AddTest.InvokeAsync(new()
+        {
+            Answers = item.Answers,
+            CreatedBy = item.CreatedBy,
+            Id = item.Id,
+            MaxGrade = item.MaxGrade,
+            MinGrade = item.MinGrade,
+            QType = item.QType,
+            Score = item.Score,
+            Subject = item.Subject,
+            Subtitle = item.Subtitle,
+            Text = item.Text,
+            Time = item.Time,
+            Title = item.Title
+        });
+    }
+    private async Task OpenAsync(Question question)
+    {
+
+        // Create a new instance of DialogData
+        // to allow the user to cancel the update
+        //var data = question with { Id = question.Id };
+        var data = question;
+        var dialog = await DialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+        {
+            //Height = "350px",
+            Width="75%",
+            Title = $"A kérdés megtekintése",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            question = (Question)result.Data;
+        }
+
+    }
 }

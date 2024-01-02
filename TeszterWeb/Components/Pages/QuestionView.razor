@@ -81,6 +81,7 @@
 				questions.Add(question);
 				errorMessage = "Kérdés mentése sikerült!";
 				logger.LogInformation(errorMessage);
+				StateHasChanged();
 			}
 
 		}

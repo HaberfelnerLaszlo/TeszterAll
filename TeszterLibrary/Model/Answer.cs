@@ -19,13 +19,12 @@ namespace TeszterLibrary.Model
 		public string Text { get; set; }=string.Empty;
 		//public byte[] Image { get; set; }
 		/// <summary>
-		/// Helyes válasz?
+		/// Helyes válasz? Vagy párosításnál a második false az első true legyen.
 		/// </summary>
 		public bool Right { get; set; }
 		/// <summary>
 		/// Sorbarendezésnél a sorrend vagy párosításnál a pár száma vagy kiegészítésnél hányadik
 		/// </summary>
 		public int Sequence { get; set; }
-		public Question Question { get; set; }
 	}
 }

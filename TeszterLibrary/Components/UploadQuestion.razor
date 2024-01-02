@@ -1,0 +1,391 @@
+﻿@using NPOI.SS.UserModel;
+@using NPOI.XSSF.UserModel;
+@using System.IO;
+@inject IToastService ToastService
+
+@inject QuestionServices service
+@inject SubjectServices sservice
+<Modal AcceptButtom="Rendben" Accept="@(()=>showModal=false)" Show=showModal>
+    <HeaderContent>
+        <p>@modalHeader</p>
+    </HeaderContent>
+    <BodyContent>
+        <p>@modalBody</p>
+    </BodyContent>
+</Modal>
+
+<button class="btn btn-primary" @onclick="Change" hidden="@IsUpload">Kérdések feltöltése </button>
+<InputFile id="fileInput" OnChange="UploadFiles" single hidden="@(!IsUpload)" />
+
+@code {
+    [Parameter] public string UserId { get; set; }
+    int cellCount;
+    int score = 0, time = 0, minGrade = 1, maxGrade = 12, k = 1;
+    string title = string.Empty, subtitle = string.Empty, subject = string.Empty, modalHeader = string.Empty, modalBody = string.Empty;
+    bool isOk = true, IsUpload = false, showModal = false;
+    Question question = new();
+
+    private async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        await GetDataFromExcel(e.File);
+        Message("Sikeres feltöltés", "A kérdések feldolgozása befejeződőtt!", ToastIntent.Success);
+        //StateHasChanged();
+        IsUpload = false;
+    }
+    async Task<bool> GetDataFromExcel(IBrowserFile file)
+    {
+        ISheet sheet;
+        IRow row;
+        List<Answer> answers = new();
+        long maxFileSize = 1024 * 1024;
+
+        try
+        {
+            //await using FileStream fs = new(Path.Combine(webRootPath, "Upload", file.Name), FileMode.Create,FileAccess.ReadWrite);
+
+            try
+            {
+                MemoryStream fs = new();
+                await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+                fs.Position = 0;
+                XSSFWorkbook xssWorkbook = new XSSFWorkbook(fs);
+                System.Collections.Generic.IEnumerator<ISheet> sheets = xssWorkbook.GetEnumerator();
+                while (sheets.MoveNext()) //Munkalapok bejárása
+                {
+                    sheet = sheets.Current;
+                    if (sheet.LastRowNum > 0) //A fejléc után van érték
+                    {
+                        cellCount = sheet.GetRow(1).LastCellNum;
+                        isOk = true;
+                        k = 1;
+                        switch (sheet.SheetName)
+                        {
+                            case nameof(QuestionType.SC):
+                                {
+                                    Console.WriteLine(sheet.SheetName);
+                                    for (int i = (sheet.FirstRowNum + 1); i <= sheet.LastRowNum; i++) //sorok bejárása
+                                    {
+                                        row = sheet.GetRow(i);
+                                        #region sorvizsgálat
+                                        if (row == null) continue;
+                                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+                                        cellCount = row.LastCellNum;
+                                        if (cellCount < 9)
+                                        {
+                                            Message("Feldolgozási hiba", "Kevés mező van kitöltve!", ToastIntent.Warning);
+                                            await Task.Delay(2000);
+                                            continue; //Kevesebb mint két válasz lehetőség.
+                                        }
+                                        #endregion
+                                        question = await AddQuestion(row, QuestionType.SC);
+                                        if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                        { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                        if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
+                                        {
+                                            answers.Clear();
+                                            answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(8).StringCellValue, Right = true, Sequence = k });
+                                            k += 1;
+                                            for (int j = 9; j < cellCount; j++)
+                                            {
+                                                answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j).StringCellValue, Right = false, Sequence = k });
+                                                k += 1;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case nameof(QuestionType.MC):
+                            case nameof(QuestionType.TF):
+                                {
+                                    Console.WriteLine(sheet.SheetName);
+                                    for (int i = (sheet.FirstRowNum + 1); i <= sheet.LastRowNum; i++) //sorok bejárása
+                                    {
+                                        row = sheet.GetRow(i);
+                                        #region sorvizsgálat
+                                        if (row == null) continue;
+                                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+                                        cellCount = row.LastCellNum;
+                                        if (cellCount < 9)
+                                        {
+                                            Message("Feldolgozási hiba", "Kevés mező van kitöltve!", ToastIntent.Warning);
+                                            await Task.Delay(2000);
+                                            continue; //Kevesebb mint két válasz lehetőség.
+                                        }
+                                        #endregion
+                                        QuestionType type = Enum.Parse<QuestionType>(sheet.SheetName);
+                                        question = await AddQuestion(row, type);
+                                        if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                        { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                        if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
+                                        {
+                                            answers.Clear();
+                                            k = 1;
+                                            for (int j = 8; j < cellCount; j += 2)
+                                            {
+                                                answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j).StringCellValue, Right = row.GetCell(j + 1).BooleanCellValue, Sequence = k });
+                                                k += 1;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case nameof(QuestionType.Open):
+                            case nameof(QuestionType.Seq):
+                            case nameof(QuestionType.Comp):
+                                {
+                                    Console.WriteLine(sheet.SheetName);
+                                    for (int i = (sheet.FirstRowNum + 1); i <= sheet.LastRowNum; i++) //sorok bejárása
+                                    {
+                                        row = sheet.GetRow(i);
+                                        #region sorvizsgálat
+                                        if (row == null) continue;
+                                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+                                        cellCount = row.LastCellNum;
+                                        if (cellCount < 8)
+                                        {
+                                            Message("Feldolgozási hiba", "Kevés mező van kitöltve!", ToastIntent.Warning);
+                                            await Task.Delay(2000);
+                                            continue; //Kevesebb mint egy válasz lehetőség.
+                                        }
+                                        #endregion
+                                        if (sheet.SheetName == nameof(QuestionType.Comp) && !row.GetCell(2).StringCellValue.Contains("{1}"))
+                                        {
+                                            Message("Feldolgozási hiba", "A kérdésnél nincs jelölve a helyettesítés helye!", ToastIntent.Warning);
+                                            await Task.Delay(2000);
+                                            continue;
+                                        }
+                                        QuestionType type = Enum.Parse<QuestionType>(sheet.SheetName);
+                                        question = await AddQuestion(row, type);
+                                        if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                        { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                        if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
+                                        {
+                                            answers.Clear();
+                                            k = 1;
+                                            for (int j = 8; j < cellCount; j++)
+                                            {
+                                                answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j).StringCellValue, Right = true, Sequence = k });
+                                                k += 1;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case nameof(QuestionType.Pair):
+                                {
+                                    Console.WriteLine(sheet.SheetName);
+                                    for (int i = (sheet.FirstRowNum + 1); i <= sheet.LastRowNum; i++) //sorok bejárása
+                                    {
+                                        row = sheet.GetRow(i);
+                                        #region sorvizsgálat
+                                        if (row == null) continue;
+                                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+                                        cellCount = row.LastCellNum;
+                                        if (cellCount < 9)
+                                        {
+                                            Message("Feldolgozási hiba", "Kevés mező van kitöltve!", ToastIntent.Warning);
+                                            await Task.Delay(2000);
+                                            continue; //Kevesebb mint két válasz lehetőség.
+                                        }
+                                        #endregion
+                                        question = await AddQuestion(row, QuestionType.Pair);
+                                        if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                        { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                        if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
+                                        {
+                                            answers.Clear();
+                                            k = 1;
+                                            for (int j = 8; j < cellCount; j += 2)
+                                            {
+                                                answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j).StringCellValue, Right = true, Sequence = k });
+                                                answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j + 1).StringCellValue, Right = true, Sequence = k });
+                                                k += 1;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            default:
+                                Message("Feldolgozási hiba", $"Ajaj ezt a típust nem ismerem: {sheet.SheetName}. Esetleg szólj a fejlesztőknek, hogy szeretnél ilyet!", ToastIntent.Warning);
+                                break;
+                        }
+                        question.Answers = answers; //Ide áthelyezhető a foreach answer ha kell.
+                        var q = await service.AddQuestionAsync(question);
+                        if (q == null)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return isOk;
+            }
+            catch (Exception ex)
+            {
+                Message("Rendzser hiba", "Hiba történt a fájl olvasássakor. " + ex.Message, ToastIntent.Error);
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Message("Rendzser hiba", "Hiba történt a fájl feltöltésekor. " + ex.Message, ToastIntent.Error);
+            return false;
+        }
+    }
+    async Task<Question> AddQuestion(IRow row, QuestionType type)
+    {
+
+        for (int j = row.FirstCellNum; j < cellCount; j++) //cellák bejárása feltételek vizsgálata
+        {
+            if (row.GetCell(j) == null)
+            {
+                switch (j)
+                {
+                    case 0:
+                        title = "Általános";
+                        break;
+                    case 2:
+                    case 8:
+                        {
+                            Message("Feldolgozási hiba", $"A {j}. sor adata nem dolgozható fel!", ToastIntent.Warning);
+                            await Task.Delay(2000);
+                            isOk = false;//Nem vihető fel a kérdés
+                        }
+                        break;
+                    case 3:
+                        {//TODO: Beállítható alapértelmezett pontszám, témakör
+                            Message("Feldolgozási hiba", $"A {j}. sorban üres pontérték miatt 100 pont lett beállítva.", ToastIntent.Warning);
+                            await Task.Delay(2000);
+                            score = 100;//Alapértelmezetten 100 pont
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+            }
+            else if (string.IsNullOrEmpty(row.GetCell(j).ToString()) && string.IsNullOrWhiteSpace(row.GetCell(j).ToString()))
+            { //Üres cellák vizsgálata
+                switch (j)
+                {
+                    case 0:
+                        title = "Általános";
+                        break;
+                    case 2:
+                    case 8:
+                        {
+                            Message("Feldolgozási hiba", $"A {j}. sor adata nem dolgozható fel!", ToastIntent.Warning);
+                            await Task.Delay(2000);
+                            isOk = false;//Nem vihető fel a kérdés
+                        }
+                        break;
+                    case 3:
+                        {//TODO: Beállítható alapértelmezett pontszám, témakör
+                            Message("Feldolgozási hiba", $"A {j}. sorban üres pontérték miatt 100 pont lett beállítva.", ToastIntent.Warning);
+                            await Task.Delay(2000);
+                            score = 100;//Alapértelmezetten 100 pont
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                switch (j)
+                {
+                    case 0:
+                        {
+                            title = row.GetCell(j).StringCellValue;
+                            if (title.Length > 250)
+                            {
+                                title = title.Remove(250);
+                            }
+                        }
+                        break;
+                    case 1:
+                        subtitle = row.GetCell(j).StringCellValue;
+                        break;
+                    case 3:
+                        {
+                            score = (int)row.GetCell(j).NumericCellValue;
+                            if (score < 0 || score > 100)
+                            {
+                                Message("Feldolgozási hiba", $"A {j}. sorban nem megfelelő pontérték miatt 100 pont lett beállítva.", ToastIntent.Warning);
+                                await Task.Delay(2000);
+                                score = 100;
+                            }
+                        }
+                        break;
+                    case 4:
+                        {
+                            time = (int)row.GetCell(j).NumericCellValue;
+                        }
+                        break;
+                    case 5:
+                        {
+                            minGrade = (int)row.GetCell(j).NumericCellValue;
+                            if (minGrade < 1 || minGrade > 12)
+                            {
+                                Message("Feldolgozási hiba", $"A {j}. sorban nem megfelelő minimum évfolyam érték miatt 1 lett beállítva.", ToastIntent.Warning);
+                                await Task.Delay(2000);
+                                minGrade = 1;
+                            }
+                        }
+                        break;
+                    case 6:
+                        {
+                            maxGrade = (int)row.GetCell(j).NumericCellValue;
+                            if (maxGrade < 1 || maxGrade > 12)
+                            {
+                                Message("Feldolgozási hiba", $"A {j}. sorban nem megfelelő maximum évfolyam érték miatt 12 lett beállítva.",ToastIntent.Warning);
+                                await Task.Delay(2000);
+                                maxGrade = 12;
+                            }
+                        }
+                        break;
+                    case 7:
+                        subject = row.GetCell(j).StringCellValue;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if (isOk)
+        {
+            question = new Question
+            {
+                Id = Guid.NewGuid(),
+                CreatedBy = Guid.Parse(UserId),
+                Title = title,
+                Subtitle = subtitle,
+                Text = row.GetCell(2).StringCellValue,
+                Score = score,
+                Time = time,
+                MinGrade = minGrade,
+                MaxGrade = maxGrade,
+                Subject = subject,
+                QType = type
+            };
+            subtitle = string.Empty;
+            subject = string.Empty;
+            time = 0;
+            minGrade = 1;
+            maxGrade = 12;
+            return question;
+            //return await service.AddQuestionAsync(question);
+        }
+        return null;
+    }
+    void Message(string header, string text,ToastIntent intent)
+    {
+        //showModal = true;
+        modalHeader = header;
+        modalBody = text;
+        ToastService.ShowToast(intent,header+ System.Environment.NewLine + text,3000);
+    }
+    void Change()
+    {
+        IsUpload = true;
+    }
+}
