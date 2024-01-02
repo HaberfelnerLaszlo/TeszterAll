@@ -15,11 +15,11 @@
     <Content Remove="build/**/*" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.1.1" />
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.36.0" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="2.15.3" />
-    <PackageReference Include="Microsoft.Identity.Web.GraphServiceClient" Version="2.15.3" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.2.1" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.2.1" />
+    <PackageReference Include="Microsoft.Graph" Version="5.37.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="2.16.0" />
+    <PackageReference Include="Microsoft.Identity.Web.GraphServiceClient" Version="2.16.0" />
     <PackageReference Include="Microsoft.TeamsFx" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
   </ItemGroup>

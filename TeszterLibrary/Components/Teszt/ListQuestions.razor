@@ -18,11 +18,12 @@ else{
             <QuestionFilter @bind-Questions="Questions"/>
         </FluentAccordionItem>
     </FluentAccordion>
-    <TestQuestions UserId=@Guid.Parse(UserId) page=1 questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
-    <button class="btn btn-outline-primary" @onclick=NewQuestion>Új kérdés</button>
+    <TestQuestions UserId=@Guid.Parse(UserId) questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
+    <button class="btn btn-outline-primary" @onclick="@(()=>NewQuestion())" type="button">Új kérdés</button>
+	<UploadQuestion UserId="@UserId"/>
     </div>
 }
-<div hidden="@newOrEdit">
+<div class="container" hidden="@newOrEdit">
 	<QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
 </div>
 @if (TestQuestion.Count>0)
@@ -63,17 +64,6 @@ else{
 	private async Task RefreshQuestions()
 	{
 		await Refresh.InvokeAsync();
-		// if (UserId == null)
-		// {
-		// 	questions = await qService.GetQuestions();
-		// }
-		// else questions = await qService.GetQuestions(Guid.Parse(UserId));
-
-		// if (questions == null)
-		// {
-		// 	errorMessage = qService.Error;
-		// 	StateHasChanged();
-		// }
 	}
 	private void DeleteQuestion(Question question)
 	{
@@ -85,21 +75,12 @@ else{
 	{
 		await Delete.InvokeAsync(TempQuestion);
 		showDelete = false;
-		// try
-		// {
-		// 	await qService.DeleteQuestionAsync(TempQuestion);
-		// 	logger.LogInformation($"A következő kérdés törlésre került: {TempQuestion.Text}", TempQuestion);
-		// 	await RefreshQuestions();
-		// }
-		// catch (Exception ex)
-		// {
-		// 	logger.LogError(ex, ex.Message, ex.StackTrace);
-		// }
 	}
 	private void NewQuestion()
 	{
 		isNew = true;
 		newOrEdit = false;
+		
 		TempQuestion = new();
 	}
 	private void Update(Question question)

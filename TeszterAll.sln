@@ -11,7 +11,7 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Teszter", "Teszter\Teszter.csproj", "{FB95AFB0-CAA0-473E-A733-F78774AACA5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeszterWeb", "TeszterWeb\TeszterWeb.csproj", "{51683931-86DD-418E-85D4-A48DABB4DE01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeszterWeb", "TeszterWeb\TeszterWeb.csproj", "{51683931-86DD-418E-85D4-A48DABB4DE01}"
 	ProjectSection(ProjectDependencies) = postProject
 		{637F3317-729C-4063-B8C5-9330A8C5AE06} = {637F3317-729C-4063-B8C5-9330A8C5AE06}
 	EndProjectSection

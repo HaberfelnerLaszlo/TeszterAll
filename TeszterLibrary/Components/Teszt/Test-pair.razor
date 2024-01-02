@@ -3,70 +3,58 @@
 {
 
     <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
+        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly name="question">@Question.QuestionText</textarea>
     </div>
-    <div class="container">
-        <form>
-        
-        @if (list is not null)
-        {
-            <ul class="list-group" id="answers">
-                @foreach (var answer in list)
-                {
-                    <li class="list-group-item answer">
-                    <span>@answer.Text</span><i class="oi oi-arrow-thick-right fs-4 text-info"></i>
-                    @if (Next.HasDelegate)
-                    {
-                        <select @onchange="@((e)=>Changed(e,answer.AnswerId))">
-                            <option value="-1" selected >Válasz egyet!</option>
-                            @foreach (var item in selectList)
-                            {
-                                <option value="@item.AnswerId">@item.Text</option>
-                            }
-                        </select>
-                    }else { 
-                        <input type="text" @bind-value=@selectList.First(i=>i.AnswerId==answer.Sequence).Text readonly>
-                        
-                    }
-                        @if (IsChecked)
+    <FluentDragContainer TItem="string"
+                         OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentStack Orientation="Orientation.Vertical">
+                @foreach (var item in Question.Answers)
+                   {
+                    <FluentStack>
+                        @if (item.Sign)
                         {
-                            if (answer.Result)
-                            {
-                                <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
-                            }
-                            else
-                            {
-                                <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
-                            }
+                            <div style="width:1fr; background-color:khaki;margin:10px; padding:5px;">
+                                @item.Text
+                            </div>
+                        <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="false" Droppable="true">
+                            <div style="border: 2px dotted red; width:1fr; background-color:lightblue;margin:10px;padding:5px;">
+                                @pairs.GetValueOrDefault(item.AnswerId)
+                            </div>
+                        </FluentDropZone>
                         }
-                    </li>
-                }
-            </ul>
-        }
-       
-    </form>
-</div>
-    <div class="container text-center">
-        @if (IsCheck)
-        {
-            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>{
-                foreach (var p in pairs)
+                        @if (IsChecked && !item.Sign)
+                        {
+                            <span hidden="@item.Result"><FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
+                            <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" /></span>
+                        }
+                    </FluentStack>
+                    <FluentDivider Orientation="Orientation.Horizontal" Role="DividerRole.Separator"></FluentDivider>
+                   }
+            </FluentStack>
+            <FluentStack Orientation="Orientation.Vertical">
+                @foreach (var item in selectList)
                 {
-                    (Question.Answers??=new()).FirstOrDefault(a => a.AnswerId == p.Key).Sequence = p.Value;
-                    (Question.Answers??=new()).FirstOrDefault(a => a.AnswerId == p.Key).Sign=true;
-                } 
-                CallCheck.InvokeAsync(Question);
-            })">
-                Ellenőrzés
-            </button>      
-        }
-        @if (Next.HasDelegate)
-        {
-             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
-                Következő
-             </button>
-        }
-    </div>
+                    <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="true" Droppable="false">
+                        <div style="width:1fr;margin:10px; padding:5px;">
+                            @item.Text
+                        </div>
+                    </FluentDropZone>
+                }
+            </FluentStack>
+        </FluentStack>
+    </FluentDragContainer> <div class="container">
+</div>
+<div class="container text-center">
+    @if (IsCheck)
+    {
+        <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Question))">Ellenőrzés</FluentButton>
+    }
+    @if (Next.HasDelegate)
+    {
+        <button class="btn btn-primary" id="send" type="button" @onclick="@Send">Következő</button>
+    }
+</div>
 }
 @code {
     [Parameter] public QuestionView? Question { get; set; }
@@ -75,8 +63,7 @@
     [Parameter] public EventCallback<QuestionView> Next { get; set; }
     [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
     List<AnswerView> selectList = new();
-    List<AnswerView> list = new();
-    Dictionary<int, int> pairs = new();
+    Dictionary<int, string> pairs = new();
     protected override void OnInitialized()
     {
         foreach (var item in Question.Answers)
@@ -87,8 +74,7 @@
             }
             else
             {
-                list.Add(item);
-                pairs.Add(item.AnswerId, -1);
+                pairs.Add(item.AnswerId, "Ide kerül a párja...");
             }
         }
         selectList.Shuffle();
@@ -96,28 +82,16 @@
     }
     void Send()
     {
-        int i = 0;
-        foreach (var p in pairs)
-        {
-            var ans = (Question.Answers ??= new()).FirstOrDefault(a => a.AnswerId == p.Key);
-            ans.Sequence = p.Value;
-            if (p.Value>=0)
-            {
-                ans.Sign = true;
-                i++;
-            }
-        }
-        if (i>0)
+        if (selectList.Count==0)
         {
             Next.InvokeAsync(Question);
         }
     }
-    private void Changed(ChangeEventArgs e, int s)
+    void HandleDropEnd(string source, string target)
     {
-        int v = Convert.ToInt16((e.Value??=-1).ToString());
-        if (v > 0)
-        {
-            pairs[s] = v;
-        }
+        var masol = selectList.Find(j => j.AnswerId == Convert.ToInt32(source));
+        pairs[Convert.ToInt32(target)] = masol.Text;
+        masol.Sequence = Question.Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target)).Sequence;
+        selectList.Remove(masol);
     }
 }

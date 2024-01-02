@@ -9,7 +9,7 @@
     <PublicTest Test="test" UserId="@userId"></PublicTest>
 }
 
-@if (tests.Count>0)
+@if (tests is not null && tests.Count>0)
 {
    @*  <button class="btn btn-primary" @onclick=PublishTest>Próba</button> *@
     <div class="d-flex flex-wrap">
@@ -43,12 +43,4 @@
         //ispublish = true;
         //StateHasChanged();
     }
-
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    //     if (firstRender)
-    //     {
-    //         StateHasChanged();
-    //     }
-    // }
 }

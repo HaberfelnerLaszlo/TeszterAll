@@ -17,18 +17,7 @@ textarea{
 button{
     margin:0 10px;
 }
-.answer {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    border-radius: 10px;
-    background: rgba(150,239,223,0.31);
-    border-color: rgb(8,42,77);
-    box-shadow: 1px 1px;
-    padding:10px;
-    display: flex;
-    justify-content: space-between;
 
-}
 .box{
     margin-right: 5px;
     margin-left: 5px;

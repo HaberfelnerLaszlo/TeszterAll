@@ -1,48 +1,45 @@
-﻿@if (Question is not null)
+﻿@if (QView is not null)
 {
-
-    <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
-    </div>
-    <form>
-        <div class="container">
-            @foreach (var answer in Question.Answers)
+    <FluentLabel>@QView.QuestionText</FluentLabel>
+    <hr />
+    <FluentDivider/>
+    <div class="container">
+        @foreach (var answer in QView.Answers)
+        {
+            <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@("Válasz helye...")" Value="@answer.Text" ReadOnly="@(!Next.HasDelegate)" />
+            @if (IsChecked)
             {
-                <input type="text" @bind-value=answer.Text readonly="@(!Next.HasDelegate)">
-                @if (IsChecked)
+                if (answer.Result)
                 {
-                            if (answer.Result)
-                            {
-                                <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
-                            }
-                            else
-                            {
-                                <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
-                            }
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                }
+                else
+                {
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                 }
             }
-        </div>
-    </form>
+        }
+    </div>
     <div class="container text-center">
         @if (IsCheck)
         {
-            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
                 Ellenőrzés
-            </button>
+            </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
+            <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
                 Következő
-             </button>
+            </FluentButton>
         }
     </div>
 }
 @code {
-    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public QuestionView? QView { get; set; }
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
     [Parameter] public EventCallback<QuestionView> Next { get; set; }
     [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
-    void Send() => Next.InvokeAsync(Question);
+    void Send() => Next.InvokeAsync(QView);
 }

@@ -1,53 +1,50 @@
-﻿@if (Question is not null)
+﻿@if (QView is not null)
 {
-
-    <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">Egészítsd ki a szöveget!</textarea>
-    </div>
-    <form>
-        <div class="container">
+    <FluentLabel>@QView.QuestionText</FluentLabel>
+    <hr />
+    <div class="container">
         @if (texts is not null)
         {
             @foreach (string t in texts)
             {
                 if (t.All(char.IsNumber))
                 {
-                    int Number = Convert.ToInt32(t)-1;
-                    <input type="text" class="answer" placeholder="@t. válasz" @bind-value="Question.Answers[Number].Text" readonly="@(!Next.HasDelegate)" />
+                    int Number = Convert.ToInt32(t) - 1;
+                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" Value="@QView.Answers[Number].Text" ReadOnly="@(!Next.HasDelegate)" />
                     @if (IsChecked)
                     {
-                        if (Question.Answers[Number].Result)
+                        if (QView.Answers[Number].Result)
                         {
-                            <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
                         }
                         else
                         {
-                            <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                         }
                     }
                 }
-                else{ <span>@t</span>}
+                else
+                { <span>@t</span>}
             }
         }
-        </div>
-    </form>
+    </div>
     <div class="container text-center">
         @if (IsCheck)
         {
-            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
                 Ellenőrzés
-            </button>
+            </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-             <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
-                Következő
-             </button>
+            <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
+                    Következő
+            </FluentButton>
         }
     </div>
 }
 @code {
-    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public QuestionView? QView { get; set; }
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
     [Parameter] public EventCallback<QuestionView> Next { get; set; }
@@ -55,10 +52,10 @@
     string[] texts;
     //string[] ans = new string[10];
 
-    void Send() => Next.InvokeAsync(Question);
+    //void Send() => Next.InvokeAsync(QView);
     protected override void OnInitialized()
     {
-        texts = Question.QuestionText.Split('{', '}');
+        texts = QView.QuestionText.Split('{', '}');
 
         base.OnInitialized();
     }

@@ -12,3 +12,12 @@
     left: 75%;
     width: 25%;
 }
+.answer {
+    margin-bottom: 5px;
+    margin-top: 5px;
+    border-radius: 10px;
+    background: rgba(150,239,223,0.31);
+    border-color: rgb(8,42,77);
+    box-shadow: 1px 1px;
+    padding: 10px;
+}

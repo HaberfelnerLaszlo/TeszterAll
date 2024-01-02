@@ -1,87 +1,105 @@
-﻿@if (Question is not null)
+﻿@if (QView is not null)
 {
+    <FluentLabel Typo="Typography.Subject">@((MarkupString)QView.QuestionText)</FluentLabel>
+    <hr />
+    @if (QView.Answers is not null)
+    {
 
-    <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly="" name="question">@Question.QuestionText</textarea>
-    </div>
-    <form>
-        @if (Question.Answers is not null)
+        @if (Type.Equals("checkbox"))
         {
-            <ul class="list-group" id="answers">
-                @foreach (var answer in Question.Answers)
-                {
-                    <li class="list-group-item answer">
-                        <input name="valasz" type="@Type" class="box" @onchange="@(_ => Changed(answer))" value=answer.Sign disabled="@(!Next.HasDelegate)"><span>@answer.Text</span>@**@
-                    @if (IsChecked)
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+                    @foreach (var answer in QView.Answers)
+                    {
+                        <FluentCheckbox Label="@answer.Text" @bind-Value="@answer.Sign"></FluentCheckbox>
+                        @if (IsChecked)
                         {
                             if (answer.Result)
                             {
-                                <i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
                             }
                             else
                             {
-                                <i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                             }
                         }
-                    </li>
+                    }
+                </FluentStack>
+            </FluentStack>}
+                else
+                {
+                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                    <ul class="list-group" style="list-style-type:none">
+
+                        @foreach (var a in QView.Answers)
+                        {
+                            if (a.Sign)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:@bgColor" @onclick="() => selected(a.AnswerId)">
+                                    @a.Text
+                                    @if (IsChecked)
+                                    {
+                                        if (a.Result)
+                                        {
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                                        }
+                                        else
+                                        {
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                                        }
+                                    }
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="list-group-item" @onclick="()=>selected(a.AnswerId)">
+                                    @a.Text
+                                </li>
+                            }
+                        }
+                    </ul>
+                </FluentStack>}
+
+                
                 }
-            </ul>
-        }
-    </form>
-    <div class="container text-center">
-        @if (IsCheck)
+                <div class="container text-center">
+                    @if (IsCheck)
+                    {
+                        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
+                            Ellenőrzés
+                        </FluentButton>
+                    }
+                    @if (Next.HasDelegate)
+                    {
+                        <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
+                            Következő
+                        </FluentButton>
+                    }
+                </div>
+                }
+                @code {
+                    [Parameter] public string Type { get; set; } = "checkbox";
+                    [Parameter] public QuestionView? QView { get; set; }
+                    [Parameter] public bool IsCheck { get; set; }
+                    [Parameter] public bool IsChecked { get; set; }
+                    [Parameter] public EventCallback<QuestionView> Next { get; set; }
+                    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+private string bgColor = System.Drawing.Color.GreenYellow.Name;
+
+        private void selected(int ID)
         {
-            <button class="btn btn-outline-info" id="send" type="button" @onclick="@(()=>CallCheck.InvokeAsync(Question))">
-                Ellenőrzés
-            </button>      
-        }
-        @if (Next.HasDelegate)
-        {
-            <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
-                Következő
-            </button>
-        }
-    </div>
-}
-@code {
-    [Parameter] public string Type { get; set; } = "checkbox";
-    [Parameter] public QuestionView? Question { get; set; }
-    [Parameter] public bool IsCheck { get; set; }
-    [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
-    
-    //void Check()
-    //{
-    //    CallCheck.InvokeAsync(Question);
-    //}
-    void Send()
-    {
-        int i = 0;
-        foreach (var a in Question.Answers)
-        {
-            if (a.Sign)
+            IsChecked = false;
+            if (bgColor != System.Drawing.Color.GreenYellow.Name)
             {
-                i++;
+                bgColor = System.Drawing.Color.GreenYellow.Name;
+            }
+            foreach (var item in QView.Answers!)
+            {
+                if (item.AnswerId == ID)
+                {
+                    item.Sign = true;
+                }
+                else item.Sign = false;
             }
         }
-        if (i>0)
-        {
-            Next.InvokeAsync(Question);
-        }
-    }
-    private void Changed(AnswerView answer)
-    {
-        if (Type=="checkbox")
-        {
-            try
-            {
-                answer.Sign=answer.Sign==false? true:false;
-            }
-            catch (ArgumentNullException)
-            {
-                throw;
-            }  
-        }
-    }
-}
+                }

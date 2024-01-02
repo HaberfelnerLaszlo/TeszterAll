@@ -10,9 +10,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="blazor-dragdrop" Version="2.6.1" />
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.1.1" />
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.36.0" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.2.1" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.2.1" />
+    <PackageReference Include="Microsoft.Graph" Version="5.37.0" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
     <PackageReference Include="TinyMCE.Blazor" Version="1.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
