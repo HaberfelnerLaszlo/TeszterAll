@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 
+using NPOI.SS.Formula.Functions;
+
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
@@ -12,10 +14,10 @@ namespace TeszterLibrary.Services
         public string ErrorMessage { get; set; } = String.Empty;
         private static readonly HttpClient client = new();
 
-        protected static string URI = "https://teszter-api.haberfelner.eu/";
+        //protected static string URI = "https://teszter-api.haberfelner.eu/";
 
         //protected static string URI = "http://localhost:7025/";
-        //protected static string URI = "https://localhost:44308/"; //ISS
+        protected static string URI = "https://localhost:44308/"; //ISS
         //protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
         //protected static string URI = "http://192.168.1.69:7025"; //laptop
         public async Task<Tv?> Get<Tv>(string uri)
@@ -34,10 +36,27 @@ namespace TeszterLibrary.Services
                 if (response.IsSuccessStatusCode)
                 {
                     valasz = await response.Content.ReadAsStringAsync();
+                    //var v1 = valasz.Contains("isSuccess");
+                    //var v2 = valasz.Contains("errorMessage");
+                    //var v3= valasz.Contains("content");
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                    {
+                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                    if (deserilizeResponse != null)
+                    {
+                        if (deserilizeResponse.IsSuccess)
+                        {
+                            return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
+                        }
+                    }
+                    }
+                    return JsonConvert.DeserializeObject<Tv>(valasz);
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    ErrorMessage = "Nem elérhető a szerver!";
+                    valasz = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(valasz)) { ErrorMessage = "Nincs eredmény."; return default; }
+                    ErrorMessage += "Nem elérhető a szerver!";
                     return default;
                 }
                 else
@@ -45,7 +64,6 @@ namespace TeszterLibrary.Services
                     ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
                     return default;
                 }
-                return JsonConvert.DeserializeObject<Tv>(valasz);
             }
             catch (HttpRequestException e)
             {
@@ -57,7 +75,7 @@ namespace TeszterLibrary.Services
             catch (Exception e)
             {
                 client.CancelPendingRequests();
-                client.Dispose();
+                //client.Dispose();
                 ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
                 return default;
             }
@@ -77,11 +95,12 @@ namespace TeszterLibrary.Services
                 var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
                 if (deserilizeResponse != null)
                 {
-                    if (deserilizeResponse.IsSucccess)
+                    if (deserilizeResponse.IsSuccess)
                     {
                         return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
                     }
                 }
+                return JsonConvert.DeserializeObject<T>(valasz);
             }
             else
             {
@@ -103,6 +122,14 @@ namespace TeszterLibrary.Services
             if (response.IsSuccessStatusCode)
             {
                 valasz = await response.Content.ReadAsStringAsync();
+                var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                if (deserilizeResponse != null)
+                {
+                    if (deserilizeResponse.IsSuccess)
+                    {
+                        return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                    }
+                }
             }
             else
             {

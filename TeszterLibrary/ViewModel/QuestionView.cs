@@ -5,14 +5,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using TeszterLibrary.Model;
+
 namespace TeszterLibrary.ViewModel
 {
     public class QuestionView
     {
         /// <summary>
+        /// A teszt kérdés azonosítója
+        /// </summary>
+        public int TestQuestionId { get; set; }
+        /// <summary>
         /// Kérdés szövege.
         /// </summary>
         public string QuestionText { get; set; } = string.Empty;
+        /// <summary>
+        /// A kérdés típusa.
+        /// </summary>
+        public QuestionType QuestionType { get; set; }
+        /// <summary>
+        /// Kérdésre kapható pontok. Vagy viszza fele a kérdésre kapott pontok.
+        /// </summary>
+        public int Score { get; set; }
+        /// <summary>
+        /// A kérdésre fordítható idő
+        /// </summary>
+        public int Time { get; set; }
         public List<AnswerView>? Answers { get; set; }
     }
     public record AnswerView

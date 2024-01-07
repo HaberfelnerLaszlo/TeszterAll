@@ -1,0 +1,44 @@
+﻿@page "/studentTests"
+@inject GlobalData data
+@inject NavigationManager navi
+@inject TestUserServices tuService
+<h3>StudentTests</h3>
+<p hidden="@noError">@errorMessage</p>
+@if (tests!=null && tests.Any())
+{
+	foreach (var item in tests)
+	{
+        <FluentCard Width="450px">
+            <TestViewCard TestItem="@item" Start="@TestStart" />
+        </FluentCard>
+    }
+}
+@code {
+    private List<TestView> tests = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+    /// <summary>
+    /// {"id":"6392352e-69b8-42ac-8f9c-3f92297e54c8","displayName":"Próba Diák"},{"id":"ad23c929-7c72-4512-93d1-1877fe290b8a","displayName":"Peterfy's Diák"}]
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        //tests = await tuService.GetTests(Guid.Parse(data.UserId));
+        tests = await tuService.GetTests(Guid.Parse("6392352e-69b8-42ac-8f9c-3f92297e54c8"));
+        if (tests == null)
+        {
+            noError = false;
+            if (tuService.ErrorMessage.Equals("Nincs eredmény."))
+            {
+                errorMessage = "Nincs már aktív teszted!";
+            }
+            errorMessage = tuService.ErrorMessage;
+            return;
+        }
+    }
+    void TestStart(TestView test)
+    {
+        data.Test = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title };
+        navi.NavigateTo($"runtest/{test.TestUserId}");
+    }
+}

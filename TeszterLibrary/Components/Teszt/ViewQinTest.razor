@@ -1,0 +1,132 @@
+﻿@using TeszterLibrary.Extensions
+@inject TestUserServices tuService
+@if (noError)
+{
+    @* Header *@
+<FluentLayout Style="margin-top: 10px;">
+    <FluentHeader>
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentSpacer />
+        <FluentLabel Typo="Typography.PaneHeader">@Title</FluentLabel>
+    </FluentHeader>
+
+    <FluentStack Width="100%">
+        <FluentBodyContent>
+            <EditForm Model="@actualq">
+                @switch (actualq.QuestionType)
+                {
+                    case QuestionType.SC:
+                        <Test_choise Type="@("radio")" QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next"/>
+                        break;
+                    case QuestionType.MC:
+                        <Test_choise Type="@("checkbox")" QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next"/>
+                        break;
+                    case QuestionType.TF:
+                        <Test_TF QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next"/>
+                        break;
+                    case QuestionType.Open:
+                        <Test_open QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next"/>
+                        break;
+                    case QuestionType.Seq:
+                        <Test_sequence QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next"></Test_sequence>
+                        break;
+                    case QuestionType.Pair:
+                        <Test_pair Question="actualq" IsCheck="true" CallCheck="Check" IsChecked="IsChecked" Next="Next"/>
+                        break;
+                    case QuestionType.Comp:
+                        <Test_comp QView="actualq" IsCheck="true" IsChecked="IsChecked" CallCheck="Check" Next="Next" />
+                        break;
+                    default:
+                        <p>Nem tudom mi történt!</p>
+                        break;
+                }
+            </EditForm>
+
+        </FluentBodyContent>
+    </FluentStack>
+    @* Footer
+        <FluentFooter Style="@("height: 40px; color: white; text-align: center;")">
+            <FluentStack Orientation="Orientation.Horizontal">
+                <FluentButton Appearance="Appearance.Accent" OnClick="@Check">Ellenőrzés</FluentButton>
+                <FluentSpacer/>
+                <FluentButton Appearance="Appearance.Neutral" OnClick="@Next">@(questions.Count==1?"Teszt vége": "Következő")</FluentButton>
+            </FluentStack>
+        </FluentFooter>*@
+</FluentLayout>
+}
+else
+{
+    <p>@errorMessage</p>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public bool IsTimer { get; set; } = false;
+    [Parameter] public bool IsShuffle { get; set; } = false;
+    [Parameter] public bool IsCheck { get; set; } = false;
+    [Parameter] public string Title { get; set; } = "A teszt címe";
+    [Parameter] public EventCallback<List<QuestionView>> TestEnd { get; set; }
+    List<QuestionView> questions = new();
+    List<QuestionView> readyQuestions = new();
+    QuestionView actualq = new();
+    bool noError = true, testStart = false, IsChecked=false;
+    string errorMessage = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        questions = await tuService.GetTestQuestions(Id);
+        if (questions is null)
+        {
+            noError = false;
+            errorMessage = tuService.ErrorMessage;
+            return;
+        }
+        if (IsShuffle)
+        {
+            questions.Shuffle();
+        }
+        actualq = questions.FirstOrDefault();
+        if (actualq is null)
+        {
+            noError = false;
+            errorMessage = "Nem határozható meg a kérdés.";
+            return;
+        }
+    }
+    async void Check(QuestionView question)
+    {
+        var resp = await tuService.GetQuestionCheck(question, Id);
+        if (resp==null)
+        {
+            noError = false;
+            errorMessage = "A kérdés ellenőrzésekor hiba lépett fel.";
+        }
+        actualq = resp;
+        IsChecked = true;
+        StateHasChanged();
+    }
+    async Task Next(QuestionView question)
+    {
+        IsChecked = false;
+        var response= await tuService.GetQuestionResult(question,Id);
+        if (response is null)
+        {
+            return;
+        }
+        readyQuestions.Add(response);
+        if (!questions.Remove(question))
+            questions.RemoveAt(0);
+        if (questions.Count > 0)
+        {
+            actualq = questions.FirstOrDefault();
+        }
+        else await TestEnd.InvokeAsync(readyQuestions);
+        if (actualq is null)
+        {
+            noError = false;
+            errorMessage = "Nem határozható meg a kérdés.";
+            return;
+        }
+        StateHasChanged();
+    }
+}

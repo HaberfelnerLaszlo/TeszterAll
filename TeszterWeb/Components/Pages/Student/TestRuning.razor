@@ -1,0 +1,72 @@
+﻿@layout TeszterWeb.Components.Layout.TestLayout
+@page "/runtest/{id:int}"
+@using TeszterLibrary.Extensions
+@inject GlobalData data
+@inject NavigationManager navi
+@inject TestUserServices tuService
+
+@if (noError)
+{
+    if (testStart)
+    {
+        <ViewQinTest Id="@Id" IsTimer="@data.Test.IsTimer" Title="@data.Test.Title" IsCheck="data.Test.IsCheck" IsShuffle="data.Test.ShuffleQuestion" TestEnd="EndTest"></ViewQinTest>
+    }
+    else if (testEnd)
+    {
+        <p>Nagyszerű!</p><p> Sikerült megoldanod a tesztet!</p>
+        <FluentButton OnClick="ResultView">Eredmény megtekintése</FluentButton>
+    }
+    else
+    {
+        <p>A @data.Test.Title teszt megírása következik.</p> <hr/>
+        @if (data.Test.IsTimer)
+        {
+            <span>A tesztet @data.Test.Time mp alatt kell megírnod.</span>
+        }
+        @if (data.Test.IsPractice)
+        {
+            <span> A teszt gyakorlásra szolgál.</span>
+        }
+        @if (data.Test.IsCheck)
+        {
+            <span>A teszt kérdések helyessége lekérdezhető.</span>
+        }
+        <hr />
+<FluentButton Appearance="Appearance.Accent" Color="yellow" OnClick="StartTest">A teszt elkezdése</FluentButton>
+    }
+
+}
+else
+{
+    <p>@errorMessage</p>
+}
+@code {
+    [Parameter] public int Id { get; set; }
+    bool noError = true, testStart = false, testEnd=false;
+    string errorMessage = string.Empty;
+    protected override void OnInitialized()
+    {
+        if (data.Test is null || Id == 0)
+        {
+            noError = false;
+            errorMessage = "Nem kapta meg a teszt adatokat!";
+        }
+        base.OnInitialized();
+    }
+    async Task StartTest()
+    {
+        testStart = true;
+        StateHasChanged();
+    }
+    void EndTest(List<QuestionView> questions)
+    {
+        testStart = false;
+        testEnd = true;
+        data.TestResults = questions.ToList();
+        StateHasChanged();
+    }
+    void ResultView()
+    {
+        navi.NavigateTo("testResult");//Todo: Eredmények megtekintésére lehet majd tovább menni.
+    }
+}

@@ -1,0 +1,51 @@
+﻿@page "/active"
+
+@inject NavigationManager navi
+@inject Microsoft.Graph.GraphServiceClient GraphServiceClient
+@inject GlobalData data
+@inject TestServices tService
+@inject ILogger<ActiveTests> _logger
+<h3>Aktív Tesztek</h3>
+<p hidden="noError">@errorMessage</p>
+@if (tests!=null && tests.Count > 0)
+{
+    <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
+        @foreach (var item in tests)
+        {
+            <FluentCard Width="450px">
+                <TestCard TestItem="item" Result="@ViewResult" />
+            </FluentCard>
+        }
+    </FluentStack>
+}
+else
+{
+    <div>
+        <p>Tesztek betöltése...</p>
+    </div>
+}
+@code {
+    private List<Test> tests = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        if (String.IsNullOrEmpty(data.UserId))
+        {
+            var user = await GraphServiceClient.Me.GetAsync();
+            data.UserId = user.Id.ToString();
+            _logger.LogInformation($"Kértem új Id-t {data.UserId}");
+        }
+
+        tests = await tService.GetActiveTests(Guid.Parse(data.UserId));
+        if (tests is null)
+        {
+            errorMessage = "Nincs a felhasználónak tesztje";
+            StateHasChanged();
+        }
+    }
+    void ViewResult(Test test)
+    {
+
+    }
+}

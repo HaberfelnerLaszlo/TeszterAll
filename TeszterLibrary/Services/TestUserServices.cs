@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TeszterLibrary.Model;
+using TeszterLibrary.ViewModel;
 
 namespace TeszterLibrary.Services
 {
@@ -14,9 +15,9 @@ namespace TeszterLibrary.Services
 		{
 			_service = service;
 		}
-		public async Task<TestUser> GetTestUser(int id)
+		public async Task<TestUser?> GetTestUser(int id)
 		{
-			var tu = await _service.Get<TestUser>($"TUser/{id}");
+			var tu = await _service.Get<TestUser?>($"TUser/{id}");
 			return tu;
 		}
 		/// <summary>
@@ -25,9 +26,9 @@ namespace TeszterLibrary.Services
 		/// <param name="userId">Felhasználó azonosító</param>
 		/// <param name="testId">Teszt azonosító</param>
 		/// <returns></returns>
-		public async Task<TestUser> GetTestUser(Guid userId, int testId)
+		public async Task<TestUser?> GetTestUser(Guid userId, int testId)
 		{
-			var tu = await _service.Get<TestUser>($"TUser/TU/{userId}/{testId}");
+			var tu = await _service.Get<TestUser?>($"TUser/TU/{userId}/{testId}");
 			return tu;
 		}
 		/// <summary>
@@ -35,9 +36,9 @@ namespace TeszterLibrary.Services
 		/// </summary>
 		/// <param name="tId">Teszt azonosítója</param>
 		/// <returns></returns>
-		public async Task<List<TestUser>> GetTestUsers(int tId)
+		public async Task<List<TestUser>?> GetTestUsers(int tId)
 		{
-			var list = await _service.Get<List<TestUser>>($"TUser/Member/{tId}");
+			var list = await _service.Get<List<TestUser>?>($"TUser/Member/{tId}");
 			return list;
 		}
 		/// <summary>
@@ -45,98 +46,40 @@ namespace TeszterLibrary.Services
 		/// </summary>
 		/// <param name="userId">Felhasználó azonosító</param>
 		/// <returns></returns>
-		public async Task<List<TestUser>> GetTests(Guid userId)
+		public async Task<List<TestView>?> GetTests(Guid userId)
 		{
-			var tests = await _service.Get<List<TestUser>>($"TUser/Tests/{userId}");
+			var tests = await _service.Get<List<TestView>?>($"TUser/Tests/{userId}");
+			if ( tests == null ) { ErrorMessage = _service.ErrorMessage; return null; }
 			return tests;
 		}
-		//public List<ApiTest> GetActiveTests(Guid userId)
-		//{
-		//	List<ApiTest> viewTests = new List<ApiTest>();
-		//	var Utests = dbContext.TestUsers.Where(tu => tu.UserId == userId && !tu.IsReady).ToList();
-
-		//	//Itt figyeli hogy amelyik teszt lejárt az már kész tesztként legyen nyilvántartva.
-		//	List<TestUser> RemovebleTest = new();
-		//	foreach (var Utest in Utests)
-		//	{
-		//		var test = dbContext.Tests.SingleOrDefault(t => t.Id == Utest.TestId);
-		//		if (test.EndTime < DateTime.Now)
-		//		{
-		//			Utest.IsReady = true;
-		//			RemovebleTest.Add(Utest);
-		//			dbContext.TestUsers.Update(Utest);
-		//		}
-		//		else
-		//		{
-		//			var tq = dbContext.TestQuestions.Where(tq => tq.TestId == test.Id).ToList();
-		//			List<ApiTestQuestion> apiQuestion = new List<ApiTestQuestion>();
-		//			foreach (var item in tq)
-		//			{
-		//				apiQuestion.Add(new ApiTestQuestion()
-		//				{
-		//					QuestionId = item.QuestionId,
-		//					Score = item.Score,
-		//					TestQuestionId = item.Id,
-		//					Time = item.Time
-		//				});
-		//			}
-		//			viewTests.Add(
-		//				new ApiTest()
-		//				{
-		//					TestId = test.Id,
-		//					TestUserId = Utest.Id,
-		//					ReplaceNumber = test.ReplaceNumber,
-		//					ReplaceNumberUser = Utest.ReplaceNumber,
-		//					EndTime = test.EndTime,
-		//					IsPractice = test.IsPractice,
-		//					IsTimer = test.IsTimer,
-		//					ShuffleQuestion = test.ShuffleQuestion,
-		//					StartTime = test.StartTime,
-		//					Summa = test.Summa,
-		//					Title = test.Title,
-		//					Time = test.Time,
-		//					Subject = test.Subject,
-		//					TestQuestions = apiQuestion
-		//				});
-		//		}
-		//	}
-		//	foreach (var item in RemovebleTest)
-		//	{
-		//		Utests.Remove(item);
-		//	}
-		//	return viewTests;
-		//}
-
+		public async Task<List<QuestionView>?> GetTestQuestions(int tUserId)
+		{
+			var response = await _service.Get<List<QuestionView>?>($"TUser/Test/{tUserId}");
+			if (response is null)
+			{
+				ErrorMessage = _service.ErrorMessage; 
+				return null;
+			}
+			return response;
+		}
 		/// <summary>
 		/// A tesztet írok száma.
 		/// </summary>
 		/// <param name="testId">Teszt azonosítója</param>
 		/// <returns></returns>
-		public async Task<int[]> GetActiveTestMemberCount(int testId)
+		public async Task<int[]?> GetActiveTestMemberCount(int testId)
 		{
-			var m = await _service.Get<int[]>($"Tuser/Member/{testId}");
+			var m = await _service.Get<int[]?>($"Tuser/Member/{testId}");
 			return m;
 		}
-		/// <summary>
-		/// A próbálkozások számát adja visza adott teszt és felhasználó esetén.
-		/// </summary>
-		/// <param name="userId">Felhasználó azonosító</param>
-		/// <param name="testId">Teszt azonosító</param>
-		/// <returns></returns>
-		//public int DifferenceReplaceNumber(Guid userId, int testId)
-		//{
-		//	var testRN = dbContext.Tests.SingleOrDefault(t=>t.Id == testId).ReplaceNumber;
-		//	var testURN =dbContext.TestUsers.SingleOrDefault(tu => tu.UserId == userId && tu.TestId == testId).ReplaceNumber;
-		//	return testRN - testURN;
-		//}
 		/// <summary>
 		/// Kész/lezárt teszteket adja eredményül felhasználónként
 		/// </summary>
 		/// <param name="userId">Felhasználó azonosító</param>
 		/// <returns></returns>
-		public async Task<List<TestUser>> GetReadyTests(Guid userId)
+		public async Task<List<TestUser>?> GetReadyTests(Guid userId)
 		{
-			var list = await _service.Get<List<TestUser>>($"TUser/Ready/{userId}");
+			var list = await _service.Get<List<TestUser>?>($"TUser/Ready/{userId}");
 			return list;
 		}
 		/// <summary>
@@ -144,16 +87,28 @@ namespace TeszterLibrary.Services
 		/// </summary>
 		/// <param name="userId">Felhasználó azonosító</param>
 		/// <returns></returns>
-		public async Task<List<TestUser>> GetAllUserTests(Guid userId)
+		public async Task<List<TestUser>?> GetAllUserTests(Guid userId)
 		{
-			var list = await _service.Get<List<TestUser>>($"TUser/All/{userId}");
+			var list = await _service.Get<List<TestUser>?>($"TUser/All/{userId}");
 			return list;
 		}
-		public async Task<TestUser> AddTestUser(TestUser testUser)
+		public async Task<QuestionView?> GetQuestionResult(QuestionView questionView,int tUserId)
+		{
+			var response = await _service.Post<QuestionView>($"TUser/Result/{tUserId}",questionView);
+			if (response is null) return null;
+			return response;
+		}
+		public async Task<QuestionView?> GetQuestionCheck(QuestionView questionView,int tUserId)
+		{
+			var response = await _service.Post<QuestionView>($"TUser/Check/{tUserId}",questionView);
+			if (response is null) return null;
+			return response;
+		}
+		public async Task<TestUser?> AddTestUser(TestUser testUser)
 		{
 			try
 			{
-				var u = await _service.Post<TestUser>("TUser",testUser);
+				var u = await _service.Post<TestUser?>("TUser",testUser);
 				return u;
 			}
 			catch (Exception e)
@@ -162,11 +117,11 @@ namespace TeszterLibrary.Services
 				return null;
 			}
 		}
-		public async Task<TestUser> UpdateTestUser(TestUser testUser)
+		public async Task<TestUser?> UpdateTestUser(TestUser testUser)
 		{
 			try
 			{
-				var u = await _service.Put<TestUser>($"TUser/{testUser.Id}", testUser);
+				var u = await _service.Put<TestUser?>($"TUser/{testUser.Id}", testUser);
 				return u;
 			}
 			catch (Exception e)

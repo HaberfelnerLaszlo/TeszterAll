@@ -11,7 +11,7 @@
             <FluentStack Orientation="Orientation.Vertical">
                 @foreach (var item in Question.Answers)
                    {
-                    <FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal">
                         @if (item.Sign)
                         {
                             <div style="width:1fr; background-color:khaki;margin:10px; padding:5px;">
@@ -19,7 +19,7 @@
                             </div>
                         <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="false" Droppable="true">
                             <div style="border: 2px dotted red; width:1fr; background-color:lightblue;margin:10px;padding:5px;">
-                                @pairs.GetValueOrDefault(item.AnswerId)
+                                @pairs.GetValueOrDefault(item.Sequence)
                             </div>
                         </FluentDropZone>
                         }
@@ -52,7 +52,7 @@
     }
     @if (Next.HasDelegate)
     {
-        <button class="btn btn-primary" id="send" type="button" @onclick="@Send">Következő</button>
+        <FluentButton OnClick="@((async)=> Send())">Következő</FluentButton>
     }
 </div>
 }
@@ -68,16 +68,28 @@
     {
         foreach (var item in Question.Answers)
         {
-            if (item.Sequence == -1)
+            if (IsChecked)
             {
-                selectList.Add(item);
+                if (!item.Sign)
+                {
+                    pairs.Add(item.Sequence,item.Text);
+                }
             }
-            else
-            {
-                pairs.Add(item.AnswerId, "Ide kerül a párja...");
+            else {
+                if (item.Sequence == -1)
+                {
+                    selectList.Add(item);
+                }
+                else
+                {
+                    pairs.Add(item.Sequence, "Ide kerül a párja...");
+                }
             }
         }
-        selectList.Shuffle();
+        if (selectList.Any())
+        {
+            selectList.Shuffle();
+        }
         base.OnInitialized();
     }
     void Send()
@@ -90,8 +102,9 @@
     void HandleDropEnd(string source, string target)
     {
         var masol = selectList.Find(j => j.AnswerId == Convert.ToInt32(source));
-        pairs[Convert.ToInt32(target)] = masol.Text;
-        masol.Sequence = Question.Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target)).Sequence;
+        var cel = Question.Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target));
+        pairs[cel.Sequence] = masol.Text;
+        masol.Sequence = cel.Sequence;
         selectList.Remove(masol);
     }
 }

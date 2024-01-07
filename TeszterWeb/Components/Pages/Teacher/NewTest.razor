@@ -5,7 +5,8 @@
 @inject NavigationManager navi
 @inject QuestionServices qService
 @inject SubjectServices sService
-<h3>NewTest</h3>
+@inject ILogger<NewTest> _logger
+<h3>Új teszt készítése</h3>
 @if (Questions.Count>0)
 {
     if (data.Questions.Count > 0)
@@ -22,15 +23,29 @@
     private List<Subject> Subjects = new();
     protected override async Task OnInitializedAsync()
     {
-        Questions = await qService.GetQuestions(Guid.Parse(data.UserId));
-        if (data.Questions.Count>0 && Questions.Count>0)
+        try
         {
-            foreach (var item in data.Questions)
+            if (String.IsNullOrEmpty(data.UserId))
             {
-                Questions.Remove(item);
+                var user = await GraphServiceClient.Me.GetAsync();
+                data.UserId = user.Id.ToString();
+                _logger.LogInformation($"Kértem új Id-t {data.UserId}");
             }
+            Questions = await qService.GetQuestions(Guid.Parse(data.UserId));
+            if (data.Questions.Count > 0 && Questions.Count > 0)
+            {
+                foreach (var item in data.Questions)
+                {
+                    Questions.Remove(item);
+                }
+            }
+            Subjects = await sService.GetSubjects();
         }
-        Subjects = await sService.GetSubjects();
+        catch (Exception e)
+        {
+            _logger.LogError("Hiba történt: " + e.Message);
+            throw;
+        }
     }
     private void PublishTest(Test newTest)
     {

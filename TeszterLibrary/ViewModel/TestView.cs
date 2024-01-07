@@ -7,12 +7,21 @@ using System.Threading.Tasks;
 
 namespace TeszterLibrary.ViewModel
 {
+    /// <summary>
+    /// Diak tesztek lekérdezésének az alapja.
+    /// </summary>
     public class TestView
     {
+        /// <summary>
+        /// A teszt azonosítója.
+        /// </summary>
         public int Id { get; set; }
+        /// <summary>
+        /// A teszt címe.
+        /// </summary>
         public string Title { get; set; } = String.Empty;
         /// <summary>
-        /// Teszt készítőjének azonosítója.
+        /// Teszt befejezésének időpontja.
         /// </summary>
         public DateTime EndTime { get; set; }
         /// <summary>
@@ -44,9 +53,17 @@ namespace TeszterLibrary.ViewModel
         /// </summary>
         public bool IsCheck { get; set; } = false;
         /// <summary>
+        /// Össze keveri a kérdéseket.
+        /// </summary>
+        public bool ShuffleQuestion { get; set; } = true;
+        /// <summary>
         /// Kérdések mely tantárgyhoz kapcsolódnak
         /// </summary>
         public string Subject { get; set; }= String.Empty;
+        /// <summary>
+        /// A teszthez rendelt felhasználó azonosító
+        /// </summary>
+        public int TestUserId { get; set; }
 
     }
 }

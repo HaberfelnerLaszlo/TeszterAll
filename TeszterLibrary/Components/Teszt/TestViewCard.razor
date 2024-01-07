@@ -1,34 +1,43 @@
-﻿<div class="testcard">
-	<div class="row">
-		<p>@Test.Title</p>
-		<div class="col">
-			<p>@Test.Subject tantárgy</p>
-			<p>Indulás: @Test.StartTime.ToShortDateString() </p>
-			<p>Vége: @Test.EndTime.ToShortDateString() </p>
-		</div>
-		<div class="col">
-			<p>Ismételhető: @Test.ReplaceNumber</p>
-			<p>@Test.Summa pont</p>
-			<p>@TimeSpan.FromSeconds(Test.Time) @Test.Time mp</p>
-		</div>
-		<div class="testsign">
-            <img src="_content/TeszterLibrary/images/recycle.svg" height="15px" hidden="@(!Test.ShuffleQuestion)" title="Kevert kérdések"/>
-            <img src="_content/TeszterLibrary/images/fa-user-clock.svg" height="15px" hidden="@(!Test.IsTimer)" title="Idő korlátos" />
-			<i class="oi oi-check-double text-primary" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="check" title="Ellenőrizhető" hidden="@(!Test.IsCheck)"></i>
-			@* <span hidden="@(!Test.IsCheck)">el</span> *@
-			<i class="oi oi-pecil answer  text-success" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="practice" title="Gyakorlás" hidden="@(!Test.IsPractice)"></i><span hidden="@(!Test.IsPractice)"></span>
-			@* <span hidden="@(!Test.IsPublished)">pu</span> *@
-		
-		
-		</div>
-	</div>
-	<div class="row" style="justify-content:space-around">
-        <button class="btn btn-primary" style="width:45%" @onclick=@(()=>Edit.InvokeAsync(Test))>@BtnText</button>
-    </div>
-</div>
+﻿@if (TestItem is not null)
+{
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
+            <h3>
+                @TestItem.Title
+            </h3>
+        </FluentStack>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
+            <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
+            <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
+            <FluentIcon Value="@(new Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
+        </FluentStack>
+    </FluentStack>
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
+            <p id="date" class="end_date" style="margin: 10px;">
+                Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
+            </p>
+            <p id="date" class="start_date" style="margin: 10px;">
+                Tesztet elvégezte / maximális ismétlések száma:&nbsp;<wbr><strong>@TestItem.UserReplaceNumber / @TestItem.TestReplaceNumber</strong>
+            </p>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
+            </p>
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
+            </p>
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time) mp</strong>
+            </p>
+        </FluentStack>
+    </FluentStack>
+    <FluentButton OnClick="@(() => Start.InvokeAsync(TestItem))">Teszt indítása</FluentButton>
+}
 @code {
-	[Parameter] public Test Test { get; set; } = new();
-	[Parameter] public string BtnText { get; set; } = "Gond van";
-	[Parameter] public EventCallback<Test> Edit { get; set; }
+    [Parameter] public TestView TestItem { get; set; } = new();
+    [Parameter] public EventCallback<TestView> Start { get; set; }
 
 }

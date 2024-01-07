@@ -10,19 +10,18 @@
 }
 else
 {
-    <div class="d-flex flex-wrap">
+    <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
     @foreach (var item in tests)
     {
-        <TestViewCard Test="item" BtnText="Eredmények" Edit="TestResult"/>
+        <TestCard TestItem="item" Result="TestResult"/>
     }
-    </div>
+    </FluentStack>
 }
 @code {
     List<Test> tests = new();
     protected override async Task OnInitializedAsync()
     {
         tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
-        //return base.OnInitializedAsync();
     }
     private void TestResult(Test test)
     {

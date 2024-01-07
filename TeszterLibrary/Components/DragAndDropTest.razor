@@ -1,28 +1,13 @@
 ﻿<h3>DragAndDropTest</h3>
-<FluentDragContainer TItem="string"
-                     OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical">
-            @foreach (var item in lists)
-            {
-                <FluentDropZone Id="@item.Id.ToString()" Draggable="false" Droppable="true" >
-                    @((MarkupString)item.Text)
-                </FluentDropZone>
-            }
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Vertical">
-            @foreach (var item in valaszok)
-            {
-                <FluentDropZone Id="@item.Id.ToString()" Draggable="true" Droppable="false">
-                    @((MarkupString)item.Text)
-                </FluentDropZone>
-            }
-        </FluentStack>
-    </FluentStack>
-</FluentDragContainer>
+<DragDropToList TItem="DataList" SourceList="lists" TargetList="valaszok" Context="source">
+    <SourceContent>@source.Text</SourceContent>
+    <TargetContent>@source.Text</TargetContent>
+</DragDropToList>
 <FluentLabel >@text</FluentLabel>
 @code {
     string text = string.Empty;
+    DataList sourceItem = new();
+    DataList SelectedValasz = new();
     List<DataList> lists = new() {
         new() { Id=1, Text="első"},
         new() { Id=3, Text="második"},
@@ -33,10 +18,18 @@
         new() { Id = 4, Text = "második v" },
         new() { Id = 6, Text = "harmadik v" }
 };
-    void HandleDropEnd(string source, string target)
+    void HandleDropEnd(FluentDropZone<DataList> source, FluentDropZone<DataList> target)
     {
-        var masol = valaszok.Find(j => j.Id == Convert.ToUInt32(source)).Text;
-        lists.Find(i => i.Id == Convert.ToUInt32(target)).Text = masol;
+        if (source.Id=="lista")
+        {
+            valaszok.Add((DataList)source.Data);
+            lists.Remove((DataList)source.Data);
+        }
+        else
+        {
+            lists.Add((DataList)source.Data);
+            valaszok.Remove((DataList)source.Data);
+        }
     }
     private record DataList()
     {
