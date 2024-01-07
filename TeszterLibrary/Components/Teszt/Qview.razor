@@ -1,20 +1,15 @@
 ﻿
-<div class="card bg-transparent rounded" style="border-color:@bgColor; border-width:medium">
-    <div class="card-header">
-        <div class="row">
-            <div class="col col-7"><b>@question.Subject <br/> @question.Title</b> </div>
-            <div class="col">
-                <p class="float-right" style="margin:0">@qType</p> <br/>
-
-                <span class="badge text-bg-primary"><b>@question.Time mp</b></span>
-               <FluentBadge><b>@question.Score pont</b></FluentBadge>
-            </div>
-        </div>
-    </div>
-    <div>
-        <p class="p-1">@((MarkupString)question.Text)</p>
-    </div>
-</div>
+<FluentCard Style=@($"border-color:{bgColor}; border-width:medium;")>
+    <FluentLabel Style="margin: 0; position: absolute; right: 20px; top: 5px;">@qType</FluentLabel> <br />
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack><b>@question.Subject <br /> @question.Title</b></FluentStack>
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+            <span class="badge text-bg-primary"><b>@question.Time mp</b></span>
+            <FluentBadge><b>@question.Score pont</b></FluentBadge>
+        </FluentStack>
+    </FluentStack>
+    <p class="p-1">@((MarkupString)question.Text)</p>
+</FluentCard>
 
 @code {
     [Parameter]

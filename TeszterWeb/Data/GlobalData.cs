@@ -1,5 +1,7 @@
 ﻿using TeszterLibrary.Model;
 
+using TeszterWeb.Components.Pages.Teacher;
+
 namespace TeszterWeb.Data
 {
     public class GlobalData
@@ -18,7 +20,7 @@ namespace TeszterWeb.Data
 
         public List<Question> Questions { get; set; } = new List<Question>();
         public Test Test { get; set; } = new Test();
-
+        public List<TeszterLibrary.ViewModel.QuestionView> TestResults { get; set; } = new();
         //public event Action Userchangedevent;
     }
 }

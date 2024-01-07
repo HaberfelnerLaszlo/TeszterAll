@@ -1,0 +1,61 @@
+﻿@page "/testResult"
+@inject GlobalData data
+@inject NavigationManager navi
+
+<h3>TestResult</h3>
+@if (noError)
+{
+    foreach (var actualq in questions)
+    {
+        <FluentCard>
+            <FluentLabel>Kapott pontok: @actualq.Score pont</FluentLabel>
+            @switch (actualq.QuestionType)
+            {
+                case QuestionType.SC:
+                    <Test_choise Type="@("radio")" QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.MC:
+                        <Test_choise Type="@("checkbox")" QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.TF:
+                    <Test_TF QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.Open:
+                    <Test_open QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.Seq:
+                    <Test_sequence QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.Pair:
+                        <Test_pair Question="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                case QuestionType.Comp:
+                        <Test_comp QView="actualq" IsCheck="false" IsChecked="true" />
+                    break;
+                default:
+                    <p>Nem tudom mi történt!</p>
+                    break;
+            }
+        </FluentCard>
+            }
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("/"))">Bezár</FluentButton>
+            }
+            else
+            {
+            <p>@errorMessage</p>
+            }
+            @code {
+                List<QuestionView> questions = new();
+                bool noError = true;
+                string errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+        {
+            questions = data.TestResults.ToList();
+            if (questions is null)
+            {
+                errorMessage = "Nincs teszt eredményed!";
+            }
+            base.OnInitialized();
+        }
+            }

@@ -8,13 +8,13 @@ namespace TeszterLibrary.Model
 {
     public class MainResponse
     {
-        public bool IsSucccess { get; set; }
-        public string ErrorMassage { get; set; } = string.Empty;
+        public bool IsSuccess { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
         public object? Content { get; set; }
         public void Clear()
         {
-            IsSucccess = false;
-            ErrorMassage = string.Empty;
+            IsSuccess = false;
+            ErrorMessage = string.Empty;
             Content = null;
         }
     }

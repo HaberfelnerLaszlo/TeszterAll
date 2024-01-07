@@ -1,6 +1,6 @@
 ﻿@if (QView is not null)
 {
-    <FluentLabel>@QView.QuestionText</FluentLabel>
+    <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
     <hr />
     <div class="container">
         @if (texts is not null)
@@ -10,7 +10,7 @@
                 if (t.All(char.IsNumber))
                 {
                     int Number = Convert.ToInt32(t) - 1;
-                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" Value="@QView.Answers[Number].Text" ReadOnly="@(!Next.HasDelegate)" />
+                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" @bind-Value="@QView.Answers[Number].Text" />
                     @if (IsChecked)
                     {
                         if (QView.Answers[Number].Result)
@@ -37,7 +37,7 @@
         }
         @if (Next.HasDelegate)
         {
-            <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
+            <FluentButton OnClick="@(()=>Next.InvokeAsync(QView))">
                     Következő
             </FluentButton>
         }

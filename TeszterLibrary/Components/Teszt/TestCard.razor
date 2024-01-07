@@ -1,60 +1,46 @@
-﻿@using TeszterLibrary.ViewModel;
-@if (Test is not null)
+﻿@if (TestItem is not null)
 {
-    <div class="container" >
-        <div class="sor" >
-            <div class="oszlop-bal">
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
                 <h3>
-                    @Test.Title
+                    @TestItem.Title
                 </h3>
-            </div>
-            <div class="oszlop-jobb">
-                <i class="fas fa-check-double text-primary" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="check" title="Ellenőrizhető" hidden="@(!Test.IsCheck)"></i>
-                <i class="fas fa-pencil-ruler text-success" data-bs-toggle="tooltip" data-bss-tooltip="" data-bs-placement="bottom" id="practice"  title="Gyakorlás" hidden="@(!Test.IsPractice)"></i>
-                <i class="fas fa-user-clock text-danger" data-bs-toggle="tooltip" data-bss-tooltip="" id="timer" title="Idő korlátos" hidden="@(!Test.IsTimer)"><span id="time" class="time"> @TimeSpan.FromSeconds(Test.Time)</span></i>
-            </div>
-        </div>
-        <div class="sor">
-            <div class="oszlop-bal">
+            </FluentStack>
+            <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
+                <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
+                <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
+                <FluentIcon Value="@(new Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
+                <FluentBadge Appearance="Appearance.Lightweight"><FluentIcon Value="@(new Icons.Regular.Size20.Replay())" /><strong>@TestItem.ReplaceNumber</strong></FluentBadge>
+            </FluentStack>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
+                <p id="date" class="start_date" style="margin: 10px;">
+                    Kezdés időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.StartTime)</strong>
+                </p>
                 <p id="date" class="end_date" style="margin: 10px;">
-                    Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}",Test.EndTime)</strong>
+                    Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
                 </p>
-            </div>
-            <div class="oszlop-jobb">
-                <span>Ismétlések száma</span><wbr>
-                <i class="fas fa-recycle text-primary" id="replace_icon"></i>
-                <span style="padding: 5px;">@Test.UserReplaceNumber/@Test.TestReplaceNumber</span>
-            </div>
-        </div>
-        <div class="sor">
-            <div class="oszlop-bal">
-                <p style="padding-top: 5px;padding-right: 5px;padding-bottom: 5px;padding-left: 5px;margin-bottom: 0px;">
-                    Tantárgy:&nbsp<wbr><strong>@Test.Subject</strong>
+            </FluentStack>
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
+                <p style="padding: 5px;margin-bottom: 0px;">
+                    Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
                 </p>
-            </div>
-            <div class="oszlop-jobb">
-                <p style="padding: 5px 12px;margin-bottom: 0px;">
-                    Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@Test.Summa pont</strong>
+                <p style="padding: 5px;margin-bottom: 0px;">
+                    Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
                 </p>
-            </div>
-        </div>
-        <div class="sor">
-            <div class="col align-self-center" style="text-align: center;">
-                <button class="btn btn-primary" type="button" @onclick="@(_=>OnStart(Test))">
-                    Indítás
-                </button>
-            </div>
-        </div>
-    </div>
+                <p style="padding: 5px;margin-bottom: 0px;">
+                    Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time)</strong>
+                </p>
+            </FluentStack>
+        </FluentStack>
+        <FluentButton OnClick="@(() => Result.InvokeAsync(TestItem))">Eredmények</FluentButton>
 }
 
 @code{
     [Parameter]
-    public RenderFragment? Content { get; set; }
-
+    public Test? TestItem { get; set; }
     [Parameter]
-    public TestView? Test { get; set; }
-    [Parameter]
-    public EventCallback<TestView> Start { get; set; }
-    void OnStart(TestView test) => Start.InvokeAsync(test);
+    public EventCallback<Test> Result { get; set; }
 }

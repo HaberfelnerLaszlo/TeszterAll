@@ -1,0 +1,95 @@
+﻿@typeparam TItem
+<FluentDragContainer TItem="TItem"
+                     OnDropEnd="@(e => HandleDropEnd(e.Source,e.Target))">
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack Orientation="Orientation.Vertical">
+            <FluentListbox Items="@SourceList" TOption="TItem" Label="@SourceLabel" SelectedOption="selectedSource">
+                <OptionTemplate>
+                    <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context">
+                        @SourceContent(context)
+                    </FluentDropZone>
+                </OptionTemplate>
+            </FluentListbox>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentButton OnClick="All" Disabled="btnDidabled">Mindenki</FluentButton>
+            <FluentButton OnClick="()=>ToMove(true)" Disabled="@(selectedSource==null)">Oda</FluentButton>
+            <FluentButton OnClick="()=>ToMove(false)" Disabled="@(selectedTarget==null)">Vissza</FluentButton>
+            <FluentButton OnClick="Reverse" Disabled="@(!btnDidabled)">Senki sem</FluentButton>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Vertical">
+            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" SelectedOption="selectedTarget">
+                <OptionTemplate>
+                    @if (TargetList.Count == 0)
+                    {
+                        <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context"></FluentDropZone>
+                    }
+                    <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context">
+                        @TargetContent(context)
+                    </FluentDropZone>
+                </OptionTemplate>
+            </FluentListbox>
+        </FluentStack>
+    </FluentStack>
+</FluentDragContainer>
+@code {
+    [Parameter] public IList<TItem> SourceList { get; set; }
+    [Parameter] public IList<TItem> TargetList { get; set; }
+    [Parameter] public string SourceLabel { get; set; } = "Forrás";
+    [Parameter] public string TargetLabel { get; set; } = "Cél";
+    [Parameter] public RenderFragment<TItem>? SourceContent { get; set; }
+    [Parameter] public RenderFragment<TItem>? TargetContent { get; set; }
+    bool btnDidabled = false;
+    TItem? selectedSource;
+    TItem? selectedTarget;
+    void HandleDropEnd(FluentDropZone<TItem> source, FluentDropZone<TItem> target)
+    {
+        if (source.Id == "lista")
+        {
+            TargetList.Add((TItem)source.Data);
+            SourceList.Remove((TItem)source.Data);
+        }
+        else
+        {
+            SourceList.Add((TItem)source.Data);
+            TargetList.Remove((TItem)source.Data);
+        }
+    }
+    private void All()
+    {
+        foreach (var item in SourceList)
+        {
+            TargetList.Add(item);
+        }
+        SourceList.Clear();
+        btnDidabled = true;
+    }
+    private void Reverse()
+    {
+        foreach (var item in TargetList)
+        {
+            SourceList.Add(item);
+        }
+        TargetList.Clear();
+        btnDidabled = false;
+    }
+    private void ToMove(bool isSource)
+    {
+        if (isSource)
+        {
+            if (selectedSource!=null)
+            {
+                TargetList.Add(selectedSource);
+                SourceList.Remove(selectedSource);
+            }
+        }
+        else
+        {
+            if (selectedTarget != null)
+            {
+                SourceList.Add(selectedTarget);
+                TargetList.Remove(selectedTarget);
+            }
+        }
+    }
+}
