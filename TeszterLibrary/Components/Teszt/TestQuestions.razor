@@ -59,13 +59,13 @@
         }
     </TemplateColumn>
     <PropertyColumn Title="Pontszám" Property="@(c => c!.Score +" p")" Sortable="false" Align=Align.Center />
-    <PropertyColumn Title="Időtartam" Property="@(c => c!.Time +" mp")" Sortable="false" Align=Align.Center />
+    <PropertyColumn Title="Időtartam" Property="@(c => c!.Time.ToTime())" Sortable="false" Align=Align.Center />
     <TemplateColumn Title="Műveletek" Align="@Align.End">
         @*<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
         <FluentButton Title="Betekintés" IconEnd="@(new Icons.Regular.Size16.Search())" OnClick="@(()=>OpenAsync(context))"></FluentButton>
         <FluentButton Title="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => SetQuestionForUpdate(context))" />
-        <FluentButton Title="Törlés" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@((async () => await Delete.InvokeAsync(context)))" />
-        <FluentButton Title="Teszthez add" IconEnd="@(new Icons.Regular.Size16.Add())" OnClick="@(() => Add(context))" />
+        <FluentButton Title="Törlés" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@((async () => await DeleteQ(context)))" />
+        <FluentButton Title="Teszthez add" IconEnd="@(new Icons.Regular.Size16.Add())" OnClick="@(() => Add(context))" Disabled="context.SelectedTest"/>
     </TemplateColumn>
 </FluentDataGrid>
 <FluentPaginator State="@pagination" />
@@ -220,6 +220,11 @@
         {
             question = (Question)result.Data;
         }
-
+    }
+    async Task DeleteQ(QuestionListView question) 
+    {
+        FilteredItems.Remove(question);
+        allQuestions.Remove(question);
+        await Delete.InvokeAsync(question);
     }
 }

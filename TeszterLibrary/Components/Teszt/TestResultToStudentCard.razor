@@ -1,0 +1,45 @@
+﻿<FluentCard Style="max-width:300px;">
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
+            <h3>
+                @TestResult.Title
+            </h3>
+        </FluentStack>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
+            <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" />
+            <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" />
+        </FluentStack>
+    </FluentStack>
+    <FluentGrid>
+        <FluentGridItem xs="12" sm="6">
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel>
+                    Tantárgy: @TestResult.Subject
+                </FluentLabel>
+                <FluentLabel>
+                    Teszt lezárult: @TestResult.EndTime.ToShortDateString()
+                </FluentLabel>
+            </FluentStack>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="6">
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel>
+                    Kapott/Összes pont: @TestResult.Score / @TestResult.Summa
+                </FluentLabel>
+                <FluentLabel>
+                    Tesztre fordított idő: @TestResult.Time
+                </FluentLabel>
+                <FluentLabel>
+                    Próbálkozások száma: @TestResult.UserReplaceNumber / @TestResult.TestReplaceNumber
+                </FluentLabel>
+            </FluentStack>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentButton OnClick="@(()=>Open.InvokeAsync(TestResult.TestUserId))">Megtekint</FluentButton>
+        </FluentGridItem>
+    </FluentGrid>
+</FluentCard>
+@code {
+    [Parameter] public TestResultToStudent TestResult { get; set; }
+    [Parameter] public EventCallback<int> Open { get; set; }
+}

@@ -1,0 +1,35 @@
+﻿<FluentCard>
+    @switch (QType)
+    {
+        case QuestionType.SC:
+            <Test_choise Type="@("radio")" Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.MC:
+            <Test_choise Type="@("checkbox")" Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.TF:
+            <Test_TF Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.Open:
+            <Test_open Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.Seq:
+            <Test_sequence Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.Pair:
+            <Test_pair Answers="Answers" IsCheck="false" IsChecked="true" />
+            break;
+        case QuestionType.Comp:
+            <Test_comp Answers="Answers" Texts="@Texts" IsCheck="false" IsChecked="true" />
+            break;
+        default:
+            <p>Nem tudom mi történt!</p>
+            break;
+    }
+</FluentCard>
+
+@code {
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
+    [Parameter] public QuestionType QType { get; set; }
+    [Parameter] public string Texts { get; set; } = string.Empty;
+}

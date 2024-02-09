@@ -31,16 +31,21 @@
                     Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
                 </p>
                 <p style="padding: 5px;margin-bottom: 0px;">
-                    Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time)</strong>
+                    Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time.ToTime())</strong>
                 </p>
             </FluentStack>
         </FluentStack>
+        <FluentLabel Typo="Typography.H5">
+            <span title="Teszttel készen van" style="color:green;">@TestItem.Ready</span>/
+            <span title="Nem kezdte el a tesztett" style="color:red;">@TestItem.NotActive</span>/
+            <span title="Összes tesztíró"><b> @TestItem.All</b></span>
+        </FluentLabel>
         <FluentButton OnClick="@(() => Result.InvokeAsync(TestItem))">Eredmények</FluentButton>
 }
 
 @code{
     [Parameter]
-    public Test? TestItem { get; set; }
+    public ActiveTestView? TestItem { get; set; }
     [Parameter]
     public EventCallback<Test> Result { get; set; }
 }

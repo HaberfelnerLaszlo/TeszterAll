@@ -1,11 +1,8 @@
-﻿@if (QView is not null)
-{
-<FluentLabel>@((MarkupString)QView.QuestionText)</FluentLabel>
-<hr/>
-@if (QView.Answers is not null)
+﻿
+@if (Answers is not null)
 {
     <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
-        @foreach (var answer in QView.Answers)
+        @foreach (var answer in Answers)
         {
             <FluentStack HorizontalAlignment="HorizontalAlignment.Start">
 
@@ -24,26 +21,26 @@
             </FluentStack>
         }
     </FluentStack>
+    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
+                Ellenőrzés
+            </FluentButton>
+        }
+        @if (Next.HasDelegate)
+        {
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@(()=>Next.InvokeAsync(Answers))">
+                Következő
+            </FluentButton>
+        }
+    </div>
 }
-<div class="container text-center">
-    @if (IsCheck)
-    {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
-            Ellenőrzés
-        </FluentButton>
-    }
-    @if (Next.HasDelegate)
-    {
-        <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
-            Következő
-        </FluentButton>
-    }
-</div>
-}
+
 @code {
-    [Parameter] public QuestionView? QView { get; set; }
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
 }

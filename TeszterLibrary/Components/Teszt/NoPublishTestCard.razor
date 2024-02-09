@@ -1,0 +1,37 @@
+﻿@if (TestItem is not null)
+{
+    <FluentStack Orientation="Orientation.Horizontal">
+            <h3>
+                @TestItem.Title
+            </h3>
+    </FluentStack>
+    <FluentStack Orientation="Orientation.Horizontal">
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
+            </p>
+            <p id="date" class="end_date" style="margin: 10px;">
+                Kérdések száma:&nbsp;<wbr><strong>@TestItem.TestQuestions.Count db</strong>
+            </p>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
+            </p>
+            <p style="padding: 5px;margin-bottom: 0px;">
+                Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time.ToTime())</strong>
+            </p>
+        </FluentStack>
+    </FluentStack>
+    <FluentStack>
+        <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size20.SendCopy())" OnClick="@(() => Publish.InvokeAsync(TestItem))">Teszt közzététele</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" BackgroundColor="green" IconEnd="@(new Icons.Regular.Size20.DocumentEdit())" OnClick="@(() => Edit.InvokeAsync(TestItem))">Teszt szerkesztése</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" BackgroundColor="red" IconEnd="@(new Icons.Regular.Size20.Delete())" OnClick="@(() => Delete.InvokeAsync(TestItem))">Teszt törlése</FluentButton>
+    </FluentStack>
+}
+@code {
+    [Parameter] public Test TestItem { get; set; } = new();
+    [Parameter] public EventCallback<Test> Publish { get; set; }
+    [Parameter] public EventCallback<Test> Edit { get; set; }
+    [Parameter] public EventCallback<Test> Delete { get; set; }
+}

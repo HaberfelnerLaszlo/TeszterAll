@@ -2,16 +2,19 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject TestUserServices tuService
+
 <h3>StudentTests</h3>
 <p hidden="@noError">@errorMessage</p>
 @if (tests!=null && tests.Any())
 {
-	foreach (var item in tests)
-	{
+    <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+        @foreach (var item in tests)
+        {
         <FluentCard Width="450px">
             <TestViewCard TestItem="@item" Start="@TestStart" />
         </FluentCard>
-    }
+        }
+    </FluentStack>
 }
 @code {
     private List<TestView> tests = new();
@@ -23,8 +26,8 @@
     /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
-        //tests = await tuService.GetTests(Guid.Parse(data.UserId));
-        tests = await tuService.GetTests(Guid.Parse("6392352e-69b8-42ac-8f9c-3f92297e54c8"));
+        tests = await tuService.GetTests(Guid.Parse(data.UserId));
+        //tests = await tuService.GetTests(Guid.Parse("6392352e-69b8-42ac-8f9c-3f92297e54c8"));
         if (tests == null)
         {
             noError = false;
@@ -38,7 +41,7 @@
     }
     void TestStart(TestView test)
     {
-        data.Test = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title };
+        data.Test = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title, Time=test.Time };
         navi.NavigateTo($"runtest/{test.TestUserId}");
     }
 }

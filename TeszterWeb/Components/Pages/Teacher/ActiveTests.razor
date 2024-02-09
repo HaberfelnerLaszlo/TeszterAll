@@ -4,10 +4,12 @@
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
 @inject TestServices tService
+@inject TestQuestionServices tqService
 @inject ILogger<ActiveTests> _logger
+
 <h3>Aktív Tesztek</h3>
 <p hidden="noError">@errorMessage</p>
-@if (tests!=null && tests.Count > 0)
+@if (tests != null && tests.Count > 0)
 {
     <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
         @foreach (var item in tests)
@@ -25,7 +27,7 @@ else
     </div>
 }
 @code {
-    private List<Test> tests = new();
+    private List<ActiveTestView> tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
     protected override async Task OnInitializedAsync()
@@ -40,12 +42,19 @@ else
         tests = await tService.GetActiveTests(Guid.Parse(data.UserId));
         if (tests is null)
         {
-            errorMessage = "Nincs a felhasználónak tesztje";
+            errorMessage = "Nincs a felhasználónak tesztje. vagy " + tService.ErrorMessage;
             StateHasChanged();
         }
     }
-    void ViewResult(Test test)
+    async Task ViewResult(Test test)
     {
+        List<TestQuestion> questions = await tqService.GetTestQuestions(test.Id);
+        if (questions is null)
+        {
+            return;
+        }
+        data.Test = new() { Id = test.Id, Title = test.Title, EndTime = test.EndTime, TestQuestions = questions };
+        navi.NavigateTo("resultTest");
 
     }
 }

@@ -1,0 +1,113 @@
+﻿@using TeszterLibrary.Components
+@using TeszterLibrary.Extensions
+@inject IDialogService DialogService
+
+<FluentDataGrid Items="@UserResults.AsQueryable()">
+    <PropertyColumn Property="@(c=>c.UserName)" Sortable="true" Title="Kitöltő neve" />
+    <PropertyColumn Property="@(c=>c.MinTime.ToTime())" Sortable="true" />
+    <PropertyColumn Property="@(c=>c.MaxTime.ToTime())" Sortable="true" />
+    <PropertyColumn Property="@(c=>c.MinScore)" Sortable="true" />
+    <PropertyColumn Property="@(c=>c.MaxScore)" Sortable="true" />
+    <PropertyColumn Property="@(c=>c.ReplaceNumber)" Sortable="true" Title="@("Ismétlések")" />
+    <PropertyColumn Property="@(c=>c.NoDecided.Count)" Sortable="true" Title="Szükséges beavatkozás" />
+    <TemplateColumn Title="Művelet">
+        <FluentButton Appearance="Appearance.Accent" @onclick="@(() => ViewAnswer(context))">Válaszok</FluentButton>
+    </TemplateColumn>
+</FluentDataGrid>
+@if (questionResult.Any())
+{
+    foreach (var qR in questionResult)
+    {
+        <FluentCard>
+            @if (qR.Type == QuestionType.Comp)
+            {
+                <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+            }
+            else
+            {
+                <FluentLabel>@((MarkupString)qR.QText)</FluentLabel>@activeid
+            }
+        <FluentTabs @bind-ActiveTabId="@activeid" OnTabChange="HandleOnTabChange">
+            @foreach (var answers in qR.ViewAnswers)
+            {
+                @if (qR.NoDecided.Contains(answers.Id))
+                {
+                    <FluentTab Id="@("tab-" + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Icons.Regular.Size20.ArrowDownExclamation()">
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
+                            <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
+                            <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Ok(answers,qR)">Elfogadva</FluentButton>
+                        </FluentStack>
+                        <ViewAnswerResult Answers="answers.Answers" QType="qR.Type" Texts="@qR.QText" />
+                    </FluentTab>
+                }
+                else
+                {
+                    <FluentTab Id="@("tab-" + tabindex.ToString())" Label="@answers.ReplaceN.ToString()">
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
+                            <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
+                            <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
+                        </FluentStack>
+                        <ViewAnswerResult Answers="answers.Answers" QType="qR.Type" Texts="@qR.QText" />
+                    </FluentTab>
+                }
+                tabindex ++;
+            }
+        </FluentTabs>
+        </FluentCard>
+    }
+}
+@code {
+    [Parameter] public List<UserResultToTeacher> UserResults { get; set; }
+    [Parameter] public List<TestQuestion> TestQuestions { get; set; }
+    [Parameter] public EventCallback<QuestionResult> Update { get; set; }
+    List<ViewResult> questionResult = new();
+    string? activeid = "tab-1";
+    FluentTab? changedto;
+    int tabindex = 1;
+
+    private void HandleOnTabChange(FluentTab tab)
+    {
+        changedto = tab;
+    }
+    void ViewAnswer(UserResultToTeacher userResult)
+    {
+        questionResult.Clear();
+        foreach (var tq in TestQuestions)
+        {
+            ViewResult result = new ViewResult(tq.Question.Text, tq.Question.QType,tq.Score, userResult.UserAnswers.Where(r => r.TestQuestionId == tq.Id).ToList(), userResult.NoDecided);
+            questionResult.Add(result);
+        }
+    }
+    private record ViewResult(string QText, QuestionType Type,int QScore, List<QuestionResult> ViewAnswers, List<int>? NoDecided);
+    async void Change(QuestionResult data,ViewResult viewResult)
+    {
+        // Create a new instance of DialogData
+        // to allow the user to cancel the update
+        var rn = data.ReplaceN;
+        data.ReplaceN = viewResult.QScore;
+        var dialog = await DialogService.ShowDialogAsync<ScoreUpdateDialog>(data, new DialogParameters()
+        {
+            Height = "240px",
+            Title = $"{rn}. sorozat pontszámának módosítása",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var updated = (QuestionResult)result.Data;
+            updated.ReplaceN = rn;
+            viewResult.NoDecided?.Remove(data.Id);
+            await Update.InvokeAsync(updated);
+        }
+    }
+    void Ok(QuestionResult data, ViewResult viewResult)
+    {
+        viewResult.NoDecided?.Remove(data.Id);
+        Update.InvokeAsync(data);
+    }
+}

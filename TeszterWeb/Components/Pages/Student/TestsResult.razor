@@ -1,0 +1,61 @@
+﻿@page "/student/testsResult"
+@using TeszterLibrary.ViewModel.Test
+@using Microsoft.Identity.Web
+@using Microsoft.Graph.Models
+@inject GlobalData data
+@inject NavigationManager navi
+@inject TestUserServices tuService
+@inject Microsoft.Graph.GraphServiceClient GraphServiceClient
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+
+<h3>Lezárt tesztek</h3>
+@if (noError)
+{
+    <FluentStack Orientation=" Orientation.Horizontal" Wrap="true">
+        @foreach (var test in tests)
+        {
+            <TestResultToStudentCard TestResult="test" Open="OpenResult" />
+        }
+    </FluentStack>
+}
+else
+{
+    <p>@errorMessage</p>
+}
+@code {
+    List<TestResultToStudent> tests = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(data.UserId))
+        {
+            try
+            {
+                var user = await GraphServiceClient.Education.Me.GetAsync();
+                if (user is not null)
+                {
+                    data.UserId = user.Id ?? throw new ArgumentNullException(nameof(user));
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsentHandler.HandleException(ex);
+            }
+
+        }
+        tests = await tuService.GetReadyTests(Guid.Parse(data.UserId));
+        if (tests is null)
+        {
+            noError = false;
+            errorMessage = "Nincs még befejezett teszted!";
+        }
+    }
+    private async void OpenResult(int tUserId)
+    {
+        data.TestResults = await tuService.GetTestQuestions(tUserId) ?? new();
+        navi.NavigateTo($"student/testresult/{tUserId}");
+    }
+
+}

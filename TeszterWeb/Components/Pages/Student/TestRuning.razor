@@ -1,6 +1,5 @@
 ﻿@layout TeszterWeb.Components.Layout.TestLayout
 @page "/runtest/{id:int}"
-@using TeszterLibrary.Extensions
 @inject GlobalData data
 @inject NavigationManager navi
 @inject TestUserServices tuService
@@ -29,7 +28,7 @@
         }
         @if (data.Test.IsCheck)
         {
-            <span>A teszt kérdések helyessége lekérdezhető.</span>
+            <span>A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
         }
         <hr />
 <FluentButton Appearance="Appearance.Accent" Color="yellow" OnClick="StartTest">A teszt elkezdése</FluentButton>
@@ -53,7 +52,7 @@ else
         }
         base.OnInitialized();
     }
-    async Task StartTest()
+    void StartTest()
     {
         testStart = true;
         StateHasChanged();
@@ -63,10 +62,10 @@ else
         testStart = false;
         testEnd = true;
         data.TestResults = questions.ToList();
-        StateHasChanged();
+        //StateHasChanged();
     }
     void ResultView()
     {
-        navi.NavigateTo("testResult");//Todo: Eredmények megtekintésére lehet majd tovább menni.
+        navi.NavigateTo("student/testResult");//Todo: Eredmények megtekintésére lehet majd tovább menni.
     }
 }

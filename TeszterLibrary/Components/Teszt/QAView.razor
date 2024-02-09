@@ -13,31 +13,40 @@
                           OnClick="@(OnDelete)"
                           Style="position:absolute; top:5px; right:5px;" />
         </FluentStack>
+        @if (question.QType == QuestionType.Comp)
+        {
+            <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+        }
+        else
+        {
+            <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
+        }
+        <hr />
         @switch (question.QType)
         {
             case QuestionType.SC:
-                <Test_choise Type="@("radio")" QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_choise Type="@("radio")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.MC:
-                <Test_choise Type="@("checkbox")" QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_choise Type="@("checkbox")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.TF:
-                <Test_TF QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_TF Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.Open:
-                <Test_open QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_open Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.Seq:
-                <Test_sequence QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
+                <Test_sequence Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
                 break;
             case QuestionType.Pair:
-                <Test_pair Question="questionView" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
+                <Test_pair Answers="questionView.Answers" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
                 break;
             case QuestionType.Comp:
-                <Test_comp QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             default:
-                <p>Nem tudom mi történt!</p>
+                <p>Nem tudom mi történt! @questionView.QuestionType.ToAttributeValue()</p>
                 break;
         }
     </FluentCard>
@@ -99,11 +108,11 @@
             //}
             return base.OnInitializedAsync();
         }
-        private void Check(QuestionView? questionView)
+        private void Check(List<AnswerView>? answerView)
         {
-            if (questionView != null && questionView.Answers != null)
+            if (answerView != null)
             {
-                answers = questionView.Answers;
+                answers = answerView;
             }
             IsChecking = true;
             switch (question.QType)

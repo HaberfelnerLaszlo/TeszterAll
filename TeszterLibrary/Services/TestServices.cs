@@ -1,5 +1,6 @@
 ﻿
 using TeszterLibrary.Model;
+using TeszterLibrary.ViewModel.Test;
 
 namespace TeszterLibrary.Services
 {
@@ -59,9 +60,14 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="uId">Tesztkészítő azonosító</param>
         /// <returns></returns>
-        public async Task<List<Test>> GetNoPublished(Guid uId)
+        public async Task<List<Test>?> GetNoPublished(Guid uId)
         {
             var list = await  _service.Get < List<Test>>($"Test/NoPublish/{uId}");
+            if (list is null)
+            {
+                ErrorMessage = _service.ErrorMessage;
+                return null;
+            }
             return list;
         }
         /// <summary>
@@ -69,9 +75,14 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="uId">Tesztkészítő azonosítója</param>
         /// <returns></returns>
-        public async Task<List<Test>> GetActiveTests(Guid uId)
+        public async Task<List<ActiveTestView>?> GetActiveTests(Guid uId)
         {
-            var list = await _service.Get<List<Test>>($"Test/Active/{uId}");
+            var list = await _service.Get<List<ActiveTestView>>($"Test/Active/{uId}");
+            if ( list is null ||!list.Any())
+            {
+                ErrorMessage=_service.ErrorMessage; 
+                return null;
+            }
             return list;
         }
         /// <summary>
@@ -79,9 +90,14 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="uId">Tesztkészítő azonosító</param>
         /// <returns></returns>
-        public async Task<List<Test>> GetClosedTests(Guid uId)
+        public async Task<List<TestResultToTeacher>?> GetClosedTests(Guid uId)
         {
-            var list = await _service.Get<List<Test>>($"Test/Closed/{uId}");
+            var list = await _service.Get<List<TestResultToTeacher>>($"Test/Closed/{uId}");
+            if ( list is null ||!list.Any())
+            {
+                ErrorMessage=_service.ErrorMessage; 
+                return null;
+            }
             return list;
         }
         /// <summary>
@@ -102,9 +118,10 @@ namespace TeszterLibrary.Services
                 return null;
             }
         }
-        public async Task DeleteTestAsync(int id)
+        public async Task<bool> DeleteTestAsync(int id)
         {
             var response=await _service.Delete($"Test/{id}"); //TODO Sikertelenség esetén teendők
+            return response;
         }
         public async Task<Test> UpdateTestAsync(Test test)
         {

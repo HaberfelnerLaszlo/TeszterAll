@@ -1,32 +1,46 @@
-﻿using TeszterLibrary.Model;
+﻿using Microsoft.Extensions.Logging;
+
+using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services
 {
 	public class SubjectServices
 	{
 		private readonly TeszterApiService _service;
-			public SubjectServices(TeszterApiService service)
+		private readonly ILogger<SubjectServices> _logger;
+		public string ErrorMessage = string.Empty;
+        public SubjectServices(TeszterApiService service, ILogger<SubjectServices> logger)
+        {
+            _service = service;
+            _logger = logger;
+        }
+        public async Task<List<Subject?>?> GetSubjects()
 		{
-			_service = service;
+			var response=await _service.Get<List<Subject?>?>("Subject");
+			if (response == null) { ErrorMessage=_service.ErrorMessage; return null; }
+			return response;
 		}
-		public async Task<List<Subject>> GetSubjects()
-		{
-			return await _service.Get<List<Subject>>("Subject");
-	   }
-		public async Task<Subject> AddSubjectsAsync(Subject subject)
+		public async Task<Subject?> AddSubjectsAsync(Subject subject)
 		{
 			try
 			{
 				var v= await _service.Post("Subject",subject);
+				if (v is null)
+				{
+					ErrorMessage = _service.ErrorMessage;
+					_logger.LogWarning(ErrorMessage);
+					return null;
+				}
 				return v;
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
+				ErrorMessage = e.Message;
+				_logger.LogError(ErrorMessage,e);
 				return null;
-				throw;
 			}
 		}
-		public async Task<Subject> UpdateSubjectAsync(Subject subject)
+		public async Task<Subject?> UpdateSubjectAsync(Subject subject)
 		{
 			try
 			{

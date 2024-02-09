@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace TeszterLibrary.Models
+namespace TeszterLibrary.Model
 {
 	/// <summary>
 	/// Az adott teszt felhasználó válaszait menti

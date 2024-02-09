@@ -1,0 +1,92 @@
+﻿@page "/subject"
+@using TeszterLibrary.Components
+
+@inject SubjectServices sService
+@inject IToastService tService
+@inject IDialogService dService
+<h3>SubjectView</h3>
+<FluentDataGrid Items="@subjects.AsQueryable()">
+    <PropertyColumn Property="c=>c.Name" Title="Tantárgy neve"></PropertyColumn>
+    <TemplateColumn Title="Műveletek">
+        <FluentButton Appearance="Appearance.Neutral" BackgroundColor="#009973" Color="white" OnClick="()=>Edit(context)">Szerkesztés</FluentButton>
+        <FluentButton Appearance="Appearance.Neutral" BackgroundColor="#ff1a1a" Color="white" OnClick="()=>Delete(context)">Törlés</FluentButton>
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentStack>
+    <FluentTextField @bind-Value="@newSubject" Placeholder="Új tantárgy neve..."></FluentTextField>
+    <FluentButton OnClick="Add">Új</FluentButton>
+</FluentStack>
+@code {
+    List<Subject> subjects = new();
+    bool noError = true;
+    string errorMessage = string.Empty, newSubject = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        subjects = await sService.GetSubjects();
+        if (subjects is null)
+        {
+            noError = false;
+            errorMessage = "Nincs tantárgy";
+            tService.ShowInfo(errorMessage);
+        }
+    }
+    async void Add()
+    {
+        var subject = await sService.AddSubjectsAsync(new() { Name = newSubject });
+        if (subject is null)
+        {
+            noError = false;
+            errorMessage = $"Nem sikerült menteni a {newSubject} tantárgyat";
+            tService.ShowError(errorMessage);
+            return;
+        }
+        subjects.Add(subject);
+        tService.ShowInfo($"{subject.Name} tantárgy mentésre került.");
+        newSubject = string.Empty;
+        StateHasChanged();
+    }
+    async void Edit(Subject subject)
+    {
+        var data = new Subject();
+        data = subject;
+        var dialog = await dService.ShowDialogAsync<EditSubjectDialog>(data, new DialogParameters()
+    {
+        Height = "240px",
+        Title = $"{subject.Id}.tantárgy módosítása",
+        PreventDismissOnOverlayClick = true,
+        PreventScroll = true,
+    });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            data = await sService.UpdateSubjectAsync((Subject)result.Data);
+            if (data is null)
+            {
+                noError = false;
+                errorMessage = $"Nem sikerült módosítani a {subject} tantárgyat";
+                tService.ShowError(errorMessage);
+                return;
+            }
+            StateHasChanged();
+        }
+
+    }
+    async void Delete(Subject subject)
+    {
+        try
+        {
+            if (subject is not null)
+            {
+                await sService.DeleteSubjectAsync(subject);
+                subjects.Remove(subject);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            tService.ShowError(e.Message);
+            return;
+        }
+    }
+    }
