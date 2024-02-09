@@ -1,19 +1,27 @@
 ﻿@page "/counter"
-@rendermode InteractiveServer
+@inject IToastService ToastService
 
 <PageTitle>Counter</PageTitle>
 
 <h1>Counter</h1>
 
 <p role="status">Current count: <FluentBadge Appearance="Appearance.Neutral">@currentCount</FluentBadge></p>
-
+<p>@uzenet</p>
 <FluentButton Appearance="Appearance.Accent" @onclick="IncrementCount">Click me</FluentButton>
-<DragAndDropTest/>
+<DragAndDropTest />
+<NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="ConfirmNav" />
 @code {
     private int currentCount = 0;
-
+    string uzenet = string.Empty;
     private void IncrementCount()
     {
         currentCount++;
+    }
+    void ConfirmNav(LocationChangingContext context)
+    {
+        uzenet = context.TargetLocation;
+        ToastService.ShowInfo(uzenet);
+        ToastService.ShowToast(ToastIntent.Info, uzenet,5000);
+        Task.Delay(5000);
     }
 }

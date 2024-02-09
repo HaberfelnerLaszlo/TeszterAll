@@ -6,9 +6,9 @@ namespace TeszterWeb.Data
 {
     public class GlobalData
     {
-        private string _userId = string.Empty;
+        private string? _userId = string.Empty;
 
-        public string UserId
+        public string? UserId
         {
             get => _userId;
             set

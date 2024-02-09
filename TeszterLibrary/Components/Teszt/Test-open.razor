@@ -1,45 +1,47 @@
-﻿@if (QView is not null)
+﻿@if (Answers is not null)
 {
-    <FluentLabel>@QView.QuestionText</FluentLabel>
-    <hr />
-    <FluentDivider/>
     <div class="container">
-        @foreach (var answer in QView.Answers)
-        {
-            <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@("Válasz helye...")" Value="@answer.Text" ReadOnly="@(!Next.HasDelegate)" />
-            @if (IsChecked)
+            @foreach (var answer in Answers)
             {
-                if (answer.Result)
+                <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@("Válasz helye...")" Value="@answer.Text" ReadOnly="@(!Next.HasDelegate)" ValueChanged="@((e)=>answer.Text=e)" />
+                @if (IsChecked)
                 {
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
-                }
-                else
-                {
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                    if (answer.Result)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                    }
                 }
             }
-        }
     </div>
     <div class="container text-center">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
                 Ellenőrzés
             </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-            <FluentButton Appearance="Appearance.Filled" OnClick="@(()=>Next.InvokeAsync(QView))">
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@(()=>Next.InvokeAsync(Answers))">
                 Következő
             </FluentButton>
         }
     </div>
 }
 @code {
-    [Parameter] public QuestionView? QView { get; set; }
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
-    void Send() => Next.InvokeAsync(QView);
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
+    string answerText = string.Empty;
+    protected override void OnParametersSet()
+    {
+        answerText = Answers[0].Text;
+        base.OnParametersSet();
+    }
 }

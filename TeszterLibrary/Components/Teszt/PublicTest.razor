@@ -1,6 +1,5 @@
 ﻿@using Microsoft.Graph.Models
 @using Microsoft.Graph;
-@using Microsoft.Kiota.Abstractions.Authentication;
 @using TeszterLibrary.Services;
 @inject GraphService gService
 @inject TestServices tService
@@ -8,8 +7,6 @@
 @inject EduUserServices uService
 <EditForm Model="@Teszt" OnValidSubmit="Publish">
 	<div class="form-group">
-		@*<label for="Title">Teszt címe: </label>
-		<InputText id="Title" @bind-Value="@Teszt.Title"></InputText>*@
 		<FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:"/>
 	</div>
 	<hr />
@@ -21,23 +18,12 @@
 	</div>
 	<hr />
     <div class="form-group">
-        @*<label class="m-1" for="praktise"> </label>
-        <InputCheckbox id="praktise" class="m-1" @bind-Value=""></InputCheckbox>*@
         <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
         <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
         <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
         <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" Value=@Teszt.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
         <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50"/>
-        @*<label class="m-1" for="praktise">Tanuló ellenőrizheti? </label>
-        <InputCheckbox id="praktise" class="m-1" @bind-Value="Teszt.IsCheck"></InputCheckbox>
-        <label class="m-1" for="timer">Válasz időre megy? </label>
-        <InputCheckbox id="timer" class="m-1" @bind-Value="Teszt.IsTimer"></InputCheckbox>
-        <label class="m-1" for="Replace">Hányszor ismételhető? </label>
-        <InputNumber id="Replace" class="m-1" @bind-Value="Teszt.ReplaceNumber"></InputNumber>*@
     </div>
-	@*<div style="margin-top: 1rem">
-		<label>Kérdések keverése </label>
-	</div>*@
 	<hr />
     <InputSelect class="m-1 m-lg-2" TValue="string" Value="SelectGroupId" ValueExpression="@(()=>SelectGroupId)" ValueChanged="SelectGroup">
 		<option value="">Válasz csoportot...</option>
@@ -49,45 +35,15 @@
  	<hr />
 	@if (Members.Count > 0 || TestMembers.Count > 0)
 	{
-		@*<div class="row">
-
-			<div class="col-lg-4 bg-dark text-white text-center">
-				Csoport tagjai
-			</div>
-			<div class="col-4 offset-2 bg-success text-center">
-				Tesztet ír
-			</div>
-		</div>*@
         <div class="row">
             <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír">
                 <SourceContent>@list.DisplayName</SourceContent>
                 <TargetContent>@list.DisplayName</TargetContent>
             </DragDropToList>
-            @*<!--<Plk.Blazor.DragDrop.Dropzone Class="col-lg-4 bg-light" TItem="EducationUser" Items="Members" Context="member" OnItemDrop="@((i)=>lastdropped = i)">
-            <div class="p-1" style="border: 2px solid black;">-->
-                <!--!-->
-                <!--@member.DisplayName
-            </div>
-        </Plk.Blazor.DragDrop.Dropzone>
-        <div class="col-2 bg-white text-center">
-            <button class="btn btn-block" @onclick="All" disabled="@BtnDidabled">Mindenki</button>
-            <button class="btn btn-block" @onclick="Reverse" disabled="@(!BtnDidabled)">Senki sem</button>
-        </div>
-
-        <Plk.Blazor.DragDrop.Dropzone Class="col-4 bg-light" TItem="EducationUser" Items="TestMembers" Context="testmember" OnItemDrop="@((i)=>lastdropped = i)">
-
-            <div class="p-1" style="border: 2px solid black;">-->
-                <!--!-->
-                <!--@testmember.DisplayName
-            </div>
-        </Plk.Blazor.DragDrop.Dropzone>-->*@
         </div>
 
             }
-        <div class="m-2 row justify-content-center">
             <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
-           @* <button class="btn btn-group-vertical" type="submit">Közzététel</button>*@
-        </div>
 </EditForm>
 <div class="d-flex center">
 	<p>@message</p>

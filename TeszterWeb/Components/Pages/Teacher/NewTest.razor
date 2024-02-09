@@ -1,4 +1,5 @@
 ﻿@page "/newTest"
+@page "/newtest/{id:int}"
 @using Microsoft.Graph.Models
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
@@ -6,12 +7,13 @@
 @inject QuestionServices qService
 @inject SubjectServices sService
 @inject ILogger<NewTest> _logger
+@inject IToastService toastService
 <h3>Új teszt készítése</h3>
-@if (Questions.Count>0)
+@if (Questions is not null && Questions.Count>0)
 {
     if (data.Questions.Count > 0)
     {
-       <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" TesztQ=data.Questions.ToList() Publish="PublishTest"></AddTest>
+       <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" TesztQ=data.Questions.ToList() Publish="PublishTest" IsSaved="saved" TestId="Id"></AddTest>
     }
     else
     {
@@ -19,8 +21,10 @@
     }
 }
 @code {
-    private List<Question> Questions = new();
-    private List<Subject> Subjects = new();
+    [Parameter] public int Id { get; set; } = 0;
+    private List<Question>? Questions = new();
+    private List<Subject?>? Subjects = new();
+    bool saved=false;
     protected override async Task OnInitializedAsync()
     {
         try
@@ -28,22 +32,44 @@
             if (String.IsNullOrEmpty(data.UserId))
             {
                 var user = await GraphServiceClient.Me.GetAsync();
+                if (user is null || user.Id is null)
+                {
+                    toastService.ShowWarning("Hiba lépet fel a user.Id lekérdezésekor.");
+                    _logger.LogWarning("A userId lekérdezésénél hiba lépet fel.");
+                    return;
+                }
                 data.UserId = user.Id.ToString();
                 _logger.LogInformation($"Kértem új Id-t {data.UserId}");
             }
             Questions = await qService.GetQuestions(Guid.Parse(data.UserId));
-            if (data.Questions.Count > 0 && Questions.Count > 0)
+            if (Questions is not  null && Id > 0)
             {
-                foreach (var item in data.Questions)
+                saved = true;
+                if (data.Test.TestQuestions.Count>0)
                 {
-                    Questions.Remove(item);
+                    data.Questions.Clear();
+                    foreach (var q in data.Test.TestQuestions)
+                    {
+                        data.Questions.Add(Questions.FirstOrDefault(k => k.Id == q.QuestionId) ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
+                    }
+                }
+            }
+            if (data.Questions.Count > 0 && Questions is not null && Questions.Count > 0)
+            {
+                foreach (Question item in data.Questions)
+                {
+                    if (!Questions.Remove(item))
+                    {
+                        toastService.ShowWarning($"A {item.Id} kérdés nem törlődött.");
+                        _logger.LogWarning("A {item.Id} kérdés nem törlődött.", item.Id);
+                    }
                 }
             }
             Subjects = await sService.GetSubjects();
         }
         catch (Exception e)
         {
-            _logger.LogError("Hiba történt: " + e.Message);
+            _logger.LogError("Hiba történt: {e.Message}" ,e.Message);
             throw;
         }
     }

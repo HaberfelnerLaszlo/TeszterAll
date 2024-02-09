@@ -1,168 +1,177 @@
 ﻿@using TeszterLibrary.Services;
 
 @inject TestServices tService
+@inject TestQuestionServices tqService
+@inject IDialogService dialogService
+@inject IToastService toastService
 @inject Microsoft.Extensions.Logging.ILogger<AddTest> _logger
+    @*   <FluentAccordion>
+            <FluentAccordionItem Heading="Szűrő">
+                <QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
+            </FluentAccordionItem>
+        </FluentAccordion>*@
+    <FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--neutral-layer-3); height:100%;overflow:scroll;">
+        <FluentGridItem xs="12" Justify="JustifyContent.SpaceBetween">
+            <FluentStack>
+                <FluentTextField @bind-Value="@newTest.Title" Placeholder="Teszt címe..." Label="Teszt címe" />
+                <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy...">
+                </FluentCombobox>
+                <FluentButton Appearance="Appearance.Accent" OnClick="TestAdd">Mentés</FluentButton>
+            </FluentStack>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="7">
+            @if (TesztQ.Count != 0)
+            {
+                foreach (var tq in TesztQ)
+                {
+                    <QAView question="tq" Delete="DeleteQ" />
+                }
+            }
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="5">
+            @foreach (var question in questions)
+            {
+                <div style="position:relative; margin:5px 0">
+                    <Qview question="question"></Qview>
+                    <FluentButton Title="Teszthez add"
+                                  OnClick="@(() => AddQuestion(question))"
+                                  Style="position:absolute; top:70px; right:5px;"
+                                  IconStart="@(new Icons.Regular.Size16.AddCircle())" />
+                    <br>
+                    <FluentButton Title="Betekintés"
+                                  OnClick="@(() => ModalOpen(question))"
+                                  Style="position:absolute; top:35px; right:5px;"
+                                  IconStart="@(new Icons.Regular.Size16.Search())" />
+                </div>
+            }
+        </FluentGridItem>
+    </FluentGrid>
+    @code {
+        [Parameter] public List<Question> questions { get; set; } = new();
+        [Parameter] public List<Subject> subjects { get; set; } = new();
+        [Parameter] public List<Question> TesztQ { get; set; } = new();
+        [Parameter] public string UserId { get; set; } = string.Empty;
+        [Parameter] public EventCallback<Test> Publish { get; set; }
+        [Parameter] public bool IsSaved { get; set; }
+        [Parameter] public int TestId { get; set; } = 0;
 
-<Modal Show=showQDetail Accept="CloseModal" AcceptButtom="Bezár">
-    <HeaderContent>
-        A kérdés részletei
-    </HeaderContent>
-    <BodyContent>
-        <QAView question="detailQuestion" />
-    </BodyContent>
-</Modal>
-@* @if (publishing)
-    {
-    <PublicTest Test="newTest"></PublicTest>
-    }
-    else{
-    <FluentAccordion>
-        <FluentAccordionItem Heading="Szűrő">
-            <QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
-        </FluentAccordionItem>
-    </FluentAccordion>*@
-<FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--neutral-layer-3); height:100%;overflow:scroll;">
-    <FluentGridItem xs="12" Justify="JustifyContent.SpaceBetween">
-        <FluentStack>
-            <FluentTextField @bind-Value="@newTest.Title" Placeholder="Teszt címe..." Label="Teszt címe"/>
-            <FluentSelect Items="@subjects" TOption="Subject" OptionValue="t=>t.Name" OptionText="t=>t.Name" @bind-Value="newTest.Subject">
-            </FluentSelect>
-            <FluentButton Appearance="Appearance.Accent" OnClick="TestAdd">Mentés</FluentButton>
-        </FluentStack>
-    </FluentGridItem>
-    <FluentGridItem xs="12" sm="7">
-        @if (TesztQ.Count != 0)
+        private Test newTest = new();
+        private bool showQDetail = false;
+        private Question detailQuestion = new();
+        bool publishing = false;
+        private List<Question> allQuestions = new();
+        protected override void OnParametersSet()
         {
-            foreach (var tq in TesztQ)
+            if (questions.Count == 0 && allQuestions.Count > 0)
             {
-                <QAView question="tq" Delete="DeleteQ"/>
+                questions = allQuestions;
             }
+            else if (questions.Count > 0 && allQuestions.Count == 0)
+            {
+                allQuestions = questions;
+            }
+            if (IsSaved)
+            {
+                newTest.Id = TestId;
+            }
+            base.OnParametersSet();
         }
-    </FluentGridItem>
-    <FluentGridItem xs="12" sm="5">
-        @foreach (var question in questions)
-        {
-            <div style="position:relative; margin:5px 0">
-                <Qview question="question"></Qview>
-                <FluentButton Title="Teszthez add"
-                          OnClick="@(() => AddQuestion(question))"
-                          Style="position:absolute; top:70px; right:5px;"
-                          IconStart="@(new Icons.Regular.Size16.AddCircle())"/>
-                <br>
-                <FluentButton Title="Betekintés"
-                          OnClick="@(() => ModalOpen(question))"
-                          Style="position:absolute; top:35px; right:5px;"
-                          IconStart="@(new Icons.Regular.Size16.Search())"/>
-            </div>
-        }
-    </FluentGridItem>
-</FluentGrid>
-@code {
-    [Parameter] public List<Question> questions { get; set; } = new();
-    [Parameter] public List<Subject> subjects { get; set; } = new();
-    [Parameter] public List<Question> TesztQ { get; set; } = new();
-    [Parameter] public string UserId { get; set; } = string.Empty;
-    [Parameter] public EventCallback<Test> Publish { get; set; }
 
-    private Test newTest = new();
-    private bool showQDetail = false;
-    private Question detailQuestion = new();
-    bool isSaved = false;
-    bool publishing = false;
-    private List<Question> allQuestions = new();
-    protected override void OnParametersSet()
-    {
-        if (questions.Count == 0 && allQuestions.Count > 0)
+        private async void ModalOpen(Question q)
         {
-            questions = allQuestions;
-        }
-        else if (questions.Count > 0 && allQuestions.Count == 0)
-        {
-            allQuestions = questions;
-        }
-        base.OnParametersSet();
-    }
+            var data = q;
+            var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+            {
+                //Height = "350px",
+                Width = "75%",
+                Title = "A kérdés megtekintése",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
 
-    private void ModalOpen(Question q)
-    {
-        detailQuestion = q;
-        showQDetail = true;
-    }
-    private void CloseModal()
-    {
-        showQDetail = false;
-    }
-    private void AddQuestion(Question q)
-    {
-        if (string.IsNullOrEmpty(newTest.Subject))
-        {
-            newTest.Subject = q.Subject;
+            var result = await dialog.Result;
+            if (!result.Cancelled && result.Data != null)
+            {
+                q = (Question)result.Data;
+            }
         }
-        questions.Remove(q);
-        TesztQ.Add(q);
-    }
+        private void AddQuestion(Question q)
+        {
+            if (string.IsNullOrEmpty(newTest.Subject))
+            {
+                newTest.Subject = q.Subject;
+            }
+            else if (!newTest.Subject.Equals(q.Subject))
+            {
+                var subj = subjects.Find(s => s.Name == "Egyéb");
+                if (subj is null)
+                {
+                    subj = new() { Name = "Egyéb" };
+                    subjects.Add(subj);
+                }
+                newTest.Subject = subj.Name;
+            }
+            questions.Remove(q);
+            TesztQ.Add(q);
+        }
 
-    private async Task DeleteQ(Question question)
-    {
-        //var index = testQuestions.FindIndex(t => t.QuestionId == question.Id);
-        //if (index != -1)
-        //{
-        //    testQuestions.RemoveAt(index);
-        //    if (IsSaved)
-        //    {
-        //        await tqservice.DeleteTestQuestionAsync(question.Id, newTest.Id);
-        //    }
-        //}
-        TesztQ.Remove(question);
-        questions.Add(question);
-    }
-    private async Task SelectedSubject(ChangeEventArgs e)
-    {
+        private async Task DeleteQ(Question question)
+        {
+            if (IsSaved)
+            {
+                if(await tqService.DeleteTestQuestionAsync(question.Id, newTest.Id)) { toastService.ShowSuccess($"A {question.Id} kérdés törölve."); }
+                else { toastService.ShowWarning($"A {question.Id} kérdés {newTest.Id} tesztből nem törlődött. Hiba: {tqService.ErrorMessage}"); return; }
+            }
+            TesztQ.Remove(question);
+            questions.Add(question);
+        }
+        private void SelectedSubject(ChangeEventArgs e)
+        {
 
-        if (e.Value != null)
+            if (e.Value != null)
+            {
+                newTest.Subject = e.Value.ToString() ?? string.Empty;
+            }
+        }
+        private async Task TestAdd()
         {
-            newTest.Subject = e.Value.ToString() ?? string.Empty;
+            try
+            {
+                newTest.CreatedBy = Guid.Parse(UserId);
+                if (newTest.TestQuestions is null)
+                {
+                    newTest.TestQuestions = new();
+                }
+                else
+                {
+                    newTest.TestQuestions.Clear();
+                }
+                foreach (var item in TesztQ)
+                {
+                    newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
+                    newTest.Summa += item.Score;
+                    newTest.Time += item.Time;
+                }
+                if (IsSaved)
+                {
+                    var responde = await tService.UpdateTestAsync(newTest);
+                }
+                else
+                {
+                    newTest = await tService.AddTest(newTest);
+                    IsSaved = true;
+                }
+                TesztQ.Clear();
+                await Publish.InvokeAsync(newTest);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+        void OnBreakpointEnterHandler(GridItemSize size)
+        {
+            Console.WriteLine($"Page Size: {size}");
         }
     }
-    private async Task TestAdd()
-    {
-        try
-        {
-            newTest.CreatedBy = Guid.Parse(UserId);
-            if (newTest.TestQuestions is null)
-            {
-                newTest.TestQuestions = new();
-            }
-            else
-            {
-                newTest.TestQuestions.Clear();
-            }
-            foreach (var item in TesztQ)
-            {
-                newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
-                newTest.Summa += item.Score;
-                newTest.Time += item.Time;
-            }
-            if (isSaved)
-            {
-                var responde = await tService.UpdateTestAsync(newTest);
-            }
-            else
-            {
-                newTest = await tService.AddTest(newTest);
-                isSaved = true;
-            }
-            TesztQ.Clear();
-            await Publish.InvokeAsync(newTest);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            throw;
-        }
-    }
-    void OnBreakpointEnterHandler(GridItemSize size)
-    {
-        Console.WriteLine($"Page Size: {size}");
-    }
-}

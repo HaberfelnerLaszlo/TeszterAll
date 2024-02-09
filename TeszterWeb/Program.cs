@@ -47,9 +47,11 @@ builder.Services.AddSingleton<TestServices>();
 builder.Services.AddSingleton<QuestionServices>();
 builder.Services.AddSingleton<SubjectServices>();
 builder.Services.AddSingleton<TestUserServices>();
+builder.Services.AddSingleton<TestQuestionServices>();
+builder.Services.AddSingleton<TestQuestionUserServices>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();
-//builder.Services.AddSingleton<GlobalData>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

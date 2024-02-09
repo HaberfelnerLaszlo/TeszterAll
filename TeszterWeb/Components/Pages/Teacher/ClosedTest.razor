@@ -2,29 +2,48 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject TestServices tService
-<h3>Lezárt Tesztek</h3>
-@if (tests is null)
+@inject TestQuestionServices tqService
+@if (noError)
 {
-    <p>Tesztek betöltése folyamatban...</p>
-    <Waiting/>
+    <h3>Lezárt Tesztek</h3>
+    @if (tests is null)
+    {
+        <p>Tesztek betöltése folyamatban...</p>
+        <Waiting />
+    }
+    else
+    {
+        <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
+            @foreach (var item in tests)
+            {
+                <FluentCard Width="450px">
+                    <ClosedTestCard TestItem="item" Result="TestResult" />
+                </FluentCard>
+            }
+        </FluentStack>
+    }
 }
 else
 {
-    <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
-    @foreach (var item in tests)
-    {
-        <TestCard TestItem="item" Result="TestResult"/>
-    }
-    </FluentStack>
+    <FluentLabel Typo="Typography.Header" Color="Color.Error">@errorMessage</FluentLabel>
 }
 @code {
-    List<Test> tests = new();
+    List<TestResultToTeacher> tests = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+
     protected override async Task OnInitializedAsync()
     {
         tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
     }
-    private void TestResult(Test test)
+    private async void TestResult(TestResultToTeacher test)
     {
-        data.Test = test;
+        List<TestQuestion> questions = await tqService.GetTestQuestions(test.TestId);
+        if (questions is null)
+        {
+            return;
+        }
+        data.Test = new() { Id = test.TestId, Title = test.Title, EndTime = test.EndTime, TestQuestions = questions };
+        navi.NavigateTo("resultTest");
     }
 }

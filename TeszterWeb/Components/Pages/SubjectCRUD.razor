@@ -1,0 +1,110 @@
+﻿@page "/subject"
+
+@inject SubjectServices sService
+@inject IDialogService DialogService
+@inject IToastService ToastService
+<h3>Tantárgyak karbantartása</h3>
+@if (noError)
+{
+    <FluentDataGrid Items="@FilteredItems" Pagination="@pagination">
+        <PropertyColumn Property="c=>c.Name" Title="Tantárgy neve">
+            <ColumnOptions>
+                <div class="search-box">
+                    <FluentSearch type="search" Autofocus=true @bind-Value=nameFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Tantárgy neve..." />
+                </div>
+            </ColumnOptions>
+        </PropertyColumn>
+        <TemplateColumn Title="Műveletek">
+            <FluentButton OnClick="()=>Edit(context)">Szerkesztés</FluentButton>
+            <FluentButton OnClick="()=>Delete(context)">Törlés</FluentButton>
+        </TemplateColumn>
+    </FluentDataGrid>
+    <FluentTextField @bind-Value="@subjectName" />
+    <FluentButton OnClick="NewSubject">Új tantárgy</FluentButton>
+}
+else
+{
+    <FluentLabel>@errorMessage</FluentLabel>
+}
+@code {
+    List<Subject> subjects = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    string nameFilter = string.Empty, subjectName = string.Empty;
+    IQueryable<Subject>? FilteredItems => subjects?.Where(x => x.Name.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)).AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        subjects = await sService.GetSubjects();
+        if (subjects is null)
+        {
+            noError = false;
+            errorMessage = sService.ErrorMessage;
+        }
+    }
+    private void HandleSubjectFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            nameFilter = value;
+        }
+    }
+
+    private void HandleClear()
+    {
+        if (string.IsNullOrWhiteSpace(nameFilter))
+        {
+            nameFilter = string.Empty;
+        }
+    }
+    private async void Edit(Subject subject)
+    {
+        // Create a new instance of DialogData
+        // to allow the user to cancel the update
+        var data = subject;
+        var dialog = await DialogService.ShowDialogAsync<SubjectDialog>(data, new DialogParameters()
+        {
+            Height = "240px",
+            Title = $"{data.Id}. tantárgy módosítása",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            data=await sService.UpdateSubjectAsync(data);
+            if (data is not null)
+            {
+                subjects.FirstOrDefault(s => s.Id == subject.Id).Name = data.Name;
+                StateHasChanged();
+            }
+        }
+
+    }
+    private async void Delete(Subject subject)
+    {
+        await sService.DeleteSubjectAsync(subject);
+    }
+    private async void NewSubject()
+    {
+        if (string.IsNullOrEmpty(subjectName))
+        {
+            errorMessage = "Üres a tantárgy neve mező!";
+            ToastService.ShowError("Üres a tantárgy neve mező!");
+        }
+        else
+        {
+            var response=await sService.AddSubjectsAsync(new() { Name = subjectName });
+            if (response is null)
+            {
+                errorMessage = $"Nem sikerült elmenteni a(z) {subjectName} tantárgyat!";
+                ToastService.ShowError(errorMessage);
+                return;
+            }
+            subjects.Add(response);
+            StateHasChanged();
+        }
+    }
+}

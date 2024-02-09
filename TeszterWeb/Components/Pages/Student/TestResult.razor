@@ -1,61 +1,80 @@
-﻿@page "/testResult"
+﻿@page "/Student/testResult"
+@page "/Student/testResult/{i:int}"
 @inject GlobalData data
 @inject NavigationManager navi
 
-<h3>TestResult</h3>
+<h4>Teszt eredménye</h4>
 @if (noError)
 {
     foreach (var actualq in questions)
     {
         <FluentCard>
+            @if (actualq.QuestionType == QuestionType.Comp)
+            {
+                <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+            }
+            else
+            {
+                <FluentLabel Typo="Typography.Subject">@((MarkupString)actualq.QuestionText)</FluentLabel>
+            }
+
             <FluentLabel>Kapott pontok: @actualq.Score pont</FluentLabel>
             @switch (actualq.QuestionType)
             {
                 case QuestionType.SC:
-                    <Test_choise Type="@("radio")" QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_choise Type="@("radio")" Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.MC:
-                        <Test_choise Type="@("checkbox")" QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_choise Type="@("checkbox")" Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.TF:
-                    <Test_TF QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_TF Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.Open:
-                    <Test_open QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_open Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.Seq:
-                    <Test_sequence QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_sequence Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.Pair:
-                        <Test_pair Question="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_pair Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
                     break;
                 case QuestionType.Comp:
-                        <Test_comp QView="actualq" IsCheck="false" IsChecked="true" />
+                    <Test_comp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="false" IsChecked="true" />
                     break;
                 default:
-                    <p>Nem tudom mi történt!</p>
+        <p>Nem tudom mi történt! </p>@actualq.QuestionType.ToAttributeValue()
                     break;
             }
         </FluentCard>
-            }
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("/"))">Bezár</FluentButton>
-            }
-            else
-            {
-            <p>@errorMessage</p>
-            }
-            @code {
-                List<QuestionView> questions = new();
-                bool noError = true;
-                string errorMessage = string.Empty;
+        <br />
+    }
+    @if (i == 0)
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("/"))">Bezár</FluentButton>
+    }
+    else
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("student/testsResult"))">Bezár</FluentButton>
+    }
+}
+else
+{
+    <p>@errorMessage</p>
+}
+@code {
+    [Parameter] public int i { get; set; } = 0;
+    List<QuestionView> questions = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
 
     protected override void OnInitialized()
+    {
+        questions = data.TestResults.ToList();
+        if (questions is null)
         {
-            questions = data.TestResults.ToList();
-            if (questions is null)
-            {
-                errorMessage = "Nincs teszt eredményed!";
-            }
-            base.OnInitialized();
+            errorMessage = "Nincs teszt eredményed!";
         }
-            }
+        base.OnInitialized();
+    }
+}

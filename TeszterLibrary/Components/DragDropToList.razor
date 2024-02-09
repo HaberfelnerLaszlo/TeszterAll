@@ -3,35 +3,46 @@
                      OnDropEnd="@(e => HandleDropEnd(e.Source,e.Target))">
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack Orientation="Orientation.Vertical">
-            <FluentListbox Items="@SourceList" TOption="TItem" Label="@SourceLabel" SelectedOption="selectedSource">
+            <FluentListbox Items="@SourceList" TOption="TItem" Label="@SourceLabel" @bind-SelectedOption="selectedSource">
                 <OptionTemplate>
-                    <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context">
-                        @SourceContent(context)
-                    </FluentDropZone>
+                    @if (SourceList.Any())
+                    {
+                        <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context">
+                            @SourceContent(context)
+                        </FluentDropZone>
+                    }
+                    else
+                    {
+                        <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context"><div>Helyezd ide...</div></FluentDropZone>
+                    }
                 </OptionTemplate>
             </FluentListbox>
         </FluentStack>
         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
             <FluentButton OnClick="All" Disabled="btnDidabled">Mindenki</FluentButton>
-            <FluentButton OnClick="()=>ToMove(true)" Disabled="@(selectedSource==null)">Oda</FluentButton>
-            <FluentButton OnClick="()=>ToMove(false)" Disabled="@(selectedTarget==null)">Vissza</FluentButton>
+            <FluentButton OnClick="()=>ToMove(true)">Oda</FluentButton>
+            <FluentButton OnClick="()=>ToMove(false)">Vissza</FluentButton>
             <FluentButton OnClick="Reverse" Disabled="@(!btnDidabled)">Senki sem</FluentButton>
         </FluentStack>
         <FluentStack Orientation="Orientation.Vertical">
-            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" SelectedOption="selectedTarget">
+            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" @bind-SelectedOption="selectedTarget">
                 <OptionTemplate>
                     @if (TargetList.Count == 0)
                     {
-                        <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context"></FluentDropZone>
+                        <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context"><div>Helyezd ide...</div></FluentDropZone>
                     }
-                    <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context">
-                        @TargetContent(context)
-                    </FluentDropZone>
-                </OptionTemplate>
+                    else
+                    {
+                        <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context">
+                            @TargetContent(context)
+                        </FluentDropZone>
+                    }
+                    </OptionTemplate>
             </FluentListbox>
         </FluentStack>
     </FluentStack>
 </FluentDragContainer>
+<FluentLabel>@target</FluentLabel>
 @code {
     [Parameter] public IList<TItem> SourceList { get; set; }
     [Parameter] public IList<TItem> TargetList { get; set; }
@@ -42,6 +53,7 @@
     bool btnDidabled = false;
     TItem? selectedSource;
     TItem? selectedTarget;
+    string target=string.Empty;
     void HandleDropEnd(FluentDropZone<TItem> source, FluentDropZone<TItem> target)
     {
         if (source.Id == "lista")
@@ -81,6 +93,7 @@
             {
                 TargetList.Add(selectedSource);
                 SourceList.Remove(selectedSource);
+                selectedSource = default;
             }
         }
         else
@@ -89,6 +102,7 @@
             {
                 SourceList.Add(selectedTarget);
                 TargetList.Remove(selectedTarget);
+                selectedTarget = default;
             }
         }
     }

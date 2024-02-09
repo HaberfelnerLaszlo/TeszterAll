@@ -1,8 +1,43 @@
 ﻿@page "/resultTest"
 @inject GlobalData data
-<h3>ResultTest</h3>
+@inject TestQuestionUserServices tquService
+@inject IToastService ToastService
+@if (noError)
+{
+    <h3>@teszt.Title teszt eredményei</h3>
+    <UsersResultView UserResults="@userResults" TestQuestions="@data.Test.TestQuestions" Update="UpdateScore"></UsersResultView>
+}
+else
+{
+    <FluentLabel Typo="Typography.Header" Color="Color.Error">@errorMessage</FluentLabel>
+}
 
 @code {
     private Test teszt = new();
-
+    List<UserResultToTeacher>? userResults = new();
+    bool noError = true;
+    string errorMessage = string.Empty;
+    protected override async Task OnParametersSetAsync()
+    {
+        teszt = data.Test;
+        userResults = await tquService.UsersResult(teszt.Id);
+        if (userResults is null)
+        {
+            errorMessage = tquService.errorMessage;
+            noError = false;
+            return;
+        }
+    }
+    async void UpdateScore(QuestionResult questionResult)
+    {
+        var response = await tquService.UpdateScore(questionResult.Id,questionResult.Score);
+        if (response)
+        {
+            ToastService.ShowInfo($"Módosítás sikerült!");
+        }
+        else
+        {
+            ToastService.ShowError($"Módosításnál hiba történt {tquService.errorMessage}");
+        }
+    }
 }

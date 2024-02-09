@@ -36,8 +36,8 @@ else{
 }
 
 @code {
-	[Parameter] public string UserId { get; set; }
-	[Parameter]	public List<Question> Questions { get; set; }= new();
+	[Parameter] public string UserId { get; set; } = string.Empty;
+	[Parameter] public List<Question> Questions { get; set; }= new();
 	[Parameter] public List<Subject> Subjects { get; set; }= new();
 	[Parameter] public EventCallback Refresh { get; set; }
 	[Parameter] public EventCallback<Question> New { get; set; }
@@ -47,7 +47,7 @@ else{
 	[Parameter] public EventCallback<List<Question>> CreateTest { get; set; }
 	Dictionary<string, string> valuePairs = new();
 	//string errorMessage = string.Empty;
-	bool isLoading = true, newOrEdit = true, isNew = false, showDelete = false;
+	bool newOrEdit = true, isNew = false, showDelete = false;
 	private List<string> titles = new();
 	private Question TempQuestion { get; set; } = new();
 	private List<Question> TestQuestion = new();
@@ -57,7 +57,6 @@ else{
 		{
 			await RefreshQuestions();
 			//Subjects = await sService.GetSubjects();
-			isLoading = false;
 			StateHasChanged();
 		}
 	}
@@ -80,7 +79,7 @@ else{
 	{
 		isNew = true;
 		newOrEdit = false;
-		
+
 		TempQuestion = new();
 	}
 	private void Update(Question question)

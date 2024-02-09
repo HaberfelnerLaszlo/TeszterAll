@@ -3,28 +3,25 @@
 @inject GraphService gService
 @inject NavigationManager navi
 @inject GlobalData data
-<h3>DraftTest</h3>
-@if (ispublish)
-{
-    <PublicTest Test="test" UserId="@userId"></PublicTest>
-}
+@inject IToastService toastService
+<h3>Piszkozat tesztek</h3>
 
 @if (tests is not null && tests.Count>0)
 {
-   @*  <button class="btn btn-primary" @onclick=PublishTest>Próba</button> *@
-    <div class="d-flex flex-wrap">
+    <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
         @foreach (var item in tests)
         {
-            <TestViewCard Test="item" Edit="PublishTest" BtnText="Közzétesz"/>
+            <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="DeleteTest"/>
         }
-    </div>
+    </FluentStack>
 }
+else { <FluentLabel>@errorMesage</FluentLabel>}
 
 @code {
     private List<Test> tests = new();
     private Test test = new();
     bool ispublish = false;
-    string userId = string.Empty;
+    string userId = string.Empty,errorMesage=string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,6 +32,11 @@
         }
         userId = data.UserId;
         tests = await tService.GetNoPublished(Guid.Parse(data.UserId));
+        if (tests is null)
+        {
+            errorMesage = tService.ErrorMessage;
+            toastService.ShowInfo(tService.ErrorMessage);
+        }
     }
     private void PublishTest(Test test)
     {
@@ -42,5 +44,22 @@
         navi.NavigateTo("publish");
         //ispublish = true;
         //StateHasChanged();
+    }
+    private void EditTest(Test test)
+    {
+        data.Test = test;
+        navi.NavigateTo($"newtest/{test.Id}");
+    }
+    private async Task DeleteTest(Test test)
+    {
+        if(await tService.DeleteTestAsync(test.Id))
+        {
+            tests.Remove(test);
+            toastService.ShowInfo("A teszt törölve lett.");
+        }
+        else
+        {
+            toastService.ShowWarning("A teszt törlése nem sikerült");
+        }
     }
 }

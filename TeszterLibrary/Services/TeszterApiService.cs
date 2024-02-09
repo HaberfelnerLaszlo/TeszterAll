@@ -14,10 +14,10 @@ namespace TeszterLibrary.Services
         public string ErrorMessage { get; set; } = String.Empty;
         private static readonly HttpClient client = new();
 
-        //protected static string URI = "https://teszter-api.haberfelner.eu/";
+        protected static string URI = "https://teszter-api.haberfelner.eu/";
 
         //protected static string URI = "http://localhost:7025/";
-        protected static string URI = "https://localhost:44308/"; //ISS
+        //protected static string URI = "https://localhost:44308/"; //ISS
         //protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
         //protected static string URI = "http://192.168.1.69:7025"; //laptop
         public async Task<Tv?> Get<Tv>(string uri)
@@ -36,9 +36,6 @@ namespace TeszterLibrary.Services
                 if (response.IsSuccessStatusCode)
                 {
                     valasz = await response.Content.ReadAsStringAsync();
-                    //var v1 = valasz.Contains("isSuccess");
-                    //var v2 = valasz.Contains("errorMessage");
-                    //var v3= valasz.Contains("content");
                     if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                     {
                     var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
@@ -55,8 +52,11 @@ namespace TeszterLibrary.Services
                 else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     valasz = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(valasz)) { ErrorMessage = "Nincs eredmény."; return default; }
-                    ErrorMessage += "Nem elérhető a szerver!";
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                    {
+                        var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        ErrorMessage = r?.ErrorMessage??"Null eredmény lett a hiba üzenet";
+                    }else ErrorMessage = "Nem elérhető a szerver!";
                     return default;
                 }
                 else
@@ -81,7 +81,7 @@ namespace TeszterLibrary.Services
             }
         }
 
-        public async Task<T> Post<T>(string uri, T t)
+        public async Task<T?> Post<T>(string uri, T t)
         {
             var valasz = string.Empty;
             client.BaseAddress ??= new Uri(URI);
@@ -92,15 +92,29 @@ namespace TeszterLibrary.Services
             if (response.IsSuccessStatusCode)
             {
                 valasz = await response.Content.ReadAsStringAsync();
-                var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                if (deserilizeResponse != null)
+                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                 {
-                    if (deserilizeResponse.IsSuccess)
+                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                    if (deserilizeResponse != null)
                     {
-                        return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                        if (deserilizeResponse.IsSuccess)
+                        {
+                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                        }
                     }
                 }
-                return JsonConvert.DeserializeObject<T>(valasz);
+                return JsonConvert.DeserializeObject<T?>(valasz);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                valasz = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                {
+                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                }
+                else ErrorMessage += "Nem elérhető a szerver!";
+                return default;
             }
             else
             {
@@ -108,28 +122,43 @@ namespace TeszterLibrary.Services
                 var message = await response.Content.ReadAsStringAsync();
                 ErrorMessage += message;
             }
-            return JsonConvert.DeserializeObject<T>(valasz);
+            return default;
         }
 
-        public async Task<T> Put<T>(string uri, T t)
+        public async Task<T?> Put<T>(string uri, T t)
         {
-            string valasz = String.Empty;
             client.BaseAddress ??= new Uri(URI);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage response = await client.PutAsJsonAsync<T>(uri, t);
+            string valasz;
             if (response.IsSuccessStatusCode)
             {
                 valasz = await response.Content.ReadAsStringAsync();
-                var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                if (deserilizeResponse != null)
+                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                 {
-                    if (deserilizeResponse.IsSuccess)
+                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                    if (deserilizeResponse != null)
                     {
-                        return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                        if (deserilizeResponse.IsSuccess)
+                        {
+                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                        }
                     }
                 }
+                return JsonConvert.DeserializeObject<T>(valasz);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                valasz = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                {
+                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                }
+                else ErrorMessage += "Nem elérhető a szerver!";
+                return default;
             }
             else
             {
@@ -137,7 +166,7 @@ namespace TeszterLibrary.Services
                 var message = await response.Content.ReadAsStringAsync();
                 ErrorMessage += message;
             }
-            return JsonConvert.DeserializeObject<T>(valasz);
+            return default;
         }
 
         public async Task<bool> Delete(string uri)

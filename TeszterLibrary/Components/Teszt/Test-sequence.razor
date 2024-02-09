@@ -1,9 +1,6 @@
 ﻿@using TeszterLibrary.Extensions;
-@if (QView is not null)
+@if (Answers is not null)
 {
-    <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly name="question">@QView.QuestionText</textarea>
-    </div>
     <FluentDragContainer TItem="string"
                          OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
@@ -28,44 +25,42 @@
     <div class="container text-center">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Items))">
                 Ellenőrzés
             </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-            <button class="btn btn-primary" id="send" type="button" @onclick="@Send">
-                Következő
-            </button>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@(()=>Next.InvokeAsync(Items))">Következő</FluentButton>
         }
     </div>
 }
 @code {
-    [Parameter] public QuestionView? QView{ get; set; }
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
     bool first = true;
     string row = string.Empty;
-    void Send() => Next.InvokeAsync(QView);
+    //void Send() => Next.InvokeAsync(QView);
     List<AnswerView> Items = new();
     protected override void OnInitialized()
     {
         if (first)
         {
-            if (QView is not null)
+            //if (QView is not null)
+            //{
+            if (Answers is not null)
             {
-                if (QView.Answers is not null)
+                Answers.Shuffle();
+                for (int i = 0; i < Answers.Count; i++)
                 {
-                    QView.Answers.Shuffle();
-                    for (int i = 0; i < QView.Answers.Count; i++)
-                    {
-                        QView.Answers[i].Sequence = i + 1;
-                    }
-                    Items = QView.Answers;
+                    Answers[i].Sequence = i + 1;
                 }
+                Items = Answers;
             }
+            //}
             first = false;
         }
         base.OnInitialized();

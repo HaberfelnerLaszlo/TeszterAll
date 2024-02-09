@@ -45,7 +45,7 @@
 	IQueryable<Question>
 	? FilteredItems => items?.Where(x => x.Title.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)).AsQueryable();
 
-	protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
 	{
 	items = questions.AsQueryable();
 	}
@@ -66,7 +66,7 @@
 	}
 	}
 
-	private async Task ToggleItemsAsync()
+	private void ToggleItemsAsync()
 	{
 	if (_clearItems)
 	{

@@ -1,21 +1,26 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TeszterLibrary.Model;
 using TeszterLibrary.ViewModel;
+using TeszterLibrary.ViewModel.Test;
 
 namespace TeszterLibrary.Services
 {
 	public class TestUserServices
 	{
 		private readonly TeszterApiService _service;
+		private readonly ILogger<TestUserServices> _logger;
 		public string ErrorMessage=string.Empty;
-		public TestUserServices(TeszterApiService service)
-		{
-			_service = service;
-		}
-		public async Task<TestUser?> GetTestUser(int id)
+        public TestUserServices(TeszterApiService service, ILogger<TestUserServices> logger)
+        {
+            _service = service;
+            _logger = logger;
+        }
+        public async Task<TestUser?> GetTestUser(int id)
 		{
 			var tu = await _service.Get<TestUser?>($"TUser/{id}");
 			return tu;
@@ -63,6 +68,21 @@ namespace TeszterLibrary.Services
 			return response;
 		}
 		/// <summary>
+		/// A tanuló kész tesztjeit adja vissza.
+		/// </summary>
+		/// <param name="tId">TUserId</param>
+		/// <returns>TestResultToStudent</returns>
+		public async Task<List<TestResultToStudent>?> GetReadyTests(Guid userId)
+		{
+			var response = await _service.Get<List<TestResultToStudent>?>($"TUser/Ready/{userId}");
+			if (response is null)
+			{
+				ErrorMessage = _service.ErrorMessage; 
+				return null;
+			}
+			return response;
+		}
+		/// <summary>
 		/// A tesztet írok száma.
 		/// </summary>
 		/// <param name="testId">Teszt azonosítója</param>
@@ -71,16 +91,6 @@ namespace TeszterLibrary.Services
 		{
 			var m = await _service.Get<int[]?>($"Tuser/Member/{testId}");
 			return m;
-		}
-		/// <summary>
-		/// Kész/lezárt teszteket adja eredményül felhasználónként
-		/// </summary>
-		/// <param name="userId">Felhasználó azonosító</param>
-		/// <returns></returns>
-		public async Task<List<TestUser>?> GetReadyTests(Guid userId)
-		{
-			var list = await _service.Get<List<TestUser>?>($"TUser/Ready/{userId}");
-			return list;
 		}
 		/// <summary>
 		/// Egy adott felhasznló összes tesztje.

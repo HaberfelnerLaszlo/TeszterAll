@@ -8,6 +8,17 @@ namespace TeszterLibrary.Extensions
 {
 	public static class StringExtensions
 	{
+		public static string ToTime(this string value)
+		{
+			int sec=Convert.ToInt32(value);
+			if (sec < 0) { return string.Empty; }
+			if (sec > 3600)
+			{
+				return $"{sec/3600}:{(sec%3600)/60}:{(sec%3600)%60}";
+			}
+			if (sec < 60) { return value +" mp"; }
+			else { return $"{sec / 60}:{sec%60}"; }
+		}
 		public static IEnumerable<Claim> ParseClaimsFromJwt(this string jwt)
 		{
 			var claims = new List<Claim>();

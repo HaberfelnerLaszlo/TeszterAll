@@ -1,36 +1,41 @@
 ﻿@using TeszterLibrary.Extensions;
-@if (Question is not null)
+@if (Answers is not null)
 {
-
-    <div class="container-fluid text-center">
-        <textarea class="form-control-lg d-flex d-sm-flex justify-content-sm-center align-items-sm-start" id="question" autocomplete="off" readonly name="question">@Question.QuestionText</textarea>
-    </div>
     <FluentDragContainer TItem="string"
                          OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
         <FluentStack Orientation="Orientation.Horizontal">
             <FluentStack Orientation="Orientation.Vertical">
-                @foreach (var item in Question.Answers)
-                   {
-                    <FluentStack Orientation="Orientation.Horizontal">
-                        @if (item.Sign)
+                @foreach (var item in Answers)
+                {
+                    @if (item.Sign)
+                    {
+                        var text = pairs.GetValueOrDefault(item.Sequence);
+                        @if (text is null)
                         {
+                            return;
+                        }
+                        <FluentStack Orientation="Orientation.Horizontal">
                             <div style="width:1fr; background-color:khaki;margin:10px; padding:5px;">
                                 @item.Text
                             </div>
-                        <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="false" Droppable="true">
-                            <div style="border: 2px dotted red; width:1fr; background-color:lightblue;margin:10px;padding:5px;">
-                                @pairs.GetValueOrDefault(item.Sequence)
-                            </div>
-                        </FluentDropZone>
-                        }
-                        @if (IsChecked && !item.Sign)
-                        {
-                            <span hidden="@item.Result"><FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                            <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" /></span>
-                        }
-                    </FluentStack>
+                            <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="false" Droppable="true">
+                                <div style="border: 2px dotted red; width:1fr; background-color:lightblue;margin:10px;padding:5px;">
+                                    @text
+                                </div>
+                            </FluentDropZone>
+                            @if (!text.Equals("Ide kerül a párja..."))
+                            {
+                                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" OnClick="@(()=>BackList(item.Sequence))"/>
+                            }
+                        </FluentStack>
+                    }
+                    @if (IsChecked && !item.Sign)
+                    {
+                        <span hidden="@item.Result"><FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
+                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" /></span>
+                    }
                     <FluentDivider Orientation="Orientation.Horizontal" Role="DividerRole.Separator"></FluentDivider>
-                   }
+                }
             </FluentStack>
             <FluentStack Orientation="Orientation.Vertical">
                 @foreach (var item in selectList)
@@ -48,7 +53,7 @@
 <div class="container text-center">
     @if (IsCheck)
     {
-        <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Question))">Ellenőrzés</FluentButton>
+        <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Answers))">Ellenőrzés</FluentButton>
     }
     @if (Next.HasDelegate)
     {
@@ -57,16 +62,17 @@
 </div>
 }
 @code {
-    [Parameter] public QuestionView? Question { get; set; }
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
     List<AnswerView> selectList = new();
+    List<AnswerView> tempList = new();
     Dictionary<int, string> pairs = new();
     protected override void OnInitialized()
     {
-        foreach (var item in Question.Answers)
+        foreach (var item in Answers)
         {
             if (IsChecked)
             {
@@ -96,15 +102,27 @@
     {
         if (selectList.Count==0)
         {
-            Next.InvokeAsync(Question);
+            Next.InvokeAsync(Answers);
         }
     }
     void HandleDropEnd(string source, string target)
     {
         var masol = selectList.Find(j => j.AnswerId == Convert.ToInt32(source));
-        var cel = Question.Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target));
+        var cel = Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target));
         pairs[cel.Sequence] = masol.Text;
         masol.Sequence = cel.Sequence;
+        tempList.Add(masol);
         selectList.Remove(masol);
+    }
+    void BackList(int sequence)
+    {
+        var temp = tempList.FirstOrDefault(i => i.Sequence == sequence);
+        if (temp is null)
+        {
+            return;
+        }
+        selectList.Add(temp);
+        tempList.Remove(temp);
+        pairs[sequence] = "Ide kerül a párja...";
     }
 }

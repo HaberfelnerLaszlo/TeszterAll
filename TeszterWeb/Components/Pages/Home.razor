@@ -11,19 +11,26 @@
 <AuthorizeView Roles="Teacher">
     Tanárok látják.
     <nav class="d-flex flex-row w-100">
-        <div class="nav-doboz"><NavLink class="nav-link" href="newtest">Új teszt készítése</NavLink></div>
+        <NavLink class="nav-link nav-doboz" href="newtest">Új teszt készítése</NavLink>
         <div class="nav-doboz"><NavLink class="nav-link" href="draft">Nem aktívált tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="active">Aktív tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="closed">Befejezett tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div>
+        <div class="nav-doboz"><NavLink class="nav-link" href="subject">Tantárgyak</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href=@qHref>Kérdések</NavLink></div>
     </nav>
 </AuthorizeView>
 @* <AuthorizeView Roles="Student">
  *@    Diák látja
+<FluentSelect TOption="string" SelectedOption="selectedValue" ValueChanged="@((e)=>SelectedChange(e))">
+    <FluentOption Value="6392352e-69b8-42ac-8f9c-3f92297e54c8">Próba Diák</FluentOption>
+    <FluentOption Value="ad23c929-7c72-4512-93d1-1877fe290b8a">Peterfy's Diák</FluentOption>
+    <FluentOption Value="54885fe6-e6cc-4d9e-aed1-0edf7fd6d036">Én</FluentOption>
+</FluentSelect>
+<FluentLabel>@selectedValue</FluentLabel>
     <nav class="d-flex flex-row w-100">
         <div class="nav-doboz"><NavLink class="nav-link" href="studenttests">Tesztjeim</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href="resulttests">Tesztek eredményei</NavLink></div>
+        <div class="nav-doboz"><NavLink class="nav-link" href="student/testsResult">Tesztek eredményei</NavLink></div>
         @* <div class="nav-doboz"><NavLink class="nav-link" href="active">Aktív tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="closed">Befejezett tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div> 
@@ -32,27 +39,41 @@
 
 @* </AuthorizeView> *@
 @code{
+    /// <summary>
+    /// {"id":"6392352e-69b8-42ac-8f9c-3f92297e54c8","displayName":"Próba Diák"},{"id":"ad23c929-7c72-4512-93d1-1877fe290b8a","displayName":"Peterfy's Diák"}]
+    /// </summary>
+    /// <returns></returns>
+
     EducationUser? user;
-    string qHref=string.Empty;
+    string qHref=string.Empty,selectedValue= "54885fe6-e6cc-4d9e-aed1-0edf7fd6d036";
     protected override async Task OnInitializedAsync()
     {
-             try
+        try
+        {
+            user = await GraphServiceClient.Education.Me.GetAsync();
+            if (user is not null)
             {
-                user = await GraphServiceClient.Education.Me.GetAsync();
-                if (user is not null)
+                data.UserId = user.Id??string.Empty;
+                qHref = $"question/{user.Id}";
+                if (!(await uService.UserExits(Guid.Parse(user.Id))))
                 {
-                    data.UserId = user.Id;
-                    qHref = $"question/{user.Id}";
-                    if (!(await uService.UserExits(Guid.Parse(user.Id))))
+                    if (string.IsNullOrEmpty(uService.ErrorMessage))
                     {
-                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName, Id = Guid.Parse(user.Id), Role=user.PrimaryRole.Value.ToString()});
+                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName, Id = Guid.Parse(user.Id), Role = user.PrimaryRole.Value.ToString() });
                     }
-                    StateHasChanged();
                 }
+                StateHasChanged();
             }
-            catch (Exception ex)
-            {
-                ConsentHandler.HandleException(ex);
-            }
+        }
+        catch (Exception ex)
+        {
+            ConsentHandler.HandleException(ex);
+        }
+    }
+    void SelectedChange(string value)
+    {
+        selectedValue = value;
+        data.UserId = value;
+        //StateHasChanged();
     }
 }

@@ -1,7 +1,5 @@
-﻿@if (QView is not null)
+﻿@if (Answers is not null)
 {
-    <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
-    <hr />
     <div class="container">
         @if (texts is not null)
         {
@@ -10,10 +8,10 @@
                 if (t.All(char.IsNumber))
                 {
                     int Number = Convert.ToInt32(t) - 1;
-                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" @bind-Value="@QView.Answers[Number].Text" />
+                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" />
                     @if (IsChecked)
                     {
-                        if (QView.Answers[Number].Result)
+                        if (Answers[Number].Result)
                         {
                             <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
                         }
@@ -31,31 +29,29 @@
     <div class="container text-center">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(QView))">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
                 Ellenőrzés
             </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-            <FluentButton OnClick="@(()=>Next.InvokeAsync(QView))">
+            <FluentButton OnClick="@(()=>Next.InvokeAsync(Answers))">
                     Következő
             </FluentButton>
         }
     </div>
 }
 @code {
-    [Parameter] public QuestionView? QView { get; set; }
+    [Parameter] public List<AnswerView> Answers { get; set; } = new();
+    [Parameter] public string Texts { get; set; } = string.Empty;
     [Parameter] public bool IsCheck { get; set; }
     [Parameter] public bool IsChecked { get; set; }
-    [Parameter] public EventCallback<QuestionView> Next { get; set; }
-    [Parameter] public EventCallback<QuestionView> CallCheck { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
     string[] texts;
-    //string[] ans = new string[10];
-
-    //void Send() => Next.InvokeAsync(QView);
     protected override void OnInitialized()
     {
-        texts = QView.QuestionText.Split('{', '}');
+        texts = Texts.Split('{', '}');
 
         base.OnInitialized();
     }

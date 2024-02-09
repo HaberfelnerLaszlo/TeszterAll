@@ -24,35 +24,43 @@
 @* Body *@
 <FluentDialogBody>
     <EditForm Model="@Content">
+        @if (Content.QType == QuestionType.Comp)
+        {
+            <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+        }
+        else
+        {
+            <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
+        }
+        <hr />
         @switch (Content.QType)
         {
             case QuestionType.SC:
-                <Test_choise Type="@("radio")" QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_choise Type="@("radio")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.MC:
-                <Test_choise Type="@("checkbox")" QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_choise Type="@("checkbox")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.TF:
-                <Test_TF QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_TF Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.Open:
-                <Test_open QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_open Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             case QuestionType.Seq:
-                <Test_sequence QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
+                <Test_sequence Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
                 break;
             case QuestionType.Pair:
-                <Test_pair Question="questionView" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
+                <Test_pair Answers="questionView.Answers" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
                 break;
             case QuestionType.Comp:
-                <Test_comp QView="questionView" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             default:
-                <p>Nem tudom mi történt!</p>
+                <p>Nem tudom mi történt!  @Content.QType.ToAttributeValue()</p>
                 break;
         }
     </EditForm>
-
 </FluentDialogBody>
 
 @code {
@@ -124,11 +132,11 @@
     {
         await Dialog.CancelAsync();
     }
-    private void Check(QuestionView? question)
+    private void Check(List<AnswerView>? answerViews)
     {
-        if (question!=null && question.Answers!=null)
+        if (answerViews != null)
         {
-            answers = question.Answers;
+            answers = answerViews;
         }
         IsChecking = true;
         switch (Content.QType)
@@ -174,7 +182,7 @@
                 }
                 break;
             case QuestionType.Pair: //CheckPair() megoldva.
-                foreach (var item in question.Answers)
+                foreach (var item in answers)
                 {
                     item.Result = Content.Answers!.FirstOrDefault(a => a.Id == item.AnswerId)!.Sequence == item.Sequence ? true : false;
                 }
@@ -187,11 +195,6 @@
                         {
                             item.Result = true;
                         }
-                        //if (item.Text == ans[item.Sequence - 1])
-                        //{
-                        //    Nodes.Where(n => n.Number == item.Sequence).First().IsPair = true;
-                        //    item.Result = true;
-                        //}
                     }
                 }
                 break;
