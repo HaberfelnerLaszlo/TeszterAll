@@ -1,178 +1,224 @@
 ﻿@using TeszterLibrary.Model;
 @using TeszterLibrary.Components;
-@using Plk.Blazor.DragDrop;
+@inject IDialogService dialogService
+@inject IToastService toastService
 @if (lessons.Count > 0)
 {
-	<button class="btn btn-primary" @onclick="()=>SaveLesson.InvokeAsync(Lessons)">@Name feladatlistájának mentése</button>
+    <button class="btn btn-primary" @onclick="()=>SaveLesson.InvokeAsync(Lessons)">@Name feladatlistájának mentése</button>
 }
 else
 {
-	<p>@Name feladatlistájának szerkesztése</p>
+    <p>@Name feladatlistájának szerkesztése</p>
 }
 <hr />
-<div class="row">
-	<div class="col">
-		<div class="bg-light">Feladatok:</div>
-		<select class="topic" @onchange="(e)=>Select(e)" title="Kategóriák:">
-			<option disabled="disabled" selected>Válasz témakört...</option>
-			@foreach(string t in topics)
-			{
-				<option value="@t">@t</option>
-			}
-		</select>
-		<Dropzone Items="filteredTasks" TItem="ListTask" OnItemDrop="@((i)=>DropTask(i))" Accepts="(d, t) =>AcceptTask(d)" Context="context" Class="tasklist">
-			<div style="border: 2px solid blue">
-				@context.Description
-			</div>
-		</Dropzone>
-	</div>
-	<div class="col">
-		<div class="bg-light">Kiosztott feladat:</div>
-		<ul class="completlist">
-			@foreach (var item in completLessons)
-			{
-				<li>
-					@item.Description
-					<i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
-				</li>
-			}
-		</ul>
-		<div>
-			<Dropzone Items="lessons" TItem="ListTask" OnItemDrop="@((i)=>DropLesson(i))" Accepts="(d, t) => IsLessonSave==true" Class="tasklist" InstantReplace=true>
-				<div style="border: 2px solid black">
-					@context.Description
-				</div>
-			</Dropzone>
-		</div>
-	</div>
-	<div class="col">
-		<p><b>@lastdropped?.Description</b> feladat beállítása</p>
-		<EditForm Model="sablon">
-			<div class="input-group">
-				<label for="max" class="form-label">Legfeljebb ennyi feladatot oldjon meg: </label>
-				<input class="sablon form-control" type="number" id="max" name="max" @bind-value=sablon.MaxCount max="30" />
-			</div>
-				<div class="input-group">
-					<label for="min" class="form-label">Legalább ennyi feladatot oldjon meg: </label>
-					<input class="sablon form-control" type="number" id="min" name="min" @bind-value=sablon.MinCount max="30" />
-				</div>
-				<p>Visszalépéshez szükséges értékek közül amelyik előbb teljesül - 0 érték esetén nem veszi figyelembe a gép. </p>
-				<div class="input-group">
-					<label for="wrongc" class="form-label">rossz válaszok száma: </label>
-					<input class="sablon form-control" type="number" id="wrongc" name="wrongc" @bind-value=sablon.WrongCount />
-				</div>
-				<div class="input-group">
-					<label for="wp" class="form-label">%-ot alatti megoldottság: </label>
-					<input class="sablon form-control" type="number" id="wp" name="wp" @bind-value=sablon.WrongPercent step="5" />
-				</div>
-					<div class="input-group">
-					<label for="time">Ennyi idő alatt befejezni: </label>
-				<input class="sablon form-control" type="number" id="time" name="time" @bind-value=sablon.Time />
-				</div>
-				<div class="input-group">
-					<label for="tipp" class="form-label">Kiválaszthatja a megoldást? </label>
-					<input type="checkbox" class="form-control" id="tipp" name="tipp" @bind-value=tipp />
-				</div>
-			<button type="submit" class="btn" @onclick="Save">Mentés</button>
-		</EditForm>
-	</div>
-</div>
+<FluentStack Orientation="Orientation.Horizontal" HorizontalGap="20">
+    <FluentStack Orientation="Orientation.Vertical">
+        <FluentSelect Items="topics" TOption="string" Title="Kategóriák: " SelectedOptionChanged="(e)=>Select(e)" />
 
+        <h5>Feladatok listája</h5>
+        <FluentSortableList Id="sharedTask1" Class="darker" Group="sharedTaskLists" OnUpdate="@SortList1" OnRemove="@List1Remove" Items="@filteredTasks" Context="topic" Style="height:400px; overflow-y:auto;">
+            <ItemTemplate>@topic.Description</ItemTemplate>
+        </FluentSortableList>
+    </FluentStack>
+    <FluentStack Orientation="Orientation.Vertical">
+        <h5>A tanuló feladatai:</h5>
+        @if (completLessons.Count > 0)
+        {
+            <FluentListbox Items="completLessons" />
+        }
+        <FluentSortableList Id="sharedTask2" Group="sharedTaskLists" OnUpdate="@SortList2" OnRemove="@List2Remove" Items="@lessons" Context="lesson" Drop="IsLessonSave">
+            <ItemTemplate>@lesson.Description</ItemTemplate>
+        </FluentSortableList>
+    </FluentStack>
+</FluentStack>
 
 @code {
-	[Parameter] public List<TaskList> TaskList { get; set; } = new();
-	[Parameter] public List<Lesson> Lessons { get; set; } = new();
-	[Parameter] public Guid StudentId { get; set; }
-	[Parameter] public string Name { get; set; } = "Tanuló";
-	[Parameter] public EventCallback<List<Lesson>> SaveLesson { get; set; }
-	private List<ListTask> listTasks = new();
-	private List<ListTask> filteredTasks = new();
-	private List<ListTask> lessons = new();
-	private List<ListTask> completLessons = new();
-	private ListTask lastdropped { get; set; } = new();
-	private Sablon sablon = new();
-	private bool IsLessonSave = true;
-	private List<string> topics = new();
-	private bool tipp=false;
-	protected override void OnInitialized()
-	{
-		lessons.Clear();
-		completLessons.Clear();
-		foreach (var item in TaskList)
-		{
-			listTasks.Add(new() { Id = item.Id, Description = item.Description, Sablon = item.Sablon, Topic=item.Topic, HasCompleted = false });
-			if (!topics.Contains(item.Topic)) topics.Add(item.Topic);
-		}
-		filteredTasks = listTasks.Where(t => t.Topic == topics.First()).ToList();
-	}
-	protected override void OnParametersSet()
-	{
-		lessons.Clear();
-		completLessons.Clear();
-		if (Lessons !=null && Lessons.Count>0)
-		{
-			foreach (var item in Lessons)
-			{
-				var t = TaskList.First(l => l.Id == item.TaskId);
-				if (t is not null && t.Sablon!=null)
-				{
-					if (item.IsCompleted)
-					{
-						completLessons.Add(new() { Id = t.Id, Description = t.Description, HasCompleted = item.IsCompleted, Sablon = t.Sablon, Topic = t.Topic });
-					}
-					else
-					{
-					lessons.Add(new() { Id = t.Id, Description = t.Description, HasCompleted = item.IsCompleted, Sablon = t.Sablon, Topic = t.Topic });
-					}
-				}		
-			}
-		}
-	}
-	private bool AcceptTask(ListTask task)
-	{
-		return !task.HasCompleted;
-	}
-	private void DropLesson(ListTask task)
-	{
-		sablon = task.Sablon;
-		listTasks.Remove(task);
-		lastdropped = task;
-		IsLessonSave = false;
-		StateHasChanged();
-	}
-	private void DropTask(ListTask task)
-	{
-		if (task!=null)
-		{
-			listTasks.Add(task);
-			Lesson lesson = Lessons.FirstOrDefault(l => l.TaskId == task.Id);
-			if (lesson!=null)
-			{
-				Lessons.Remove(lesson);
-				StateHasChanged();
-			}
-		}
-	}
-	private void Save()
-	{
-		Lesson lesson = new() { IsTipp = tipp, MaxCount = sablon.MaxCount, MinCount = sablon.MinCount, StudentId = StudentId, TaskId = lastdropped.Id, Time = sablon.Time, WrongCount = sablon.WrongCount, WrongPercent = sablon.WrongPercent };
-		Lessons.Add(lesson);
-		IsLessonSave = true;
-	}
-	private void Select(ChangeEventArgs e)
-	{
-		if (e.Value!=null)
-		{
-			filteredTasks=listTasks.Where(t => t.Topic == e.Value.ToString()).ToList();
-			StateHasChanged();
-		}
-	}
-	private record ListTask()
-	{
-		public int Id { get; set; }
-		public string Description { get; set; } = string.Empty;
-		public bool HasCompleted { get; set; }
-		public string Topic { get; set; }= string.Empty;
-		public Sablon Sablon = new();
-	}
+    [Parameter] public List<TaskList> TaskList { get; set; } = new();
+    [Parameter] public List<Lesson> Lessons { get; set; } = new();
+    [Parameter] public Guid StudentId { get; set; }
+    [Parameter] public string Name { get; set; } = "Tanuló";
+    [Parameter] public EventCallback<List<Lesson>> SaveLesson { get; set; }
+    private List<ListTask> listTasks = new();
+    private List<ListTask> filteredTasks = new();
+    private List<ListTask> lessons = new();
+    private List<ListTask> completLessons = new();
+    private ListTask lastdropped { get; set; } = new();
+    private Sablon sablon = new();
+    private bool IsLessonSave = true;
+    private List<string> topics = new();
+    private bool tipp = false;
+    protected override void OnParametersSet()
+    {
+        lessons.Clear();
+        completLessons.Clear();
+        if (!listTasks.Any())
+        {
+            foreach (var item in TaskList)
+            {
+                listTasks.Add(new() { Id = item.Id, Description = item.Description, Sablon = item.Sablon, Topic = item.Topic, HasCompleted = false });
+                if (!topics.Contains(item.Topic)) topics.Add(item.Topic);
+            }
+            filteredTasks = listTasks.Where(t => t.Topic == topics.First()).ToList();
+        }
+        if (Lessons != null && Lessons.Count > 0)
+        {
+            foreach (var item in Lessons)
+            {
+                var t = TaskList.First(l => l.Id == item.TaskId);
+                if (t is not null && t.Sablon != null)
+                {
+                    if (item.IsCompleted)
+                    {
+                        completLessons.Add(new() { Id = t.Id, Description = t.Description, HasCompleted = item.IsCompleted, Sablon = t.Sablon, Topic = t.Topic });
+                    }
+                    else
+                    {
+                        lessons.Add(new() { Id = t.Id, Description = t.Description, HasCompleted = item.IsCompleted, Sablon = t.Sablon, Topic = t.Topic });
+                    }
+                }
+            }
+        }
+    }
+    private bool AcceptTask(ListTask task)
+    {
+        return !task.HasCompleted;
+    }
+    private void Save()
+    {
+        if (Guid.Empty==StudentId || lastdropped.Id<=0 )
+        {
+            toastService.ShowError("Nem sikerült a mentés,mert az utolsó elem nem lett mentve.");
+            return;
+        }
+        Lesson lesson = new() { IsTipp = tipp, MaxCount = Convert.ToByte(sablon.MaxCount), MinCount = Convert.ToByte(sablon.MinCount), StudentId = StudentId, TaskId = lastdropped.Id, Time = sablon.Time, WrongCount = Convert.ToByte(sablon.WrongCount), WrongPercent = Convert.ToByte(sablon.WrongPercent) };
+        Lessons.Add(lesson);
+        toastService.ShowSuccess("A feladat sikeresen hozzáadva.");
+        IsLessonSave = true;
+    }
+    private bool Select(string e)
+    {
+        if (!string.IsNullOrEmpty(e))
+        {
+            filteredTasks = listTasks.Where(t => t.Topic == e).ToList();
+            StateHasChanged();
+            return true;
+        }
+        return false;
+    }
+    private record ListTask()
+    {
+        public int Id { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public bool HasCompleted { get; set; }
+        public string Topic { get; set; } = string.Empty;
+        public Sablon Sablon = new();
+    }
+    private async void List1Remove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+
+        // get the item at the old index in list 1
+        var item = filteredTasks[args.OldIndex];
+
+        sablon = item.Sablon;
+        IsLessonSave = false;
+        var dialog = await dialogService.ShowDialogAsync<SetTaskSablonDialog>(sablon, new DialogParameters()
+        {
+            //Height = "340px",
+            Title = $"{item.Topic} beállítása",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+        lastdropped = item;
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            sablon = (Sablon)result.Data;
+            Save();
+        }
+        else if (result.Cancelled || result.Data is null)
+        {
+            toastService.ShowWarning("Nem sikerült a feladat áthelyezése.");
+            return;
+        }
+        // add it to the new index in list 2
+        lessons.Insert(args.NewIndex, item);
+        // remove the item from the old index in list 1
+        filteredTasks.Remove(filteredTasks[args.OldIndex]);
+        StateHasChanged();
+    }
+
+    private void List2Remove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+        // get the item at the old index in list 2
+        var item = lessons[args.OldIndex];
+        var lesson = Lessons.First(l => l.TaskId == item.Id);
+        if (lesson is null)
+        {
+            toastService.ShowError("Hiba történt nem található a feladat.");
+            return;
+        }
+        Lessons.Remove(lesson);
+        // add it to the new index in list 1
+        filteredTasks.Insert(args.NewIndex, item);
+
+        // remove the item from the old index in list 2
+        lessons.Remove(lessons[args.OldIndex]);
+    }
+    private void SortList1(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.filteredTasks;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+
+    private void SortList2(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.lessons;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+
 }

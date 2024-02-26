@@ -1,0 +1,306 @@
+﻿@page "/AddCourse"
+@inject NavigationManager NavigationManager
+@inject GraphService graphService
+@inject GlobalData data
+@inject MathService mService
+@inject EduUserServices uService
+@inject IToastService ToastService
+@inject ILogger<AddMathCourse> _logger
+<h3>AddMathCourse</h3>
+<EditForm Model="Groups">
+    <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
+        <option disabled selected>Válasz csoportot...</option>
+        @foreach (var item in Groups)
+        {
+            <option value="@item.Id">@item.DisplayName</option>
+        }
+    </InputSelect>
+</EditForm>
+<label for="IsClass">Osztálynak készül?</label>
+<input id="IsClass" type="checkbox" @onchange=CboxChange />
+<hr />
+@if (!IsClass && (Members.Count > 0 || TestMembers.Count > 0))
+{
+    <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
+        <FluentGridItem xs="12" sm="6">
+            <h5>Csoport tagjai</h5>
+            <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" Context="member">
+                <ItemTemplate>@member.DisplayName</ItemTemplate>
+            </FluentSortableList>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="6">
+            <h5>Feladatsort kap</h5>
+            <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@TestMembers" Context="testmember">
+                <ItemTemplate>@testmember.DisplayName</ItemTemplate>
+            </FluentSortableList>
+        </FluentGridItem>
+    </FluentGrid>
+}
+@if (IsClass)
+{
+    <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
+}
+@if (IsCompletMember)
+{
+    <TaskToLesson TaskList="TaskLists" SaveLesson="Saved" Name="@StudentName" StudentId="@StudentId" Lessons="@Lessons">
+    </TaskToLesson>
+}
+else if (!IsClass && TestMembers.Any())
+{
+    <button class="btn btn-success text-center" @onclick="AddLessons">Feladatlisták meghatározása</button>
+}
+
+@code {
+    private List<Microsoft.Graph.Models.EducationClass> Groups = new List<Microsoft.Graph.Models.EducationClass>();
+    private List<Student> Members = new List<Student>();
+    private List<Student> TestMembers = new List<Student>();
+    private List<TaskList> TaskLists = new();
+    private List<Lesson> Lessons = new();
+    private List<HasLesson> hasLessons = new();
+    private string SelectGroupId = string.Empty, StudentName;
+    private bool BtnDidabled = false, IsCompletMember = false, IsClass = false;
+    private Guid StudentId, ClassId;
+    //TODO ReplaceNumber maximalizálása!
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (string.IsNullOrEmpty(data.UserId))
+            {
+                try
+                {
+                    var user = await graphService.GetMe();
+                    if (user is not null)
+                    {
+                        data.UserId = user.Id.ToString(); // ??= throw new ArgumentNullException(nameof(user));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ToastService.ShowError($"Hiba történt a UserId lekérésekor: {ex.Message}");
+                    _logger.LogError(ex, "Hiba történt a UserId lekérésekor: {ex.Message}", ex.Message);
+                }
+
+            }
+
+            Groups = await graphService.GetClasses(data.UserId);
+            TaskLists = await mService.GetTaskList();
+            if (TaskLists is null)
+            {
+                ToastService.ShowError("A TaskList üres fel kell tölteni.");
+            }
+            StateHasChanged();
+        }
+    }
+    private async Task SelectGroup(string id)
+    {
+        Members.Clear();
+        SelectGroupId = id;
+        if (id != null)
+        {
+            var members = await graphService.GetStudents(id);
+            foreach (var item in members)
+            {
+                Members.Add(new Student() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id) });
+                hasLessons.Add(new() { StudentId = Guid.Parse(item.Id), HasCourse = false });
+            }
+            hasLessons = await mService.HasLessons(hasLessons);
+            foreach (var item in hasLessons.Where(l => l.HasCourse).ToList())
+            {
+                Members.First(m => m.Id == item.StudentId).Style = "HasLesson";
+            }
+        }
+        else return;
+        if (IsClass)
+        {
+            StudentId = Guid.Parse(SelectGroupId);
+            ClassId = Guid.Parse(id);
+            Lessons.Clear();
+            Lessons = await mService.GetLessons(StudentId);
+        }
+        StateHasChanged();
+    }
+    private void All()
+    {
+        TestMembers.AddRange(Members);
+        Members.Clear();
+        BtnDidabled = true;
+    }
+    private void Reverse()
+    {
+        Members.AddRange(TestMembers);
+        TestMembers.Clear();
+        BtnDidabled = false;
+    }
+    async void Saved(List<Lesson> lessons)
+    {
+        var j = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());//csak az újat küldi
+        if (j is not null)
+        {
+            if (TestMembers.Count > 0)
+            {
+                if (TestMembers.Count == 1) //Az utolsó tanuló akinek be kellett állítani
+                {
+                    TestMembers.Clear();
+                    //Members.Clear();
+                    IsCompletMember = false;
+                    StateHasChanged();
+                    return;
+                }
+                StudentId = TestMembers[0].Id;
+                StudentName = TestMembers[0].DisplayName;
+                var response = await uService.UserExits(StudentId);
+                if (response != null && response == false)
+                {
+                    await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
+                }
+                if (TestMembers[0].Style == "HasLesson")
+                {
+                    Lessons.Clear();
+                    Lessons = await mService.GetLessons(TestMembers[0].Id);
+                }
+                else
+                {
+                    //Lessons = lessons;
+                    Lessons.Clear();
+                }
+                //lessons törlése, bár lehet olyan gomb is ami meghagyja illetve olyan gomb ami a csoport minden tagjára ugyan ezt a beállításokat adja meg.
+                StateHasChanged();
+                TestMembers.RemoveAt(0);
+            }
+            else
+            {
+                IsCompletMember = false;
+                Lessons.Clear();
+            }
+        }//TODO Ha nem ment akkor figyelmeztetni.
+    }
+    private async Task SaveClass(List<Lesson> lessons)
+    {
+        var resp = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());
+        resp = await mService.UpdateClassLessons(lessons.Where(l => l.Id != 0).ToList());
+    }
+    private async Task AddLessons()
+    {
+        if (IsClass)
+        {
+            StudentId = Guid.Parse(SelectGroupId);
+            StudentName = Groups.FirstOrDefault(g => g.Id == SelectGroupId).DisplayName;
+            TaskLists = TaskLists.Where(t => t.Topic == "Mértékegység").ToList();
+            Lessons.Clear();
+            Lessons = await mService.GetLessons(StudentId);
+            IsCompletMember = true;
+            StateHasChanged();
+            return;
+        }
+        StudentId = TestMembers[0].Id;
+        StudentName = TestMembers[0].DisplayName;
+        IsCompletMember = true;
+        var response = await uService.UserExits(StudentId);
+        if (response != null && response == false)
+        {
+            await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
+        }
+        if (TestMembers[0].Style == "HasLesson")
+        {
+            Lessons.Clear();
+            Lessons = await mService.GetLessons(TestMembers[0].Id);
+        }
+        else
+        {
+            //Lessons = lessons;
+            Lessons.Clear();
+        }
+        StateHasChanged();
+    }
+    void CboxChange(ChangeEventArgs arg)
+    {
+        ClassId = Guid.Parse(SelectGroupId);
+        IsClass = (bool)arg.Value;
+    }
+    private record Student()
+    {
+        public Guid Id { get; set; }
+        public string DisplayName { get; set; }
+        public string Style { get; set; } = "NoLesson";
+    }
+    private void ListOneRemove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+
+        // get the item at the old index in list 1
+        var item = Members[args.OldIndex];
+
+        // add it to the new index in list 2
+        TestMembers.Insert(args.NewIndex, item);
+
+        // remove the item from the old index in list 1
+        Members.Remove(Members[args.OldIndex]);
+    }
+
+    private void ListTwoRemove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+        // get the item at the old index in list 2
+        var item = TestMembers[args.OldIndex];
+
+        // add it to the new index in list 1
+        Members.Insert(args.NewIndex, item);
+
+        // remove the item from the old index in list 2
+        TestMembers.Remove(TestMembers[args.OldIndex]);
+    }
+    private void SortListOne(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.Members;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+
+    private void SortListTwo(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.TestMembers;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+}

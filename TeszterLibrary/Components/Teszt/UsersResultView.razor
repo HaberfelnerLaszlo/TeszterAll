@@ -2,18 +2,19 @@
 @using TeszterLibrary.Extensions
 @inject IDialogService DialogService
 
-<FluentDataGrid Items="@UserResults.AsQueryable()">
+<FluentDataGrid Items="@UserResults.AsQueryable()" Pagination="@pagination">
     <PropertyColumn Property="@(c=>c.UserName)" Sortable="true" Title="Kitöltő neve" />
-    <PropertyColumn Property="@(c=>c.MinTime.ToTime())" Sortable="true" />
-    <PropertyColumn Property="@(c=>c.MaxTime.ToTime())" Sortable="true" />
+    <PropertyColumn Property="@(c=>c.MinTime.ToTime())" Sortable="true" Title="Kitöltési min idő"/>
+    <PropertyColumn Property="@(c=>c.MaxTime.ToTime())" Sortable="true" Title="Kitöltési max idő"/>
     <PropertyColumn Property="@(c=>c.MinScore)" Sortable="true" />
     <PropertyColumn Property="@(c=>c.MaxScore)" Sortable="true" />
     <PropertyColumn Property="@(c=>c.ReplaceNumber)" Sortable="true" Title="@("Ismétlések")" />
-    <PropertyColumn Property="@(c=>c.NoDecided.Count)" Sortable="true" Title="Szükséges beavatkozás" />
+    <PropertyColumn Property="@(c=>c.NoDecided!.Count)" Sortable="true" Title="Szükséges beavatkozás" />
     <TemplateColumn Title="Művelet">
         <FluentButton Appearance="Appearance.Accent" @onclick="@(() => ViewAnswer(context))">Válaszok</FluentButton>
     </TemplateColumn>
 </FluentDataGrid>
+<FluentPaginator State="@pagination" />
 @if (questionResult.Any())
 {
     foreach (var qR in questionResult)
@@ -25,14 +26,14 @@
             }
             else
             {
-                <FluentLabel>@((MarkupString)qR.QText)</FluentLabel>@activeid
+                <FluentLabel>@((MarkupString)qR.QText)</FluentLabel>
             }
-        <FluentTabs @bind-ActiveTabId="@activeid" OnTabChange="HandleOnTabChange">
+        <FluentTabs OnTabChange="HandleOnTabChange">
             @foreach (var answers in qR.ViewAnswers)
             {
                 @if (qR.NoDecided.Contains(answers.Id))
                 {
-                    <FluentTab Id="@("tab-" + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Icons.Regular.Size20.ArrowDownExclamation()">
+                    <FluentTab Id="@("tab-" +tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Icons.Regular.Size20.ArrowDownExclamation()">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
                             <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
                             <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
@@ -44,7 +45,7 @@
                 }
                 else
                 {
-                    <FluentTab Id="@("tab-" + tabindex.ToString())" Label="@answers.ReplaceN.ToString()">
+                    <FluentTab Id="@("tab-" + tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
                             <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
                             <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
@@ -57,6 +58,7 @@
             }
         </FluentTabs>
         </FluentCard>
+       tabsIndex++;
     }
 }
 @code {
@@ -64,9 +66,9 @@
     [Parameter] public List<TestQuestion> TestQuestions { get; set; }
     [Parameter] public EventCallback<QuestionResult> Update { get; set; }
     List<ViewResult> questionResult = new();
-    string? activeid = "tab-1";
+    PaginationState pagination = new PaginationState { ItemsPerPage = 5 };
     FluentTab? changedto;
-    int tabindex = 1;
+    int tabindex = 1, tabsIndex=0;
 
     private void HandleOnTabChange(FluentTab tab)
     {

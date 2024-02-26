@@ -5,6 +5,7 @@
 @inject TestServices tService
 @inject TestUserServices tuService
 @inject EduUserServices uService
+@inject IToastService toastService
 <EditForm Model="@Teszt" OnValidSubmit="Publish">
 	<div class="form-group">
 		<FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:"/>
@@ -45,9 +46,6 @@
             }
             <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
 </EditForm>
-<div class="d-flex center">
-	<p>@message</p>
-</div>
 
 @code {
 	[Parameter] public Test Teszt { get; set; } = new();
@@ -132,12 +130,12 @@
 		var response= await tService.UpdateTestAsync(Teszt);
 		if (response !=null)
 		{
-			message = "Elmentve";
+			toastService.ShowSuccess("A teszt sikeresen közzétéve.");
 			await Published.InvokeAsync();
 		}
 		else
 		{
-			message = "Mentés nem sikerült! "+tService.ErrorMessage;
+			toastService.ShowWarning("Mentés nem sikerült! Hiba: " + tService.ErrorMessage);
 		}
 	}
 }

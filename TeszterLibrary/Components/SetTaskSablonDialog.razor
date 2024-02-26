@@ -1,0 +1,60 @@
+﻿@implements IDialogContentComponent<Sablon>
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            @Dialog.Instance.Parameters.Title
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Mentés</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Mégsem</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+<FluentDialogBody>
+    <EditForm Model="@Content" OnSubmit="@(()=>SaveAsync())">
+        <FluentNumberField @bind-Value="@Content.MaxCount" Min="0" Max="30" MaxLength="2">Legfeljebb ennyi feladatot oldjon meg:</FluentNumberField>
+        <div class="input-group">
+            <FluentNumberField @bind-Value="@Content.MinCount" Min="0" Max="10" MaxLength="3">Legalább ennyi feladatot oldjon meg:</FluentNumberField>
+        </div>
+        <FluentLabel>Visszalépéshez szükséges értékek közül amelyik előbb teljesül - 0 érték esetén nem veszi figyelembe a gép.</FluentLabel>
+        <div class="input-group">
+            <FluentNumberField @bind-Value="@Content.WrongCount" Min="0" Max="30" MaxLength="3">Rossz válaszok száma:</FluentNumberField>
+        </div>
+        <div class="input-group">
+            <FluentNumberField @bind-Value="@Content.WrongPercent" Min="0" Max="100" Step="5" MaxLength="3">Adott % alatti megoldottság:</FluentNumberField>
+        </div>
+        <div class="input-group">
+            <FluentNumberField @bind-Value="@Content.Time" Min="0" Step="5" MaxLength="3">Ennyi idő alatt befejezni:</FluentNumberField>
+        </div>
+        @*<div class="input-group">
+            <FluentCheckbox @bind-Value="tipp">Kiválaszthatja a megoldást?</FluentCheckbox>
+        </div>
+        <button type="submit" class="btn" @onclick="SaveAsync">Mentés</button>*@
+    </EditForm>
+
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public Sablon Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    private async Task SaveAsync()
+    {
+        await Dialog.CloseAsync(Content);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

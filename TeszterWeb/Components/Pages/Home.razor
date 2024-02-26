@@ -18,6 +18,8 @@
         <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href="subject">Tantárgyak</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href=@qHref>Kérdések</NavLink></div>
+        <NavLink class="nav-doboz nav-link" href="addcourse">Matek gyakorlás tanulónak</NavLink>
+        <NavLink class="nav-doboz nav-link" href="classResult">Matek gyakorlás eredményei</NavLink>
     </nav>
 </AuthorizeView>
 @* <AuthorizeView Roles="Student">
@@ -28,14 +30,14 @@
     <FluentOption Value="54885fe6-e6cc-4d9e-aed1-0edf7fd6d036">Én</FluentOption>
 </FluentSelect>
 <FluentLabel>@selectedValue</FluentLabel>
-    <nav class="d-flex flex-row w-100">
-        <div class="nav-doboz"><NavLink class="nav-link" href="studenttests">Tesztjeim</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href="student/testsResult">Tesztek eredményei</NavLink></div>
-        @* <div class="nav-doboz"><NavLink class="nav-link" href="active">Aktív tesztek</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href="closed">Befejezett tesztek</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div> 
+<nav class="d-flex flex-row w-100">
+    <NavLink class="nav-doboz nav-link" href="studenttests">Tesztjeim</NavLink>
+    <NavLink class="nav-doboz nav-link" href="student/testsResult">Tesztek eredményei</NavLink>
+    <NavLink class="nav-doboz nav-link" href="student/math">Matematika gyakorló</NavLink>
+    @*   <div class="nav-doboz"><NavLink class="nav-link" href="closed">Befejezett tesztek</NavLink></div>
+        <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div>
         <div class="nav-doboz"><NavLink class="nav-link" href=@qHref>Kérdések</NavLink></div>*@
-    </nav>
+</nav>
 
 @* </AuthorizeView> *@
 @code{
