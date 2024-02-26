@@ -72,6 +72,19 @@ footer {
     padding: 5px;
     margin: 5px;
 }
+.NoLesson {
+    padding: 5px;
+}
+
+.sablon {
+    width: 50px;
+}
+
+.HasLesson {
+    padding: 5px;
+    background-color: limegreen;
+}
+
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;

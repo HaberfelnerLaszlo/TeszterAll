@@ -49,6 +49,8 @@ builder.Services.AddSingleton<SubjectServices>();
 builder.Services.AddSingleton<TestUserServices>();
 builder.Services.AddSingleton<TestQuestionServices>();
 builder.Services.AddSingleton<TestQuestionUserServices>();
+builder.Services.AddSingleton<MathService>();
+builder.Services.AddScoped<PageHistoryState>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();
 

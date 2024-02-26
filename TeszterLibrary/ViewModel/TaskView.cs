@@ -7,6 +7,10 @@
 		/// </summary>
 		public int TaskId { get; set; }
 		/// <summary>
+		/// A feladat leírása
+		/// </summary>
+		public string Title { get; set; }=string.Empty;
+		/// <summary>
 		/// A számítások listája elvileg MaxCount db
 		/// </summary>
 		public List<OperationView> Operations { get; set; } = null!;

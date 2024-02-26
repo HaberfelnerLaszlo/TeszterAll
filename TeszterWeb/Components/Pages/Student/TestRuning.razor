@@ -20,7 +20,7 @@
         <p>A @data.Test.Title teszt megírása következik.</p> <hr/>
         @if (data.Test.IsTimer)
         {
-            <span>A tesztet @data.Test.Time mp alatt kell megírnod.</span>
+            <span>A tesztet <b> @data.Test.Time.ToTime() </b>alatt kell megírnod.</span>
         }
         @if (data.Test.IsPractice)
         {

@@ -3,14 +3,7 @@
 @if (tests.Count>0)
 {
     <button class="btn btn-primary" @onclick=PublishTest>Próba</button>
- @*     <PublicTest Test="test"></PublicTest>
-     <div class="container">
-        @foreach (var item in tests)
-        {
-            <TestViewCard Test="item"/>
-        }
-    </div>
- *@}
+}
 @if (ispublish)
 {
     <PublicTest Teszt="test" UserId="@UserId"></PublicTest>

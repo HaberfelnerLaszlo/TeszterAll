@@ -6,43 +6,44 @@
 	{
 		<h3 id="error">@errorMessage</h3><hr />
 	}
-	<form>@foreach (var item in s)
-	{
-		if (item.Contains(" = "))
-		{
-			<span>@((MarkupString)item) </span> 
-			@if (IsFraction)
-			{
-			<div class="fraction">
-				<input class="valasz" type="number" @bind-value="@szamlalo" autofocus @onkeyup="(e)=>Leutes(e)" />
-					<svg height="5" width="100">
-						<line x1="0" y1="0" x2="100" y2="0" style="stroke:rgb(0,0,0);stroke-width:3" />
-					</svg>
-				<input class="valasz" type="number" @bind-value="@nevezo" @onkeyup="(e)=>Leutes(e)" />
-				</div>
-			}
-			else
-			{
-				<input class="valasz" type="text" @bind-value="@Assignment.Result" autofocus @onkeyup="(e)=>Leutes(e)" />
-			}
-		}
-		else
-		{
-			@((MarkupString)item)
-		}
-	}
-	@if (IsChecked)
-	{
-		if (IsCorrect)
-		{
-			<i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
-		}
-		else
-		{
-			<i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
-		}
-	}
-	</form>
+<form>
+    @foreach (var item in s)
+    {
+        if (item.Contains(" = "))
+        {
+            <span>@((MarkupString)item) </span>
+            @if (IsFraction)
+            {
+                <div class="fraction">
+                    <input class="valasz" type="number" @bind-value="@szamlalo" autofocus @onkeydown="(e)=>Leutes(e)" />
+                    <svg height="5" width="100">
+                        <line x1="0" y1="0" x2="100" y2="0" style="stroke:rgb(0,0,0);stroke-width:3" />
+                    </svg>
+                    <input class="valasz" type="number" @bind-value="@nevezo" @onkeydown="(e)=>Leutes(e)" />
+                </div>
+            }
+            else
+            {
+                <input class="valasz" type="text" @bind-value="@Assignment.Result" autofocus @onkeydown="(e)=>Leutes(e)" />
+            }
+        }
+        else
+        {
+            @((MarkupString)item)
+        }
+    }
+    @if (IsChecked)
+    {
+        if (IsCorrect)
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
+        }
+        else
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size20.DismissCircle())" Color="@Color.Error" />
+        }
+    }
+</form>
 </div>
 <button class="btn btn-success send" @onclick="@(()=>Sending())">Küldés</button>
 
@@ -62,27 +63,27 @@
 	}
 	private async Task Leutes(KeyboardEventArgs e)
 	{
-		if (e.Key=="Enter")
+		if (e.Code=="Enter" || e.Code == "NumpadEnter")
 		{
 			await Sending();
 		}
 	}
 	private async Task Sending()
 	{
-			if (IsFraction)
+		if (IsFraction)
+		{
+			if (nevezo != 0)
 			{
-				if (nevezo != 0)
-				{
-					var result = $"{szamlalo}/{nevezo}";
-					Assignment.Result = result;
-				}
-				else errorMessage = "Nevező nem lehet nulla!";
+				var result = $"{szamlalo}/{nevezo}";
+				Assignment.Result = result;
 			}
-			if (Assignment.Result.Length > 0)
-			{
-				await Send.InvokeAsync(Assignment);
-			}
-			else errorMessage = "Ne hagyd üresen a válasz mezőt!";
-		
+			else errorMessage = "Nevező nem lehet nulla!";
+		}
+		if (Assignment.Result.Length > 0)
+		{
+			await Send.InvokeAsync(Assignment);
+		}
+		else errorMessage = "Ne hagyd üresen a válasz mezőt!";
+
 	}
 }

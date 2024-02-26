@@ -1,0 +1,35 @@
+﻿@page "/TaskList"
+@inject MathService mService
+<h3>ManageTaskList</h3>
+@if (taskLists is not null && taskLists.Count > 0)
+{
+    <FluentDataGrid Items="@taskLists.AsQueryable()">
+        <PropertyColumn Property="@(i => i.Topic)" />
+        <PropertyColumn Property="@(i => i.Description)" />
+        <PropertyColumn Property="@(i => i.Sablon.Time)" />
+        <PropertyColumn Property="@(i => i.Sablon.MinCount)" />
+        <PropertyColumn Property="@(i => i.Sablon.MaxCount)" />
+        <PropertyColumn Property="@(i => i.Sablon.WrongCount)" />
+        <PropertyColumn Property="@(i => i.Sablon.WrongPercent)" />
+    </FluentDataGrid>
+}
+else
+{
+    <FluentButton>Feladatlista feltöltése</FluentButton>
+}
+
+@code {//Todo csak a sablon módosítható, mivel kódba vannak égetve a feladatok!
+    List<TaskList> taskLists = new();
+    protected override async Task OnParametersSetAsync()
+    {
+        var list = await mService.GetTaskList();
+        if (list is not null && list.Count > 0)
+        {
+            taskLists.AddRange(list);
+        }
+    }
+    void AddTask()
+        {
+            
+        }
+}

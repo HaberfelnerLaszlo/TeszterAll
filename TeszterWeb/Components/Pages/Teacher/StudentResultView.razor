@@ -1,0 +1,30 @@
+﻿@page "/StudentResult/{id}/{name}"
+@inject MathService mService
+@inject NavigationManager NavigationManager
+@inject PageHistoryState PageHistoryState
+<h4>@Name eredménye</h4>
+<StudentResult studentViews="resultStudentViews" Click="ViewTask"></StudentResult>
+@if (PageHistoryState.CanGoBack())
+{
+	<a href="@PageHistoryState.GetGoBackPage()">Vissza</a>
+}
+@code {
+	[Parameter] public string Id { get; set; }
+	[Parameter] public string  Name { get; set; }
+	private List<ResultStudentView> resultStudentViews = new();
+	protected override async Task OnParametersSetAsync()
+	{
+		resultStudentViews.Clear();
+		var response = await mService.ResultStudentViews(Id);
+		if (response != null)
+		{
+			resultStudentViews = response;
+		}
+	}
+	private void ViewTask(int taskId)
+	{
+		var name = resultStudentViews.Find(s => s.CompletTaskId == taskId).TaskName;
+		NavigationManager.NavigateTo($"/TaskResult/{taskId}/{name}");
+	}
+
+}
