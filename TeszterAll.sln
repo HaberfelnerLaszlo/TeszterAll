@@ -14,6 +14,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeszterWeb", "TeszterWeb\Te
 		{637F3317-729C-4063-B8C5-9330A8C5AE06} = {637F3317-729C-4063-B8C5-9330A8C5AE06}
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeszterTeams", "TeszterTeams\TeszterTeams.csproj", "{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{637F3317-729C-4063-B8C5-9330A8C5AE06} = {637F3317-729C-4063-B8C5-9330A8C5AE06}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +41,12 @@ Global
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC4E7AB9-185F-4702-8BDA-29E0B02E44A6}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

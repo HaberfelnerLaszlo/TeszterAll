@@ -1,0 +1,235 @@
+﻿@using Microsoft.Extensions.Configuration
+@using Microsoft.Graph;
+@using TeszterLibrary.Components.Teszt
+
+@inject IConfiguration Configuration
+@inject NavigationManager MyNavigationManager
+@inject QuestionServices qService
+@inject SubjectServices sServive
+@inject ILogger<WelcomeTeacher> logger
+@inject IJSRuntime _jsRuntime
+@inject TeamsUserCredential teamsUserCredential
+
+
+@*<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
+	<HeaderContent>
+		<p>Figyelmeztetés!</p>
+	</HeaderContent>
+	<BodyContent>
+		<h4>@errorMessage</h4>
+	</BodyContent>
+</Modal>
+<Modal AcceptButtom="Igen" Accept="DeleteQ" CancelButtom="Nem" Cancel="CloseModal" Show=showDelete>
+	<HeaderContent>
+		<p>Kérdés törlésére figyelmeztetés!</p>
+	</HeaderContent>
+	<BodyContent>
+		<h4>A következő kérdés törlésre kerül!</h4>
+		<p>@TempQuestion.Text</p>
+	</BodyContent>
+</Modal>*@
+@if (isLoading)
+{
+	<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+		<FluentProgressRing/>
+	</div>
+}
+else
+{
+	<div class="welcome page">
+		<div class="narrow page-padding">
+			<FluentTabs style="width: 90%; justify-content: space-between; margin: 1rem auto;">
+                <FluentTab style="font-size: 16px; min-height:36px;" Label="Kérdések">
+                    <div hidden="@(!newOrEdit)">
+                        @*<FluentAccordion>
+        <FluentAccordionItem Heading="Szűrő">
+             <QuestionFilter @bind-Questions="Questions" />
+                        </FluentAccordionItem>
+                        </FluentAccordion>*@
+                        <TestQuestions UserId=Guid.Parse(UserId) questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
+                        <button class="btn btn-outline-primary" @onclick=NewQuestion>Új kérdés</button>
+                    </div>
+                    <div hidden="@newOrEdit">
+                        <QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
+                    </div>
+
+                </FluentTab>
+				<CascadingValue Value="GraphClient">
+                <FluentTab Label="Teszt készítés">
+					@if (TestQuestion.Count>0)
+					{
+						<FluentBadge Circular=true> @TestQuestion.Count</FluentBadge>
+					}
+					<AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="@UserId" Publish="PublishTest"/>
+
+				</FluentTab>
+                <FluentTab Label="Tesztek" >
+					@*<TestViewer UserId="@UserId"/>*@
+                    </FluentTab>
+                </CascadingValue>
+                <FluentTab Label="Matematika gyakorló">
+                    <Deploy /><Publish />
+                </FluentTab>
+			</FluentTabs>
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter] public string UserId { get; set; }
+	string errorMessage = string.Empty;
+	bool isLoading = true, newOrEdit = true, isNew = false, showDelete=false;
+	public List<Question> Questions = new();
+	private List<Subject> Subjects = new();
+	Dictionary<string, string> valuePairs = new();
+	private List<string> titles = new();
+	private Question TempQuestion { get; set; } = new();
+	private List<Question> TestQuestion = new();
+	private readonly string _scope = "User.Read EduRoster.ReadBasic";
+	GraphServiceClient GraphClient;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await RefreshQuestions();
+			Subjects = await sServive.GetSubjects();
+			isLoading = false;
+			GraphClient = new GraphServiceClient(teamsUserCredential);
+			await base.OnAfterRenderAsync(firstRender);
+			StateHasChanged();
+		}
+	}
+	private async Task RefreshQuestions()
+	{
+		if (UserId == null)
+		{
+			Questions = await qService.GetQuestions();
+		}
+		else Questions = await qService.GetQuestions(Guid.Parse(UserId));
+		if (Questions == null)
+		{
+			errorMessage = qService.Error;
+			StateHasChanged();
+		}
+	}
+	private void DeleteQuestion(Question question)
+	{
+		showDelete = true;
+		TempQuestion = question;
+		StateHasChanged();
+	}
+	private async Task DeleteQ()
+	{
+		try
+		{
+			await qService.DeleteQuestionAsync(TempQuestion);
+			showDelete = false;
+			logger.LogInformation($"A következő kérdés törlésre került: {TempQuestion.Text}",TempQuestion);
+			await RefreshQuestions();
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, ex.Message, ex.StackTrace);
+		}
+	}
+	private void NewQuestion()
+	{
+		isNew = true;
+		newOrEdit = false;
+		TempQuestion = new();
+	}
+	private void Update(Question question)
+	{
+		isNew = false;
+		newOrEdit = false;
+		TempQuestion = question;
+	}
+	private void AddTestQ(Question question)
+	{
+		TestQuestion.Add(question);
+	}
+	private async Task Save(Question question)
+	{
+		if (isNew)
+		{
+			try
+			{
+				question.Id = Guid.NewGuid();
+				question.CreatedBy = Guid.Parse(UserId);
+				foreach (var item in question.Answers)
+				{
+					item.QuestionId = question.Id;
+				}
+				var q = await qService.AddQuestionAsync(question);
+				if (q == null)
+				{
+					errorMessage = "Nem sikerült elmenteni a kérdést!";
+				}
+				else
+				{
+					Questions.Add(question);
+					newOrEdit = true;
+					errorMessage = "Kérdés mentése sikerült!";
+				}
+				logger.LogInformation(errorMessage);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, ex.Message, ex.StackTrace);
+			}
+		}
+		else
+		{
+			try
+			{
+				var q = await qService.UpdateQuestionAsync(question);
+				if (q == null)
+				{
+					errorMessage = "Nem sikerült elmenteni a módosításokat!";
+				}
+				else
+				{
+					newOrEdit = true;
+					errorMessage = "Módosítások mentése sikerült!";
+				}
+				logger.LogInformation(errorMessage);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, ex.Message, ex.StackTrace);
+			}
+		}
+	}
+	private async Task SaveSubject(string name)
+	{
+		try
+		{
+			var s = await sServive.AddSubjectsAsync(new Subject() { Name = name });
+			if (s == null)
+			{
+				errorMessage = "Nem sikerült elmenteni a tantárgyat!";
+			}
+			else
+			{
+				Subjects.Add(s);
+				TempQuestion.Subject = s.Name;
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, ex.Message, ex.StackTrace);
+		}
+	}
+	private void CloseModal()
+	{
+		errorMessage = string.Empty;
+		showDelete = false;
+		StateHasChanged();
+	}
+	private async void PublishTest(Test newTest)
+	{
+		await _jsRuntime.InvokeVoidAsync("open", "lesson", "_blank");
+	}
+}
+
