@@ -1,0 +1,57 @@
+﻿@page "/"
+@page "/tab"
+@using TeszterTeams.Components;
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+
+@rendermode InteractiveServer
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+        <FluentProgressRing />
+    </div>
+}
+else if (role.Equals("Teacher"))
+{
+    <div>
+        <WelcomeTeacher UserId="@clientId" />
+    </div>
+}
+else
+{
+    <div>
+        <Welcome />
+    </div>
+}
+@code
+{
+    string userName, clientId, role;
+    string errorMessage;
+    bool isInTeams;
+    bool isLoading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //isInTeams = await MicrosoftTeams.IsInTeams();
+
+            //if (isInTeams)
+            //{
+            var user = await teamsUserCredential.GetUserInfoAsync();
+            userName = user.DisplayName;
+            clientId = user.ObjectId;
+            await MicrosoftTeams.InitializeAsync();
+            var context = await MicrosoftTeams.GetTeamsContextAsync();
+            role = context.User.LicenseType;
+            //}
+            //else
+            //{
+            //    errorMessage = "Nem a Microsoft Teams-ben lett elindítva.";
+            //}
+
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
