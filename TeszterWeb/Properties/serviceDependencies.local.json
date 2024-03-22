@@ -6,6 +6,10 @@
       "resourceId": null,
       "type": "identityapp.default",
       "connectionId": "AzureAD:ClientSecret"
+    },
+    "secrets1": {
+      "type": "secrets.user",
+      "dynamicId": null
     }
   }
 }

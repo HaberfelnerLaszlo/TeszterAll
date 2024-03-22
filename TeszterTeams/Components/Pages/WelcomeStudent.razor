@@ -1,0 +1,189 @@
+﻿@using Microsoft.Extensions.Configuration
+@using Microsoft.Graph;
+@using TeszterLibrary.Components.Teszt
+
+@inject TestUserServices tuService
+@inject IToastService toastService
+@inject ILogger<WelcomeStudent> logger
+
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+        <FluentProgressRing />
+    </div>
+}
+else
+{
+    <FluentTabs Orientation="Orientation.Vertical" Style="width: 90%; justify-content: space-between; margin: 1rem auto;" @bind-ActiveTabId="@activeTabId">
+        <FluentTab Id="tesztek" Style="font-size: 16px; min-height:36px;" Label="Aktuális tesztjeim">
+            <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+                @foreach (var item in tests)
+                {
+                    <FluentCard Width="450px">
+                        <TestViewCard TestItem="@item" Start="@TestStart" />
+                    </FluentCard>
+                }
+            </FluentStack>
+
+        </FluentTab>
+        <FluentTab Id="readytest" Label="Lezárt tesztek">
+            <FluentStack Orientation=" Orientation.Horizontal" Wrap="true">
+                @foreach (var test in testResults)
+                {
+                    <TestResultToStudentCard TestResult="test" Open="OpenResult" />
+                }
+            </FluentStack>
+        </FluentTab>
+        <FluentTab Id="result" Label="Eredmény">
+            <FluentLabel>Ez a eredmény közlő</FluentLabel>
+            @foreach (var actualq in questions)
+            {
+            <FluentCard>
+                @if (actualq.QuestionType == QuestionType.Comp)
+                {
+                    <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+                }
+                else
+                {
+                    <FluentLabel Typo="Typography.Subject">@((MarkupString)actualq.QuestionText)</FluentLabel>
+                }
+
+                <FluentLabel>Kapott pontok: @actualq.Score pont</FluentLabel>
+                @switch (actualq.QuestionType)
+                {
+                    case QuestionType.SC:
+                        <Test_choise Type="@("radio")" Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.MC:
+                        <Test_choise Type="@("checkbox")" Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.TF:
+                        <Test_TF Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.Open:
+                        <Test_open Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.Seq:
+                        <Test_sequence Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.Pair:
+                        <Test_pair Answers="actualq.Answers" IsCheck="false" IsChecked="true" />
+                        break;
+                    case QuestionType.Comp:
+                        <Test_comp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="false" IsChecked="true" />
+                        break;
+                    default:
+                        <p>Nem tudom mi történt! </p>@actualq.QuestionType.ToAttributeValue()
+                        break;
+                }
+            </FluentCard>
+            <br />
+            }
+        </FluentTab>
+        <FluentTab Id="write" Label="Teszt írás">
+            @if (testStart)
+            {
+            <ViewQinTest Id="@newTest.Id" IsTimer="@newTest.IsTimer" Title="@newTest.Title" IsCheck="newTest.IsCheck" IsShuffle="newTest.ShuffleQuestion" TestEnd="EndTest"></ViewQinTest>
+            }
+            else if (testEnd)
+            {
+            <p>Nagyszerű!</p><p> Sikerült megoldanod a tesztet!</p>
+            <FluentButton OnClick="ResultView">Eredmény megtekintése</FluentButton>
+            }
+            else
+            {
+            <p>A @newTest.Title teszt megírása következik.</p> <hr />
+            @if (newTest.IsTimer)
+            {
+                <span>A tesztet <b> @newTest.Time.ToTime() </b>alatt kell megírnod.</span>
+            }
+            @if (newTest.IsPractice)
+            {
+                <span> A teszt gyakorlásra szolgál.</span>
+            }
+            @if (newTest.IsCheck)
+            {
+                <span>A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
+            }
+            <hr />
+            <FluentButton Appearance="Appearance.Accent" Color="yellow" OnClick="StartTest">A teszt elkezdése</FluentButton>
+            }
+        </FluentTab>
+        <FluentTab Id="gyak" Label="Matematika gyakorló">
+            <MathCourse UserId="@UserId"/>
+        </FluentTab>
+    </FluentTabs>
+}
+
+@code {
+    [Parameter] public string UserId { get; set; }
+    string errorMessage = string.Empty, activeTabId = "tesztek";
+    bool isLoading = true, testStart = false, testEnd = false;
+    private readonly string _scope = "User.Read EduRoster.ReadBasic";
+    Test newTest = new();
+    private List<TestView> tests = new();
+    List<QuestionView> questions = new();
+    List<TestResultToStudent> testResults = new();
+
+    GraphServiceClient GraphClient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tests = await tuService.GetTests(Guid.Parse(UserId));
+        //tests = await tuService.GetTests(Guid.Parse("6392352e-69b8-42ac-8f9c-3f92297e54c8"));
+        if (tests == null)
+        {
+            if (tuService.ErrorMessage.Equals("Nincs eredmény."))
+            {
+                errorMessage = "Nincs már aktív teszted!";
+            }
+            errorMessage = tuService.ErrorMessage;
+            return;
+        }
+        testResults = await tuService.GetReadyTests(Guid.Parse(UserId));
+        if (testResults is null)
+        {
+            errorMessage = "Nincs még befejezett teszted!";
+        }
+
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isLoading = false;
+        }
+        base.OnAfterRender(firstRender);
+    }
+    void TestStart(TestView test)
+    {
+        newTest = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title, Time = test.Time };
+        activeTabId = "write";
+
+    }
+    void StartTest()
+    {
+        testStart = true;
+        StateHasChanged();
+    }
+
+    void EndTest(List<QuestionView> questionViews)
+    {
+        testStart = false;
+        testEnd = true;
+        questions = questionViews.ToList();
+        //StateHasChanged();
+    }
+    void ResultView()
+    {
+        activeTabId = "result";
+    }
+    private async void OpenResult(int tUserId)
+    {
+        questions = await tuService.GetTestQuestions(tUserId) ?? new();
+        activeTabId = "result";
+    }
+
+
+}
+

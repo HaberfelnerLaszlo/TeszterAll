@@ -4,7 +4,6 @@
 @inject TeamsUserCredential teamsUserCredential
 @inject MicrosoftTeams MicrosoftTeams
 
-@rendermode InteractiveServer
 @if (isLoading)
 {
     <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
@@ -15,6 +14,12 @@ else if (role.Equals("Teacher"))
 {
     <div>
         <WelcomeTeacher UserId="@clientId" />
+    </div>
+}
+else if (role.Equals("Student"))
+{
+    <div>
+        <WelcomeStudent UserId="@clientId"/>
     </div>
 }
 else

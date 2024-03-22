@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>9c4f81e3-1f4e-4f70-8980-859381df36b8</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <Platforms>AnyCPU;ARM64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +22,7 @@
     <PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="2.17.1" />
     <PackageReference Include="Microsoft.Identity.Web.GraphServiceClient" Version="2.17.1" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="2.17.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
     <PackageReference Include="TinyMCE.Blazor" Version="1.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.2" />

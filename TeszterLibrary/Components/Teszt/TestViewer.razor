@@ -4,10 +4,11 @@
 {
     <button class="btn btn-primary" @onclick=PublishTest>Próba</button>
 }
-@if (ispublish)
+@foreach (var item in tests)
 {
-    <PublicTest Teszt="test" UserId="@UserId"></PublicTest>
+    <NoPublishTestCard TestItem="item"></NoPublishTestCard>
 }
+
 @code {
     
     [Parameter] public string UserId { get; set; }

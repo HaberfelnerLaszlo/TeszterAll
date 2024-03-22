@@ -1,0 +1,119 @@
+﻿@page "/Units"
+@inject MathService mService
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+
+<div class="doboz">
+	<h3>Mértékegység átváltás gyakorlása</h3>
+@if(isLoading)
+{
+	<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+		<FluentProgressRing/>
+	</div>
+}
+else
+{
+
+@if (message.Length > 0)
+{
+	if (IsError)
+	{
+		<Modal AcceptButtom="Ok" Show=true>
+			<HeaderContent>
+				<h4>Hiba!</h4>
+			</HeaderContent>
+			<BodyContent>
+				<p>@message</p>
+			</BodyContent>
+		</Modal>
+	}
+	else
+	{
+		<Modal AcceptButtom="Rendben" Show=true>
+			<HeaderContent>
+				<h4>Üzenet</h4>
+			</HeaderContent>
+			<BodyContent>
+				<p>@message</p>
+			</BodyContent>
+		</Modal>
+	}
+}
+	<ClassLesson TaskView="taskView" Recives="recives" IsChecked="IsChecked" Send="@CheckClass" Next="NextClass" />
+}
+</div>
+@code {
+	public TaskView taskView = new();
+	private Guid UserId, ClassId;
+	private bool IsChecked = false, IsError = false,isLoading = true, isInTeams;
+	System.Timers.Timer timer = new System.Timers.Timer();
+	private int time = 0;
+	private string message = string.Empty,userName;
+	private List<ClassRecive> recives = new();
+	protected async override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			isInTeams = await MicrosoftTeams.IsInTeams();
+			timer.Interval = 1000;
+			if (isInTeams)
+			{
+				var user = await teamsUserCredential.GetUserInfoAsync();
+				userName = user.DisplayName;
+				UserId = Guid.Parse(user.ObjectId);
+				var info = await MicrosoftTeams.GetTeamsContextAsync();
+				ClassId = Guid.Parse(info.Team.GroupId);
+				taskView = await mService.ClassLesson(ClassId);
+				if (taskView is not null)
+				{
+					foreach (var item in taskView.Operations)
+					{
+						recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+					}
+					StateHasChanged();
+					timer.Elapsed += (s, e) => { time += 1; };
+				}
+				else
+				{
+					IsError = false;
+					message = "Nincs kiadva mértékegység váltás feladat a csoport számára";
+				}
+			}
+			else
+			{
+				IsError = true;
+				message = "Not running in Microsoft Teams.";
+				//var id = await sessionStorage.GetItemAsync<string>("UserId");
+				//UserId = Guid.Parse(id);
+			}
+			isLoading = false;
+			StateHasChanged();
+			timer.Start();
+		}
+	}
+	private async Task CheckClass(List<ClassRecive> _recives)
+	{
+		timer.Stop();
+		var avgTime = time / _recives.Count;
+		foreach (var item in _recives)
+		{
+			item.Time = avgTime;
+		}
+		recives = await mService.ClassResult(_recives);
+		IsChecked = true;
+		StateHasChanged();
+	}
+	private async Task NextClass()
+	{
+			taskView = await mService.ClassLesson(ClassId);
+			recives.Clear();
+			IsChecked = false;
+			foreach (var item in taskView.Operations)
+			{
+				recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+			}
+			time = 0;
+			timer.Start();
+	}
+}

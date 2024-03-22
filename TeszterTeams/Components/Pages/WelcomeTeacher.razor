@@ -6,28 +6,11 @@
 @inject NavigationManager MyNavigationManager
 @inject QuestionServices qService
 @inject SubjectServices sServive
+@inject IToastService toastService
 @inject ILogger<WelcomeTeacher> logger
 @inject IJSRuntime _jsRuntime
 @inject TeamsUserCredential teamsUserCredential
 
-
-@*<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
-	<HeaderContent>
-		<p>Figyelmeztetés!</p>
-	</HeaderContent>
-	<BodyContent>
-		<h4>@errorMessage</h4>
-	</BodyContent>
-</Modal>
-<Modal AcceptButtom="Igen" Accept="DeleteQ" CancelButtom="Nem" Cancel="CloseModal" Show=showDelete>
-	<HeaderContent>
-		<p>Kérdés törlésére figyelmeztetés!</p>
-	</HeaderContent>
-	<BodyContent>
-		<h4>A következő kérdés törlésre kerül!</h4>
-		<p>@TempQuestion.Text</p>
-	</BodyContent>
-</Modal>*@
 @if (isLoading)
 {
 	<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
@@ -36,10 +19,10 @@
 }
 else
 {
-	<div class="welcome page">
-		<div class="narrow page-padding">
-			<FluentTabs style="width: 90%; justify-content: space-between; margin: 1rem auto;">
-                <FluentTab style="font-size: 16px; min-height:36px;" Label="Kérdések">
+	@*<div class="welcome page">
+		<div class="narrow page-padding">*@
+			<FluentTabs Orientation="Orientation.Vertical" Style="width: 90%; justify-content: space-between; margin: 1rem auto;" @bind-ActiveTabId="@activeTabId">
+                <FluentTab Id="Questions" Style="font-size: 16px; min-height:36px;" Label="Kérdések">
                     <div hidden="@(!newOrEdit)">
                         @*<FluentAccordion>
         <FluentAccordionItem Heading="Szűrő">
@@ -52,33 +35,43 @@ else
                     <div hidden="@newOrEdit">
                         <QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
                     </div>
-
                 </FluentTab>
-				<CascadingValue Value="GraphClient">
-                <FluentTab Label="Teszt készítés">
-					@if (TestQuestion.Count>0)
-					{
-						<FluentBadge Circular=true> @TestQuestion.Count</FluentBadge>
-					}
-					<AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="@UserId" Publish="PublishTest"/>
-
-				</FluentTab>
-                <FluentTab Label="Tesztek" >
-					@*<TestViewer UserId="@UserId"/>*@
+                    <FluentTab Id="newTeszt" Label="Teszt készítés">
+                        @if (TestQuestion.Count > 0)
+                        {
+                            <FluentBadge Circular=true> @TestQuestion.Count</FluentBadge>
+                        }
+                        @if (publish)
+                        {
+							<PublicTestInTeams Teszt="newTest" UserId="@UserId" Published="@(() => { publish = false; activeTabId = "Questions"; })"></PublicTestInTeams>
+                        }
+                        else
+                        {
+                            <AddTest questions="Questions" subjects="Subjects" TesztQ="TestQuestion" UserId="@UserId" Publish="PublishTest" />
+                        }
                     </FluentTab>
-                </CascadingValue>
-                <FluentTab Label="Matematika gyakorló">
+				<FluentTab Id="pub" Label="Közzététel" Disabled="@(!publish)">
+					<FluentLabel>Ez a közzététel</FluentLabel>
+				</FluentTab>
+				<FluentTab Id="proba" Label="Próba">
+					<FluentButton OnClick="Tabchange">Váltás</FluentButton>
+					<FluentSwitch Value="@publish" ValueChanged="e=>Tabchange(e)"></FluentSwitch>
+				</FluentTab>
+                <FluentTab Id="Tesztek" Label="Tesztek" >
+					<TestViewer UserId="@UserId"/>
+                    </FluentTab>
+                <FluentTab Id="gyak" Label="Matematika gyakorló">
                     <Deploy /><Publish />
                 </FluentTab>
 			</FluentTabs>
-		</div>
-	</div>
+		@*</div>
+	</div>*@
 }
 
 @code {
 	[Parameter] public string UserId { get; set; }
-	string errorMessage = string.Empty;
-	bool isLoading = true, newOrEdit = true, isNew = false, showDelete=false;
+	string errorMessage = string.Empty, activeTabId="Questions";
+	bool isLoading = true, newOrEdit = true, isNew = false, showDelete = false, publish = false;
 	public List<Question> Questions = new();
 	private List<Subject> Subjects = new();
 	Dictionary<string, string> valuePairs = new();
@@ -86,6 +79,7 @@ else
 	private Question TempQuestion { get; set; } = new();
 	private List<Question> TestQuestion = new();
 	private readonly string _scope = "User.Read EduRoster.ReadBasic";
+	Test newTest = new();
 	GraphServiceClient GraphClient;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -109,6 +103,7 @@ else
 		else Questions = await qService.GetQuestions(Guid.Parse(UserId));
 		if (Questions == null)
 		{
+			toastService.ShowError($"Hiba történt: {qService.Error}");
 			errorMessage = qService.Error;
 			StateHasChanged();
 		}
@@ -125,7 +120,8 @@ else
 		{
 			await qService.DeleteQuestionAsync(TempQuestion);
 			showDelete = false;
-			logger.LogInformation($"A következő kérdés törlésre került: {TempQuestion.Text}",TempQuestion);
+			toastService.ShowInfo($"A következő kérdés törlésre került: {TempQuestion.Text}");
+			logger.LogInformation("A következő kérdés törlésre került: {TempQuestion.Text}",TempQuestion.Text);
 			await RefreshQuestions();
 		}
 		catch (Exception ex)
@@ -176,6 +172,7 @@ else
 			}
 			catch (Exception ex)
 			{
+				toastService.ShowError($"Hiba történt: {ex.Message}");
 				logger.LogError(ex, ex.Message, ex.StackTrace);
 			}
 		}
@@ -186,17 +183,20 @@ else
 				var q = await qService.UpdateQuestionAsync(question);
 				if (q == null)
 				{
+					toastService.ShowError("Nem sikerült elmenteni a módosításokat!");
 					errorMessage = "Nem sikerült elmenteni a módosításokat!";
 				}
 				else
 				{
 					newOrEdit = true;
+					toastService.ShowSuccess("Módosítások mentése sikerült!");
 					errorMessage = "Módosítások mentése sikerült!";
 				}
 				logger.LogInformation(errorMessage);
 			}
 			catch (Exception ex)
 			{
+				toastService.ShowError($"Hiba történt: {ex.Message}");
 				logger.LogError(ex, ex.Message, ex.StackTrace);
 			}
 		}
@@ -208,16 +208,19 @@ else
 			var s = await sServive.AddSubjectsAsync(new Subject() { Name = name });
 			if (s == null)
 			{
+				toastService.ShowError("Nem sikerült elmenteni a tantárgyat!");
 				errorMessage = "Nem sikerült elmenteni a tantárgyat!";
 			}
 			else
 			{
 				Subjects.Add(s);
 				TempQuestion.Subject = s.Name;
+				toastService.ShowSuccess("Sikerült elmenteni a tantárgyat.");
 			}
 		}
 		catch (Exception ex)
 		{
+			toastService.ShowError($"Hiba történt: {ex.Message}");
 			logger.LogError(ex, ex.Message, ex.StackTrace);
 		}
 	}
@@ -227,9 +230,24 @@ else
 		showDelete = false;
 		StateHasChanged();
 	}
-	private async void PublishTest(Test newTest)
+	private async void PublishTest(Test newT)
 	{
-		await _jsRuntime.InvokeVoidAsync("open", "lesson", "_blank");
+		newTest = newT;
+		if (newT is not null)
+		{
+			publish = true;
+			StateHasChanged();
+		}
+		//await _jsRuntime.InvokeVoidAsync("open", "lesson", "_blank");
+	}
+	private void Tabchange()
+	{
+		activeTabId = "gyak";
+	}
+	private void Tabchange(bool value)
+	{
+		publish = value;
+		StateHasChanged();
 	}
 }
 

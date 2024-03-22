@@ -14,13 +14,16 @@ builder.Services.AddRazorComponents()
 var config = builder.Configuration.Get<ConfigOptions>();
 builder.Services.AddTeamsFx(config.TeamsFx.Authentication);
 builder.Services.AddScoped<MicrosoftTeams>();
-//builder.Services.AddScoped<GraphService>();
+builder.Services.AddScoped<GraphServices>();
 builder.Services.AddSingleton<MathService>();
 builder.Services.AddSingleton<TeszterApiService>();
 builder.Services.AddSingleton<QuestionServices>();
 builder.Services.AddSingleton<SubjectServices>();
 builder.Services.AddSingleton<TestServices>();
+builder.Services.AddSingleton<TestUserServices>();
 builder.Services.AddSingleton<TestQuestionServices>();
+builder.Services.AddSingleton<TestQuestionUserServices>();
+builder.Services.AddSingleton<EduUserServices>();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient("WebClient", client => client.Timeout = TimeSpan.FromSeconds(600));
