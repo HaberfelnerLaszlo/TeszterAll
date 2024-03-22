@@ -1,0 +1,138 @@
+﻿@page "/lesson"
+@using TeszterLibrary.ViewModel
+@using TeszterLibrary.Components.MathLesson
+@inject MathService mService
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+<h2>Matematika gyakorló program</h2>
+
+@if(isLoading)
+{
+	<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+		<FluentProgressRing/>
+	</div>
+}
+else
+{
+	<h3>Üdvözölek @(!String.IsNullOrEmpty(userName) ? ", " + userName : "")!</h3>
+	<h4>@message </h4>
+	@if (errorMessage.Length>0)
+	{
+		<h4 id="error"> @errorMessage</h4>
+	}
+@*	<select @onchange="(e)=>NewUserId(e)">
+		<option selected disabled>Válasz...</option>
+		<option value="ad23c929-7c72-4512-93d1-1877fe290b8a">Péterfy's diák'</option>
+		<option value="6392352e-69b8-42ac-8f9c-3f92297e54c8">Péterfy diák'</option>
+	</select>
+*@	<div class="center">
+		@if (taskView!=null && currentOperation.OperationId!=0)
+		{
+			<p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
+			<MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction"/>
+	
+		} else
+		{
+			<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+				<p>Betöltés</p>
+				<FluentProgressRing/>
+			</div>
+		}
+	</div>
+}
+@code 
+{
+	public TaskView taskView = new();
+	private OperationView currentOperation = new();
+	private Guid UserId;
+	private bool IsChecked = false, isLoading=true, isInTeams;
+	private TaskRecive taskRecive = new();
+	System.Timers.Timer timer = new System.Timers.Timer();
+	private int time = 0;
+	private string message="A kitüzött feladat: ", errorMessage=string.Empty, userName;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			isInTeams = await MicrosoftTeams.IsInTeams();
+			timer.Interval = 1000;
+			if (isInTeams)
+			{
+				var user = await teamsUserCredential.GetUserInfoAsync();
+				userName = user.DisplayName;
+				UserId = Guid.Parse(user.ObjectId);
+				taskView = await mService.Start(UserId);
+				if (taskView is not null)
+				{
+					if (taskView.Operations.Count > 0)
+					{
+						currentOperation = taskView.Operations[0];
+					}
+					else errorMessage = $"Nincs művelet! {taskView.TaskId}";
+					StateHasChanged();
+					timer.Elapsed += (s, e) => { time += 1; };
+				}
+				else
+				{
+					message = "Nincs feladat kiadva számodra!";
+				}
+			}
+			else
+			{
+				errorMessage = "Not running in Microsoft Teams.";
+				//var id = await sessionStorage.GetItemAsync<string>("UserId");
+				//UserId = Guid.Parse(id);
+			}
+
+			isLoading = false;
+			StateHasChanged();
+		}
+		return;
+	}
+	private async Task Next(OperationView operation){
+		timer.Stop();
+		TaskRecive recive = new() {OperationId=operation.OperationId, IsTipp=false, Result=operation.Result, Step=0, StudentId=UserId, Time=time};
+		taskRecive = await mService.Result(recive);
+		if (taskRecive is not null)
+		{
+			IsChecked = true;
+			StateHasChanged();
+			await Task.Delay(3000);
+			taskView.Operations.Remove(operation);
+			if (taskRecive.Step>0)
+			{
+				taskView = await mService.Start(UserId);
+				if (taskView is null)
+				{
+					message = "A kitűzőtt feladatokat elvégezted.";
+					StateHasChanged();
+					return;
+				}
+			}
+			if (taskView.Operations.Count > 0)
+			{
+				currentOperation = taskView.Operations[0];
+			}
+			else errorMessage = $"Nincs művelet! {taskView.TaskId}";
+			time = 0;
+			timer.Start();
+			IsChecked = false;
+		}
+	}
+	private async Task NewUserId(ChangeEventArgs e){
+		UserId=Guid.Parse(e.Value.ToString());
+		taskView = await mService.Start(UserId);
+		if (taskView is not null)
+		{
+			if (taskView.Operations.Count > 0)
+			{
+				currentOperation = taskView.Operations[0];
+			}
+			else errorMessage = $"Nincs művelet! {taskView.TaskId}";
+			StateHasChanged();
+			timer.Elapsed += (s, e) =>  {time += 1;};
+		}
+	}
+}

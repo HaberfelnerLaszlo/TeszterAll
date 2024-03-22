@@ -6,3 +6,10 @@ services:
     build:
       context: .
       dockerfile: TeszterTeams/Dockerfile
+
+  teszterweb:
+    image: ${DOCKER_REGISTRY-}teszterweb
+    build:
+      context: .
+      dockerfile: TeszterWeb/Dockerfile
+

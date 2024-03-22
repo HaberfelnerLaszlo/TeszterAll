@@ -1,50 +1,58 @@
 {
-	"profiles": {
-		// Debug project within Teams
-		"Microsoft Teams (browser)": {
-			"commandName": "Project",
-			"dotnetRunMessages": true,
-			"launchBrowser": true,
-			"launchUrl": "https://teams.microsoft.com/l/app/e79aba1f-327e-4ee7-856d-c2ff8e3e0613?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
-			"applicationUrl": "https://localhost:44302;http://localhost:2544",
-			"environmentVariables": {
-				"ASPNETCORE_ENVIRONMENT": "Development"
-			},
-			"hotReloadProfile": "aspnetcore"
-		},
-		"Microsoft 365 app (browser)": {
-			"commandName": "Project",
-			"dotnetRunMessages": true,
-			"launchBrowser": true,
-			"launchUrl": "https://www.office.com/m365apps/aeb42bf1-1764-4b01-8edb-9df992b897a7?auth=2&login_hint=haberfelner@peterfysuli.hu",
-			"applicationUrl": "https://localhost:44302;http://localhost:2544",
-			"environmentVariables": {
-				"ASPNETCORE_ENVIRONMENT": "Development"
-			},
-			"hotReloadProfile": "aspnetcore"
-		},
-		"Outlook (browser)": {
-			"commandName": "Project",
-			"dotnetRunMessages": true,
-			"launchBrowser": true,
-			"launchUrl": "https://outlook.office.com/host/aeb42bf1-1764-4b01-8edb-9df992b897a7?login_hint=haberfelner@peterfysuli.hu",
-			"applicationUrl": "https://localhost:44302;http://localhost:2544",
-			"environmentVariables": {
-				"ASPNETCORE_ENVIRONMENT": "Development"
-			},
-			"hotReloadProfile": "aspnetcore"
-		}
-		//// Uncomment following profile to debug project only (without launching Teams)
-		//,
-		//"Start Project (not in Teams)": {
-		//  "commandName": "Project",
-		//  "dotnetRunMessages": true,
-		//  "launchBrowser": true,
-		//  "applicationUrl": "https://localhost:44302;http://localhost:2544",
-		//  "environmentVariables": {
-		//    "ASPNETCORE_ENVIRONMENT": "Development"
-		//  },
-		//  "hotReloadProfile": "aspnetcore"
-		//}
-	}
+  "profiles": {
+    "Microsoft Teams (browser)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "https://teams.microsoft.com/l/app/e79aba1f-327e-4ee7-856d-c2ff8e3e0613?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:44302;http://localhost:2544",
+      "hotReloadProfile": "aspnetcore"
+    },
+    "Microsoft 365 app (browser)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "https://www.office.com/m365apps/aeb42bf1-1764-4b01-8edb-9df992b897a7?auth=2&login_hint=haberfelner@peterfysuli.hu",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:44302;http://localhost:2544",
+      "hotReloadProfile": "aspnetcore"
+    },
+    "Outlook (browser)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "https://outlook.office.com/host/aeb42bf1-1764-4b01-8edb-9df992b897a7?login_hint=haberfelner@peterfysuli.hu",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:44302;http://localhost:2544",
+      "hotReloadProfile": "aspnetcore"
+    },
+    "Start Project (not in Teams)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:44302;http://localhost:2544",
+      "hotReloadProfile": "aspnetcore"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/l/app/e79aba1f-327e-4ee7-856d-c2ff8e3e0613?installAppPackage=true&webjoin=true&appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&login_hint=haberfelner@peterfysuli.hu",
+      "environmentVariables": {
+        "ASPNETCORE_HTTPS_PORTS": "8081",
+        "ASPNETCORE_HTTP_PORTS": "8080"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  }
 }

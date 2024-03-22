@@ -2,32 +2,65 @@
 @inject MicrosoftTeams MicrosoftTeams;
 @inject NavigationManager NavigationManager;
 
-<div class="config page" id ="tab config">
-        <h1>Tab Configuration</h1>
-        <p>
-            This is where you will add your tab configuration options the user 
-            can choose when the tab is added to your team/group chat.
-        </p>
+<div class="config page" id="tab config">
+    <h3>Lap beállítása</h3>
+    <p>
+        Az alábbi menübõl kérlek válaszd ki melyiket szeretnéd elhelyezni.
+    </p>
+    <FluentSelect TOption="TabSetting" Items="tabSettings" OptionText="@(s=>s.Name)" SelectedOptionChanged="Selected" SelectedOption="selectedSetting"></FluentSelect>
 </div>
 
 @code {
 
-    private Guid _entityId = Guid.NewGuid();
-
+    private TabSetting selectedSetting;
+    private List<TabSetting> tabSettings = new();
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(firstRender)
+        if (firstRender)
         {
+            tabSettings.Add(new TabSetting("8582F13E-8D4A - 4AF8 - 9FA9 - 7DD4D0D993E0", "Mértékegység gyakorlás", "Mértékegység", "units", "units"));
+            tabSettings.Add(new TabSetting("8A0F6A80-CF70-4D7C-B4CF-26CD2FE7724C", "Eredmény tábla", "Eredmény", "result", "result"));
+            tabSettings.Add(new TabSetting("C32D85C6-4665-4035-B130-0B0A59A384C1", "Matematika gyakorló", "Gyakorló", "lesson", "lesson"));
+            selectedSetting = tabSettings[0];
+            StateHasChanged();
             var settings = new TeamsInstanceSettings
             {
-                SuggestedDisplayName = "My Tab",
-                EntityId = _entityId.ToString(),
-                ContentUrl = $"{NavigationManager.BaseUri}/tab",
-                WebsiteUrl = $"{NavigationManager.BaseUri}/tab"
+                SuggestedDisplayName = selectedSetting.DisplayName,
+                EntityId = selectedSetting.Id,
+                ContentUrl = $"{NavigationManager.BaseUri}{selectedSetting.ContentUrl}",
+                WebsiteUrl = $"{NavigationManager.BaseUri}{selectedSetting.WebsiteUrl}"
             };
-
             await MicrosoftTeams.InitializeAsync();
             await MicrosoftTeams.RegisterOnSaveHandlerAsync(settings);
         }
     }
-}
+    private async Task Selected(TabSetting setting)
+    {
+        var settings = new TeamsInstanceSettings
+        {
+            SuggestedDisplayName = setting.DisplayName,
+            EntityId = setting.Id,
+            ContentUrl = $"{NavigationManager.BaseUri}{setting.ContentUrl}",
+            WebsiteUrl = $"{NavigationManager.BaseUri}{setting.WebsiteUrl}"
+        };
+
+        //await MicrosoftTeams.InitializeAsync();
+        await MicrosoftTeams.RegisterOnSaveHandlerAsync(settings);
+
+    }
+    private struct TabSetting
+    {
+        public string Id;
+        public string Name;
+        public string DisplayName;
+        public string ContentUrl;
+        public string WebsiteUrl;
+        public TabSetting(string id, string name, string displayName, string content, string website)
+        {
+            Id = id;
+            Name = name;
+            DisplayName = displayName;
+            ContentUrl = content;
+            WebsiteUrl = website;
+        }
+    }}

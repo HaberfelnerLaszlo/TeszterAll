@@ -1,0 +1,237 @@
+﻿@using Microsoft.Graph.Models
+@using Microsoft.Graph;
+@using TeszterLibrary.Services;
+@inject TestServices tService
+@inject GraphServices gService
+@inject TestUserServices tuService
+@inject EduUserServices uService
+@inject IToastService toastService
+@inject TeamsUserCredential teamsUserCredential
+<EditForm Model="@Teszt" OnValidSubmit="Publish">
+    <div class="form-group">
+        <FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:" />
+    </div>
+    <hr />
+    <div class="form-group">
+        <label for="StartTime">Teszt kezdete: </label>
+        <input type="datetime-local" id="StartTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.StartTime" />
+        <label for="EndTime">Teszt zárása: </label>
+        <input type="datetime-local" id="EndTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.EndTime" />
+    </div>
+    <hr />
+    <div class="form-group">
+        <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
+        <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
+        <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
+        <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" Value=@Teszt.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
+        <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50" />
+    </div>
+    <hr />
+    <InputSelect class="m-1 m-lg-2" TValue="string" Value="SelectGroupId" ValueExpression="@(()=>SelectGroupId)" ValueChanged="SelectGroup">
+        <option value="">Válasz csoportot...</option>
+        @foreach (var item in Groups)
+        {
+            <option value="@item.Id">@item.DisplayName</option>
+        }
+    </InputSelect>
+    <hr />
+    @if (Members.Count > 0 || TestMembers.Count > 0)
+    {
+        <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
+            <FluentGridItem xs="12" sm="5">
+                <h5>Csoport tagjai</h5>
+                <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" Context="member">
+                    <ItemTemplate>@member.DisplayName</ItemTemplate>
+                </FluentSortableList>
+            </FluentGridItem>
+            <FluentGridItem xs="12" sm="5">
+                <h5>Feladatsort kap</h5>
+                <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@TestMembers" Context="testmember">
+                    <ItemTemplate>@testmember.DisplayName</ItemTemplate>
+                </FluentSortableList>
+            </FluentGridItem>
+        </FluentGrid>
+
+        @*<div class="row">
+            <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír">
+                <SourceContent>@list.DisplayName</SourceContent>
+                <TargetContent>@list.DisplayName</TargetContent>
+            </DragDropToList>
+        </div>*@
+
+    }
+    <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
+</EditForm>
+
+@code {
+    [Parameter] public Test Teszt { get; set; } = new();
+    [Parameter] public string UserId { get; set; }
+    [Parameter] public EventCallback Published { get; set; }
+
+    public List<EducationClass> Groups { get; set; } = new();
+    private List<EducationUser> Members = new List<EducationUser>();
+    private List<EducationUser> TestMembers = new List<EducationUser>();
+    private string SelectGroupId = string.Empty;
+    private EducationUser lastdropped { get; set; }
+    private bool BtnDidabled = false;
+    private GraphServiceClient? graph;
+    string message = string.Empty;
+    protected override async Task OnParametersSetAsync()
+    {
+        Groups = await gService.GetClasses(UserId);
+        Teszt.StartTime = DateTime.Now;
+        Teszt.EndTime = Teszt.StartTime.AddDays(1);
+    }
+    private async Task SelectGroup(string id)
+    {
+        Members.Clear();
+        SelectGroupId = id;
+        if (id != null)
+        {
+            var members = await gService.GetStudents(id);
+            foreach (var item in members)
+            {
+                if (item.PrimaryRole is null)
+                {
+                    Members.Add(new() { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = EducationUserRole.Student });
+                }
+                else if (item.PrimaryRole.Value == EducationUserRole.Student)
+                {
+                    Members.Add(new() { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = item.PrimaryRole.Value });
+                }
+            }
+        }
+    }
+
+    //private void All()
+    //{
+    //	TestMembers.AddRange(Members);
+    //	Members.Clear();
+    //	BtnDidabled = true;
+    //}
+    //private void Reverse()
+    //{
+    //	Members.AddRange(TestMembers);
+    //	TestMembers.Clear();
+    //	BtnDidabled = false;
+    //}
+    private async Task Publish(EditContext context)
+    {
+        bool active = true;
+        message = "Mentést elkezdtem";
+        StateHasChanged();
+        Teszt.IsPublished = true;
+        if (DateTime.Compare(Teszt.StartTime, Teszt.EndTime) > 0)
+        {
+            var temp = Teszt.StartTime;
+            Teszt.StartTime = Teszt.EndTime;
+            Teszt.EndTime = temp;
+        }
+        if (Teszt.StartTime > DateTime.Now)
+        {
+            active = false;
+        }
+        foreach (var item in TestMembers)
+        {
+            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime, Test = null });
+            var HasUser = await uService.UserExits(Guid.Parse(item.Id));
+            if (!HasUser)
+            {
+                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id), Role = item.PrimaryRole.Value.ToString() });
+            }
+        }
+        Teszt.TestQuestions = null;
+        Teszt.TestUsers = null;
+        Teszt.IsPublished = true;
+        var response = await tService.UpdateTestAsync(Teszt);
+        if (response != null)
+        {
+            toastService.ShowSuccess("A teszt sikeresen közzétéve.");
+            await Published.InvokeAsync();
+        }
+        else
+        {
+            toastService.ShowWarning("Mentés nem sikerült! Hiba: " + tService.ErrorMessage);
+        }
+    }
+    private void ListOneRemove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+
+        // get the item at the old index in list 1
+        var item = Members[args.OldIndex];
+
+        // add it to the new index in list 2
+        TestMembers.Insert(args.NewIndex, item);
+
+        // remove the item from the old index in list 1
+        Members.Remove(Members[args.OldIndex]);
+    }
+
+    private void ListTwoRemove(FluentSortableListEventArgs args)
+    {
+        if (args is null)
+        {
+            return;
+        }
+        // get the item at the old index in list 2
+        var item = TestMembers[args.OldIndex];
+
+        // add it to the new index in list 1
+        Members.Insert(args.NewIndex, item);
+
+        // remove the item from the old index in list 2
+        TestMembers.Remove(TestMembers[args.OldIndex]);
+    }
+    private void SortListOne(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.Members;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+
+    private void SortListTwo(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var oldIndex = args.OldIndex;
+        var newIndex = args.NewIndex;
+
+        var items = this.TestMembers;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+    }
+
+}
