@@ -1,0 +1,59 @@
+﻿@page "/"
+@inject MathService mService
+<h3>Index</h3>
+<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="string">
+    <FluentOption Value="86a75783-0797-4779-b0b1-9c53e6014ee7">5. első csoport</FluentOption>
+    <FluentOption Value="8545e6b2-b227-4e78-8fdc-a4576b37ee6e">5. második csoport</FluentOption>
+    <FluentOption Value="f9a0b4d6-86fb-4eed-947d-503796575f99">6. első csoport</FluentOption>
+    <FluentOption Value="df78676d-0f83-457a-8047-337088de4e0d">7. első csoport</FluentOption>
+    <FluentOption Value="6c9e754f-f21c-469e-b58c-ba073a995a5c">7. második csoport</FluentOption>
+</FluentSelect>
+@if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
+{
+    <p>már látszik?</p>
+    <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
+
+}
+@code {
+    string selectClass = string.Empty;
+    public TaskView taskView = new();
+    private OperationView currentOperation = new() { OperationId = 0 };
+    private Guid UserId, ClassId;
+    private bool IsChecked = false, IsError = false, IsClass = false;
+    private TaskRecive taskRecive = new();
+    System.Timers.Timer timer = new System.Timers.Timer();
+    private int time = 0, allTime = 0;
+    private string message = string.Empty;
+    private List<ClassRecive> recives = new();
+
+    private async Task CheckClass(List<ClassRecive> _recives)
+    {
+        timer.Stop();
+        var avgTime = time / _recives.Count;
+        foreach (var item in _recives)
+        {
+            item.Time = avgTime;
+        }
+        recives = await mService.ClassResult(_recives);
+        IsChecked = true;
+        StateHasChanged();
+    }
+    private async void SelectedClass(string arg)
+    {
+        selectClass = arg;
+        await NextClass();
+    }
+    private async Task NextClass()
+    {
+        taskView = await mService.ClassLesson(Guid.Parse(selectClass));
+        recives.Clear();
+        IsChecked = false;
+        foreach (var item in taskView.Operations)
+        {
+            recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+        }
+        time = 0;
+        timer.Start();
+    }
+
+}
