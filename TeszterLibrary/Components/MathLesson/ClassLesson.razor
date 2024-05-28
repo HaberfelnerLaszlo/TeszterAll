@@ -20,11 +20,11 @@
 					<td>
 						@if (a.IsCorrect)
 						{
-						<i id="right" class="oi oi-circle-check text-success d-inline-flex box"></i>
+							<FluentIcon Value="@(new Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
 						}
 						else
 						{
-						<i id="wrong" class="oi oi-circle-x text-end text-danger d-inline-flex box"></i>
+							<FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" Color="@Color.Error" />
 						}
 					</td>
 				}
