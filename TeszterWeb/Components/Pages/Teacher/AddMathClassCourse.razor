@@ -1,0 +1,90 @@
+﻿@page "/AddClassCourse"
+@inject NavigationManager NavigationManager
+@inject GraphService graphService
+@inject GlobalData data
+@inject MathService mService
+@inject EduUserServices uService
+@inject IToastService ToastService
+@inject ILogger<AddMathClassCourse> _logger
+<h3>Osztály feladatainak beállítása</h3>
+<EditForm Model="Groups">
+    <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
+        <option disabled selected>Válasz csoportot...</option>
+        @foreach (var item in Groups)
+        {
+            <option value="@item.Id">@item.DisplayName</option>
+        }
+    </InputSelect>
+</EditForm>
+<hr />
+<AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
+
+@code {
+    private List<Microsoft.Graph.Models.EducationClass> Groups = new List<Microsoft.Graph.Models.EducationClass>();
+    private List<TeszterLibrary.Model.ClassLesson> Lessons = new();
+    private string SelectGroupId = string.Empty;
+    private bool BtnDidabled = false, IsCompletMember = false, IsClass = false;
+    private Guid ClassId;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (string.IsNullOrEmpty(data.UserId))
+            {
+                try
+                {
+                    var user = await graphService.GetMe();
+                    if (user is not null)
+                    {
+                        data.UserId = user.Id.ToString(); // ??= throw new ArgumentNullException(nameof(user));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ToastService.ShowError($"Hiba történt a UserId lekérésekor: {ex.Message}");
+                    _logger.LogError(ex, "Hiba történt a UserId lekérésekor: {ex.Message}", ex.Message);
+                }
+
+            }
+            Groups = await graphService.GetClasses(data.UserId); //Az osztályok lekérése
+            StateHasChanged();
+        }
+    }
+    private async Task SelectGroup(string id)
+    {
+        if (id != null)
+        {
+            ClassId = Guid.Parse(id);
+            Lessons.Clear();
+            Lessons= await mService.GetClassLessons(ClassId);
+        }
+        else return;
+        StateHasChanged();
+    }
+    private async Task SaveClass(List<TeszterLibrary.Model.ClassLesson> lessons)
+    {
+        var resp = await mService.SetClassLessons(lessons);
+        if (resp.Count>0)
+        {
+            ToastService.ShowInfo("A feladatok mentése sikerült!");
+            Lessons.Clear();
+            Lessons = resp.ToList();
+        }
+        //resp = await mService.UpdateClassLessons(lessons.Where(l => l.Id != 0).ToList());
+    }
+    //private async Task AddLessons()
+    //{
+    //    if (IsClass)
+    //    {
+    //        ClassId = Guid.Parse(SelectGroupId);
+    //        Lessons.Clear();
+    //        Lessons = await mService.GetLessons(ClassId);
+    //        IsCompletMember = true;
+    //        StateHasChanged();
+    //        return;
+    //    }
+    //    IsCompletMember = true;
+    //    Lessons.Clear();
+    //    StateHasChanged();
+    //}
+}

@@ -115,8 +115,8 @@
 </table>
 <button type="button" class="btn btn-success text-center" @onclick="Save">Mentés</button>
 @code {
-	[Parameter] public EventCallback<List<Lesson>> SaveTask { get; set; }
-	[Parameter] public List<Lesson> Lessons { get; set; } = new();
+	[Parameter] public EventCallback<List<Model.ClassLesson>> SaveTask { get; set; }
+	[Parameter] public List<Model.ClassLesson> Lessons { get; set; } = new();
 	[Parameter] public Guid ClassId { get; set; }
 	byte[] taskIds = new byte[100];
 	byte sum = 0;
@@ -131,8 +131,8 @@
 		{
 			foreach (var item in Lessons) //TODO null ellenőrzés
 			{
-				taskIds[item.TaskId - 62] = item.MaxCount;
-				sum += item.MaxCount;
+				taskIds[item.TaskId - 62] = item.TaskCount;
+				sum += item.TaskCount;
 			}
 		}
 	}
@@ -145,18 +145,16 @@
 			{
 				if (taskIds[i] == 0)
 				{
-					lesson.MaxCount = 0;
-					lesson.IsCompleted = true;
+					lesson.TaskCount = 0;
 				}
 				else
 				{
-					lesson.MaxCount = taskIds[i];
-					lesson.IsCompleted = false;
+					lesson.TaskCount = taskIds[i];
 				}
 			}
 			else if (taskIds[i]>0)
 			{
-				Lessons.Add(new() { TaskId = i + 62, MaxCount = taskIds[i], StudentId=ClassId });
+				Lessons.Add(new() { TaskId = i + 62, TaskCount = taskIds[i], ClassId=ClassId });
 			}
 		}
 		SaveTask.InvokeAsync(Lessons);

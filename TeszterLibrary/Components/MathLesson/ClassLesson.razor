@@ -38,12 +38,15 @@
 	}
 </form>
 <div style="text-align:center">
-@if (Send.HasDelegate)
-{
-	<button type="submit" class="btn btn-success send" @onclick="()=>Sending()">Ellenőrzés</button>
+    @if (Send.HasDelegate)
+    {
+        <button type="submit" class="btn btn-success send" @onclick="()=>Sending()">Ellenőrzés</button>
 
-}
-<button type="submit" class="btn btn-primary next" @onclick="@(()=>Next.InvokeAsync())">Következő</button>
+    }
+    @if (Next.HasDelegate)
+    {
+        <button type="submit" class="btn btn-primary next" @onclick="@(()=>Next.InvokeAsync())">Következő</button>
+    }
 </div>
 @code{
 	[Parameter] public TaskView TaskView { get; set; } = new();

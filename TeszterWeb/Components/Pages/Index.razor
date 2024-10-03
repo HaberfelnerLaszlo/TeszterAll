@@ -1,40 +1,43 @@
 ﻿@page "/"
 @inject MathService mService
-<h3>Index</h3>
+@inject IToastService toastService 
+<h3>Válasz osztályt!</h3>
 <FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="string">
     <FluentOption Value="">Válasz egy csoportot...</FluentOption>
-    <FluentOption Value="86a75783-0797-4779-b0b1-9c53e6014ee7">5. első csoport</FluentOption>
-    <FluentOption Value="8545e6b2-b227-4e78-8fdc-a4576b37ee6e">5. második csoport</FluentOption>
-    <FluentOption Value="f9a0b4d6-86fb-4eed-947d-503796575f99">6. első csoport</FluentOption>
-    <FluentOption Value="df78676d-0f83-457a-8047-337088de4e0d">7. első csoport</FluentOption>
-    <FluentOption Value="6c9e754f-f21c-469e-b58c-ba073a995a5c">7. második csoport</FluentOption>
+    <FluentOption Value="8048b263-4106-4925-a316-ffdee54a91a2">6. első csoport</FluentOption>
+    <FluentOption Value="b02dc50d-d531-43fb-9c6b-e6a39a1beb8e">6. második csoport</FluentOption>
+    <FluentOption Value="f9a0b4d6-86fb-4eed-947d-503796575f99">7. első csoport</FluentOption>
+    <FluentOption Value="df78676d-0f83-457a-8047-337088de4e0d">8. első csoport</FluentOption>
+    <FluentOption Value="6c9e754f-f21c-469e-b58c-ba073a995a5c">8. második csoport</FluentOption>
 </FluentSelect>
 @if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
 {
-    <p>már látszik?</p>
-    <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
-
+    <AuthorizeView>
+        <Authorized>
+            <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
+        </Authorized>
+        <NotAuthorized>
+            <ClassLesson TaskView="taskView" Recives="recives" IsChecked=IsChecked></ClassLesson>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else if (!string.IsNullOrEmpty(selectClass))
+{
+    <h5>Adatok betöltése...</h5>
+    <FluentProgressRing />
 }
 @code {
     string selectClass = string.Empty;
     public TaskView taskView = new();
     private OperationView currentOperation = new() { OperationId = 0 };
     private Guid UserId, ClassId;
-    private bool IsChecked = false, IsError = false, IsClass = false;
+    private bool IsChecked = false;
     private TaskRecive taskRecive = new();
-    System.Timers.Timer timer = new System.Timers.Timer();
-    private int time = 0, allTime = 0;
-    private string message = string.Empty;
+    //private string message = string.Empty;
     private List<ClassRecive> recives = new();
 
     private async Task CheckClass(List<ClassRecive> _recives)
     {
-        timer.Stop();
-        var avgTime = time / _recives.Count;
-        foreach (var item in _recives)
-        {
-            item.Time = avgTime;
-        }
         recives = await mService.ClassResult(_recives);
         IsChecked = true;
         StateHasChanged();
@@ -46,15 +49,28 @@
     }
     private async Task NextClass()
     {
-        taskView = await mService.ClassLesson(Guid.Parse(selectClass));
-        recives.Clear();
-        IsChecked = false;
-        foreach (var item in taskView.Operations)
+        try
         {
-            recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+            taskView = await mService.ClassLesson(Guid.Parse(selectClass));
+            recives.Clear();
+            IsChecked = false;
+            if (taskView.Operations.Count>0)
+            {
+                foreach (var item in taskView.Operations)
+                {
+                    recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+                }
+            }
+            else
+            {
+                toastService.ShowInfo("Nem található művelet");
+            }
+            StateHasChanged();
         }
-        time = 0;
-        timer.Start();
+        catch (Exception e)
+        {
+            toastService.ShowError(e.Message);
+            throw;
+        }
     }
-
 }

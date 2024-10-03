@@ -16,8 +16,8 @@
         }
     </InputSelect>
 </EditForm>
-<label for="IsClass">Osztálynak készül?</label>
-<input id="IsClass" type="checkbox" @onchange=CboxChange />
+@*<label for="IsClass">Osztálynak készül?</label>
+<input id="IsClass" type="checkbox" @onchange=CboxChange />*@
 <hr />
 @if (!IsClass && (Members.Count > 0 || TestMembers.Count > 0))
 {
@@ -36,10 +36,10 @@
         </FluentGridItem>
     </FluentGrid>
 }
-@if (IsClass)
+@*@if (IsClass)
 {
     <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
-}
+}*@
 @if (IsCompletMember)
 {
     <TaskToLesson TaskList="TaskLists" SaveLesson="Saved" Name="@StudentName" StudentId="@StudentId" Lessons="@Lessons">
