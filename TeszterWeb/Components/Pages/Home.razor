@@ -10,46 +10,37 @@
 <PageTitle>Kezdőlap</PageTitle>
 @data.UserId;
 <AuthorizeView Roles="Teacher">
-    Tanárok látják.
-    <nav class="d-flex flex-row w-100">
-        <NavLink class="nav-link nav-doboz" href="newtest">Új teszt készítése</NavLink>
-        <NavLink class="nav-link nav-doboz" href="draft">Nem aktívált tesztek</NavLink>
-        <NavLink class="nav-link nav-doboz" href="active">Aktív tesztek</NavLink>
-        <NavLink class="nav-link nav-doboz" href="closed">Befejezett tesztek</NavLink>
-        <NavLink class="nav-link nav-doboz" href="counter">Archivált tesztek</NavLink>
-        <NavLink class="nav-link nav-doboz" href="subject">Tantárgyak</NavLink>
-        <NavLink class="nav-link nav-doboz" href=@qHref>Kérdések</NavLink>
-        <NavLink class="nav-doboz nav-link" href="addclasscourse">Matek gyakorlás osztálynak</NavLink>
-        <NavLink class="nav-doboz nav-link" href="addcourse">Matek gyakorlás tanulónak</NavLink>
-        <NavLink class="nav-doboz nav-link" href="classResult">Matek gyakorlás eredményei</NavLink>
-    </nav>
+    <FluentGrid Style="margin:10px 0px">
+        <NavLink class="nav-doboz" href="newtest_w">Új teszt készítése</NavLink>
+        <NavLink class="nav-doboz" href="draft">Nem aktívált tesztek</NavLink>
+        <NavLink class="nav-doboz" href="active">Aktív tesztek</NavLink>
+        <NavLink class="nav-doboz" href="closed">Befejezett tesztek</NavLink>
+        <NavLink class="nav-doboz" href="counter">Archivált tesztek</NavLink>
+        <NavLink class="nav-doboz" href="subject">Tantárgyak</NavLink>
+        <NavLink class="nav-doboz" href=@qHref>Kérdések</NavLink>
+        <NavLink class="nav-doboz" href="addclasscourse">Matek gyakorlás osztálynak</NavLink>
+        <NavLink class="nav-doboz" href="addcourse">Matek gyakorlás tanulónak</NavLink>
+        <NavLink class="nav-doboz" href="classResult">Matek gyakorlás eredményei</NavLink>
+    </FluentGrid>
 </AuthorizeView>
 @* <AuthorizeView Roles="Student">
- *@    Diák látja
-<FluentSelect TOption="string" SelectedOption="selectedValue" ValueChanged="@((e)=>SelectedChange(e))">
-    <FluentOption Value="6392352e-69b8-42ac-8f9c-3f92297e54c8">Próba Diák</FluentOption>
-    <FluentOption Value="ad23c929-7c72-4512-93d1-1877fe290b8a">Peterfy's Diák</FluentOption>
-    <FluentOption Value="54885fe6-e6cc-4d9e-aed1-0edf7fd6d036">Én</FluentOption>
-</FluentSelect>
-<FluentLabel>@selectedValue</FluentLabel>
+        Diák látja
+    <FluentSelect TOption="string" SelectedOption="selectedValue" ValueChanged="@((e)=>SelectedChange(e))">
+        <FluentOption Value="6392352e-69b8-42ac-8f9c-3f92297e54c8">Próba Diák</FluentOption>
+        <FluentOption Value="ad23c929-7c72-4512-93d1-1877fe290b8a">Peterfy's Diák</FluentOption>
+        <FluentOption Value="54885fe6-e6cc-4d9e-aed1-0edf7fd6d036">Én</FluentOption>
+    </FluentSelect>
+    <FluentLabel>@selectedValue</FluentLabel>*@
 <nav class="d-flex flex-row w-100">
     <NavLink class="nav-doboz nav-link" href="studenttests">Tesztjeim</NavLink>
     <NavLink class="nav-doboz nav-link" href="student/testsResult">Tesztek eredményei</NavLink>
     <NavLink class="nav-doboz nav-link" href="student/math">Matematika gyakorló</NavLink>
-    @*   <div class="nav-doboz"><NavLink class="nav-link" href="closed">Befejezett tesztek</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href="counter">Archivált tesztek</NavLink></div>
-        <div class="nav-doboz"><NavLink class="nav-link" href=@qHref>Kérdések</NavLink></div>*@
 </nav>
 
 @* </AuthorizeView> *@
 @code{
-    /// <summary>
-    /// {"id":"6392352e-69b8-42ac-8f9c-3f92297e54c8","displayName":"Próba Diák"},{"id":"ad23c929-7c72-4512-93d1-1877fe290b8a","displayName":"Peterfy's Diák"}]
-    /// </summary>
-    /// <returns></returns>
-
     EducationUser? user;
-    string qHref=string.Empty,selectedValue= "54885fe6-e6cc-4d9e-aed1-0edf7fd6d036";
+    string qHref = string.Empty, selectedValue = "54885fe6-e6cc-4d9e-aed1-0edf7fd6d036";
     protected override async Task OnInitializedAsync()
     {
         try
@@ -57,13 +48,13 @@
             user = await GraphServiceClient.Education.Me.GetAsync();
             if (user is not null)
             {
-                data.UserId = user.Id??string.Empty;
+                data.UserId = user.Id ?? Guid.Empty.ToString();
                 qHref = $"question/{user.Id}";
-                if (!(await uService.UserExits(Guid.Parse(user.Id))))
+                if (!(await uService.UserExits(Guid.Parse(data.UserId))))
                 {
                     if (string.IsNullOrEmpty(uService.ErrorMessage))
                     {
-                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName, Id = Guid.Parse(user.Id), Role = user.PrimaryRole.Value.ToString() });
+                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole.Value.ToString() });
                     }
                 }
                 StateHasChanged();

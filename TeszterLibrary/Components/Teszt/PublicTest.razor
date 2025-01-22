@@ -1,41 +1,73 @@
 ﻿@using Microsoft.Graph.Models
 @using Microsoft.Graph;
 @using TeszterLibrary.Services;
+@using TeszterLibrary.Components;
 @inject GraphService gService
 @inject TestServices tService
 @inject TestUserServices tuService
 @inject EduUserServices uService
+@inject SectionServices seService
 @inject IToastService toastService
+@inject ILogger<PublicTest> _logger
 <EditForm Model="@Teszt" OnValidSubmit="Publish">
-	<div class="form-group">
-		<FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:"/>
-	</div>
-	<hr />
-	<div class="form-group">
-		<label for="StartTime">Teszt kezdete: </label>
-		<input type="datetime-local" id="StartTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.StartTime" />
-		<label for="EndTime">Teszt zárása: </label>
-		<input type="datetime-local" id="EndTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.EndTime" />
-	</div>
-	<hr />
+    <div class="form-group">
+        <FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:" />
+    </div>
+    <hr />
+    <div class="form-group">
+        <label for="StartTime">Teszt kezdete: </label>
+        <input type="datetime-local" id="StartTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.StartTime" />
+        <label for="EndTime">Teszt zárása: </label>
+        <input type="datetime-local" id="EndTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.EndTime" />
+    </div>
+    <hr />
     <div class="form-group">
         <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
         <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
         <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
         <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" Value=@Teszt.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
-        <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50"/>
+        <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50" />
     </div>
-	<hr />
+    @if (Teszt.HasSection)
+    {
+        <FluentStack>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Szekció</th>
+                        <th>Max előfordulás</th>
+                        <th>tesztenként az előfordulás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (sections is not null)
+                    {
+                        foreach (var item in sections)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.TestId</td>
+                                <td>
+                                    <FluentNumberField TValue="int" Min="1" Max="@item.TestId.ToString()" @bind-Value="@item.Count" />
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </FluentStack>
+    }
+    <hr />
     <InputSelect class="m-1 m-lg-2" TValue="string" Value="SelectGroupId" ValueExpression="@(()=>SelectGroupId)" ValueChanged="SelectGroup">
-		<option value="">Válasz csoportot...</option>
-		@foreach (var item in Groups)
-		{
-			<option value="@item.Id">@item.DisplayName</option>
-		}
-        </InputSelect>
- 	<hr />
-	@if (Members.Count > 0 || TestMembers.Count > 0)
-	{
+        <option value="">Válasz csoportot...</option>
+        @foreach (var item in Groups?? new())
+        {
+            <option value="@item.Id">@item.DisplayName</option>
+        }
+    </InputSelect>
+    <hr />
+    @if (Members.Count > 0 || TestMembers.Count > 0)
+    {
         <div class="row">
             <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír">
                 <SourceContent>@list.DisplayName</SourceContent>
@@ -43,99 +75,196 @@
             </DragDropToList>
         </div>
 
-            }
-            <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
+    }
+    <FluentSwitch Value="AssigmentCreated" CheckedMessage="Igen" UncheckedMessage="Nem" Label="Teams feladat létrehozása"/>
+    <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
 </EditForm>
 
 @code {
-	[Parameter] public Test Teszt { get; set; } = new();
-	[Parameter] public string UserId { get; set; }
-	[Parameter] public EventCallback Published { get; set; }
+    [Parameter] public Test Teszt { get; set; } = new();
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public List<Section>? sections { get; set; } = new();
+    [Parameter] public EventCallback Published { get; set; }
 
-	public List<EducationClass> Groups { get; set; } = new();
-	private List<EducationUser> Members = new List<EducationUser>();
-	private List<EducationUser> TestMembers = new List<EducationUser>();
-	private string SelectGroupId = string.Empty;
-	private EducationUser lastdropped { get; set; }
-	private bool BtnDidabled = false;
-	private GraphServiceClient? graph;
-	string message = string.Empty;
-	protected override async Task OnParametersSetAsync()
-	{
-		Groups = await gService.GetClasses(UserId);
-		Teszt.StartTime = DateTime.Now;
-		Teszt.EndTime =Teszt.StartTime.AddDays(1);
-	}
-	private async Task SelectGroup(string id)
-	{
-		Members.Clear();
-		SelectGroupId = id;
-		if (id != null)
-		{
-			var members = await gService.GetStudents(id);
-			foreach (var item in members)
-			{
-				if (item.PrimaryRole is null)
-				{
-					Members.Add(new () { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = EducationUserRole.Student});
-				}
-				else if (item.PrimaryRole.Value == EducationUserRole.Student)
-				{
-					Members.Add(new () { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = item.PrimaryRole.Value});
-				}
-			}
-		}
-	}
+    public List<EducationClass>? Groups { get; set; } = new();
+    private List<EducationUser> Members = new List<EducationUser>();
+    private List<EducationUser> TestMembers = new List<EducationUser>();
+    private string SelectGroupId = string.Empty;
+    private EducationUser lastdropped { get; set; } = new();
+    private bool BtnDidabled = false, AssigmentCreated = false;
+    private GraphServiceClient? graph;
+    string message = string.Empty;
 
-	//private void All()
-	//{
-	//	TestMembers.AddRange(Members);
-	//	Members.Clear();
-	//	BtnDidabled = true;
-	//}
-	//private void Reverse()
-	//{
-	//	Members.AddRange(TestMembers);
-	//	TestMembers.Clear();
-	//	BtnDidabled = false;
-	//}
-	private async Task Publish(EditContext context)
-	{
-		bool active = true;
-		message = "Mentést elkezdtem";
-		StateHasChanged();
-		Teszt.IsPublished = true;
-		if (DateTime.Compare(Teszt.StartTime,Teszt.EndTime)>0)
-		{
-			var temp = Teszt.StartTime;
-			Teszt.StartTime = Teszt.EndTime;
-			Teszt.EndTime = temp;
-		}
-		if (Teszt.StartTime > DateTime.Now)
-		{
-			active = false;
-		}
-		foreach (var item in TestMembers)
-		{
-			await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime, Test = null });
-			var HasUser = await uService.UserExits(Guid.Parse(item.Id));
-			if (!HasUser)
-			{
-				await uService.AddUser(new EduUser() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id), Role = item.PrimaryRole.Value.ToString() });
-			}
-		}
-		Teszt.TestQuestions = null;
-		Teszt.TestUsers = null;
-		Teszt.IsPublished = true;
-		var response= await tService.UpdateTestAsync(Teszt);
-		if (response !=null)
-		{
-			toastService.ShowSuccess("A teszt sikeresen közzétéve.");
-			await Published.InvokeAsync();
-		}
-		else
-		{
-			toastService.ShowWarning("Mentés nem sikerült! Hiba: " + tService.ErrorMessage);
-		}
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        Groups = await gService.GetClasses(UserId);
+        if (Groups is null)
+        {
+            toastService.ShowWarning("Nincs csoportja!");
+            _logger.LogWarning("Nincs csoportja! A csoport lekérdezés nullra ment felhasználó azonosító: {UserId}",UserId);
+            return;
+        }
+        Teszt.StartTime = DateTime.Now;
+        Teszt.EndTime = Teszt.StartTime.AddDays(1);
+        if (Teszt.HasSection)
+        {
+            if (sections is null||sections.Count==0)
+            {
+                toastService.ShowEvent("Szankciók nincsenek átvéve lekérdezés történik.");
+                sections = await seService.GetSections(Teszt.Id);
+            }
+            if (sections is not null && sections.Count > 0)
+            {
+                sections.ForEach(s => s.TestId = 0);
+                Teszt.TestQuestions.ForEach((q) => sections.FirstOrDefault(s => s.Id == q.SectionId).TestId += 1);
+            }
+            else
+            {
+                toastService.ShowWarning($"Hibalépet fel a szankciók lekérdezésénél!");
+            }
+        }
+    }
+    private async Task SelectGroup(string id)
+    {
+        Members.Clear();
+        SelectGroupId = id;
+        if (id != null)
+        {
+            var members = await gService.GetStudents(id);
+            foreach (var item in members)
+            {
+                if (item.PrimaryRole is null)
+                {
+                    Members.Add(new() { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = EducationUserRole.Student });
+                }
+                else if (item.PrimaryRole.Value == EducationUserRole.Student)
+                {
+                    Members.Add(new() { DisplayName = item.DisplayName, Id = item.Id, PrimaryRole = item.PrimaryRole.Value });
+                }
+            }
+        }
+    }
+
+    //private void All()
+    //{
+    //	TestMembers.AddRange(Members);
+    //	Members.Clear();
+    //	BtnDidabled = true;
+    //}
+    //private void Reverse()
+    //{
+    //	Members.AddRange(TestMembers);
+    //	TestMembers.Clear();
+    //	BtnDidabled = false;
+    //}
+    private async Task Publish(EditContext context)
+    {
+        bool active = true;
+        message = "Mentést elkezdtem";
+        StateHasChanged();
+        Teszt.IsPublished = true;
+        if (DateTime.Compare(Teszt.StartTime, Teszt.EndTime) > 0)
+        {
+            var temp = Teszt.StartTime;
+            Teszt.StartTime = Teszt.EndTime;
+            Teszt.EndTime = temp;
+        }
+        if (Teszt.StartTime > DateTime.Now)
+        {
+            active = false;
+        }
+        foreach (var item in TestMembers)
+        {
+            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime, Test = null });
+            var HasUser = await uService.UserExits(Guid.Parse(item.Id));
+            if (!HasUser)
+            {
+                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName??string.Empty, Id = Guid.Parse(item.Id), Role = item?.PrimaryRole.Value.ToString()?? "Student" });
+            }
+        }
+        Teszt.TestQuestions = null;
+        Teszt.TestUsers = null;
+        Teszt.IsPublished = true;
+        if (sections is not null)
+        {
+            sections.ForEach(async s =>
+            {
+                s.TestId = Teszt.Id;
+                await seService.UpdateSectionAsync(s);
+            });
+        }
+        var response = await tService.UpdateTestAsync(Teszt);
+        if (response != null)
+        {
+            toastService.ShowSuccess("A teszt sikeresen közzétéve.");
+            if (AssigmentCreated)
+            {
+                await CreateAssignment();
+            }
+            await Task.Delay(6000);
+            await Published.InvokeAsync();
+        }
+        else
+        {
+            toastService.ShowWarning("Mentés nem sikerült! Hiba: " + tService.ErrorMessage);
+        }
+    }
+    private async Task CreateAssignment()
+    {
+        var link = "https://haberfelner.eu/start/" + Teszt.Id;
+        bool result = false;
+        if (TestMembers.Count == Members.Count)
+        {
+            var requestBody = new EducationAssignment
+            {
+                DueDateTime = (DateTimeOffset)Teszt.EndTime.ToUniversalTime(),
+                DisplayName = Teszt.Title,
+                Instructions = new EducationItemBody
+                {
+                    ContentType = BodyType.Text,
+                    Content = "A mellékelt tesztet végezd el",
+                },
+                Grading = new EducationAssignmentPointsGradeType
+                {
+                    OdataType = "#microsoft.graph.educationAssignmentPointsGradeType",
+                    MaxPoints = Teszt.Summa,
+                },
+                Status = EducationAssignmentStatus.Draft,
+                AllowStudentsToAddResourcesToSubmission = true,
+                AssignTo = new EducationAssignmentClassRecipient
+                {
+                    OdataType = "#microsoft.graph.educationAssignmentClassRecipient",
+                }
+            };
+            result = await gService.CreateAssignments(requestBody, SelectGroupId,link);
+        }
+        else
+        {
+            var requestBody = new EducationAssignment
+            {
+                DueDateTime = (DateTimeOffset)Teszt.EndTime.ToUniversalTime(),
+                DisplayName = Teszt.Title,
+                Instructions = new EducationItemBody
+                {
+                    ContentType = BodyType.Text,
+                    Content = "A mellékelt tesztet végezd el",
+                },
+                Grading = new EducationAssignmentPointsGradeType
+                {
+                    OdataType = "#microsoft.graph.educationAssignmentPointsGradeType",
+                    MaxPoints = Teszt.Summa,
+                },
+                Status = EducationAssignmentStatus.Draft,
+                AllowStudentsToAddResourcesToSubmission = true,
+                AssignTo = new EducationAssignmentIndividualRecipient
+                {
+                    OdataType = "#microsoft.graph.educationAssignmentIndividualRecipient",
+                    Recipients = TestMembers.Select(u => u.Id).ToList(),
+                }
+            };
+            result = await gService.CreateAssignments(requestBody, SelectGroupId,link);
+        }
+        if (result) toastService.ShowSuccess("A Teams feladat létrejött.");
+        else toastService.ShowWarning("A Teams feladatot nem sikerült létrehozni");
+    }
 }

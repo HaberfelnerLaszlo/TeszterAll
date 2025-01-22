@@ -13,11 +13,11 @@
                     {
                         if (Answers[Number].Result)
                         {
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
                         }
                         else
                         {
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                         }
                     }
                 }
@@ -48,7 +48,7 @@
     [Parameter] public bool IsChecked { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
-    string[] texts;
+    string[] texts = [];
     protected override void OnInitialized()
     {
         texts = Texts.Split('{', '}');

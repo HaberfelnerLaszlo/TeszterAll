@@ -1,0 +1,22 @@
+﻿@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+<FluentButton OnClick="Bold">B</FluentButton>
+<FluentButton OnClick="Italic">D</FluentButton>
+<div Id="richText" contenteditable="true">
+@((MarkupString)Context)
+</div>
+@code {
+    [Parameter] public string Context { get; set; } = string.Empty;
+    private async Task Bold()
+    {
+        var Sign = "<b>";
+        var text = await JSRuntime.InvokeAsync<string>
+    ("wrapText", new[] { Sign, "</b>" });
+    }
+    private async Task Italic()
+    {
+    var Sign = "'*'";
+    var text = await JSRuntime.InvokeAsync<string>
+        ("wrapText", new[] { Sign, Sign });
+        }
+
+        }

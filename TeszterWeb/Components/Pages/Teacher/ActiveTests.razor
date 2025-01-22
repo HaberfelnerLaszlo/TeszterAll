@@ -6,9 +6,8 @@
 @inject TestServices tService
 @inject TestQuestionServices tqService
 @inject ILogger<ActiveTests> _logger
+@inject IToastService toastService
 
-<h3>Aktív Tesztek</h3>
-<p hidden="noError">@errorMessage</p>
 @if (tests != null && tests.Count > 0)
 {
     <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
@@ -20,18 +19,30 @@
         }
     </FluentStack>
 }
-else
+else if (noError)
 {
     <div>
         <p>Tesztek betöltése...</p>
     </div>
 }
+else
+{
+    <p>@errorMessage</p>
+}
 @code {
     private List<ActiveTestView> tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
+    protected override void OnParametersSet()
+    {
+        data.Title = "Aktív tesztek";
+        StateHasChanged();
+        base.OnParametersSet();
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        data.Title = "Aktív tesztek";
         if (String.IsNullOrEmpty(data.UserId))
         {
             var user = await GraphServiceClient.Me.GetAsync();
@@ -42,15 +53,21 @@ else
         tests = await tService.GetActiveTests(Guid.Parse(data.UserId));
         if (tests is null)
         {
-            errorMessage = "Nincs a felhasználónak tesztje. vagy " + tService.ErrorMessage;
-            StateHasChanged();
+            noError = false;
+            errorMessage = tService.ErrorMessage;
+            toastService.ShowInfo(errorMessage);
         }
+        StateHasChanged();
     }
     async Task ViewResult(Test test)
     {
         List<TestQuestion> questions = await tqService.GetTestQuestions(test.Id);
         if (questions is null)
         {
+            noError = false;
+            errorMessage = tqService.ErrorMessage;
+            toastService.ShowError(errorMessage);
+            _logger.LogError("Teszt kérdések letültésénél: {errorMessage}", errorMessage);
             return;
         }
         data.Test = new() { Id = test.Id, Title = test.Title, EndTime = test.EndTime, TestQuestions = questions };

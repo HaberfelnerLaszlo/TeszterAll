@@ -1,11 +1,23 @@
 ﻿@page "/Student/testResult"
 @page "/Student/testResult/{i:int}"
 @inject GlobalData data
+@inject TestQuestionUserServices tquService
 @inject NavigationManager navi
+@inject IToastService toastService
+@inject ILogger<TestResult> logger
 
 <h4>Teszt eredménye</h4>
 @if (noError)
 {
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start">
+        @foreach (var j in tabs)
+        {
+            if (actual == j) { apperance = Appearance.Accent; }
+            else { apperance = Appearance.Neutral; }
+            <FluentButton OnClick="@(() => ActualChanged(j))" Appearance="apperance">@j</FluentButton>
+        }
+    </FluentStack>
+    <hr/>
     foreach (var actualq in questions)
     {
         <FluentCard>
@@ -63,18 +75,73 @@ else
     <p>@errorMessage</p>
 }
 @code {
-    [Parameter] public int i { get; set; } = 0;
+    [Parameter] public int i { get; set; } = 0; //TestUserId
     List<QuestionView> questions = new();
+    List<TestQuestionUser> testQuestionUsers = new();
     bool noError = true;
+    int max = 1, actual=1;
+    int[] tabs = {1};
     string errorMessage = string.Empty;
+    Appearance apperance= Appearance.Neutral;
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
         questions = data.TestResults.ToList();
-        if (questions is null)
+        if (questions is null || questions.Count==0)
         {
-            errorMessage = "Nincs teszt eredményed!";
+            noError = false;
+            errorMessage = "Nincsenek teszt kérdés eredményeid!";
+            toastService.ShowWarning(errorMessage);
+            logger.LogWarning(errorMessage);
+
+            return;
         }
-        base.OnInitialized();
+        else
+        {
+            testQuestionUsers = await tquService.GetTestQuestionUsers(i);
+            if (testQuestionUsers is null)
+            {
+                errorMessage = "Nem lehetet lekérni az eredményidet!";
+                toastService.ShowWarning(errorMessage);
+                logger.LogWarning(errorMessage);
+                return;
+            }
+            else
+            {
+                max = testQuestionUsers.LastOrDefault()?.ReplacedNumber??1;
+                tabs = new int[max];
+                for (int i = 0; i < max; i++)
+                {
+                    tabs[i]=i + 1;
+                }
+                ActualQuestion(max);
+                actual = max;
+            }
+            StateHasChanged();
+        }
+    }
+    void ActualChanged(int i)
+    {
+        ActualQuestion(i);
+        actual = i;
+        StateHasChanged();
+    }
+    void ActualQuestion(int i)
+    {
+        if (testQuestionUsers.Count > 0)
+        {
+            foreach (var tqu in testQuestionUsers.Where(t => t.ReplacedNumber == i))
+            {
+                var actualQ = questions.First(q => q.TestQuestionId == tqu.TestQuestionId);
+                tqu.Answers.ForEach(tqa =>
+                {
+                    var actualA = actualQ.Answers.First(a => a.AnswerId == tqa.AnswerId);
+                    actualA.Result = tqa.Result;
+                    actualA.Sequence = tqa.Sequence;
+                    actualA.Sign = tqa.Sign;
+                    actualA.Text = tqa.Text;
+                });
+            }
+        }
     }
 }

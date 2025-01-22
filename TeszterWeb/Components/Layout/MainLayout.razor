@@ -2,8 +2,8 @@
 @inject GlobalData data
 <FluentLayout>
     <FluentHeader>
-        TeszterWeb
-        <FluentStack HorizontalAlignment="HorizontalAlignment.End">
+        @data.Title
+        <FluentStack HorizontalAlignment="HorizontalAlignment.End" Width="70%">
             <LoginDisplay />
         </FluentStack>
     </FluentHeader>
@@ -16,22 +16,19 @@
         </FluentBodyContent>
     </FluentStack>
     <FluentFooter>
-        <div class="link1">
-            <a href="https://www.fluentui-blazor.net" target="_blank">Documentation and demos</a>
-        </div>
-        <div>
+        <div id="version">
             <span>
-                @data.UserId
+                Verzió: 0.5.1
             </span>
-        </div>
-        <div class="link2">
-            <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor" target="_blank">About Blazor</a>
+            <FluentTooltip Anchor="version">
+                2025.01.22
+            </FluentTooltip>
         </div>
     </FluentFooter>
 </FluentLayout>
 <FluentDialogProvider />
 <FluentToastProvider MaxToastCount="10" />
-
+<FluentTooltipProvider />
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>

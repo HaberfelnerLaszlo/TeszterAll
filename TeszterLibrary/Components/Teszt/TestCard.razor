@@ -7,23 +7,23 @@
                 </h3>
             </FluentStack>
             <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
-                <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
-                <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
-                <FluentIcon Value="@(new Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
-                <FluentBadge Appearance="Appearance.Lightweight"><FluentIcon Value="@(new Icons.Regular.Size20.Replay())" /><strong>@TestItem.ReplaceNumber</strong></FluentBadge>
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
+                <FluentBadge Appearance="Appearance.Lightweight"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" /><strong>@TestItem.ReplaceNumber</strong></FluentBadge>
             </FluentStack>
         </FluentStack>
         <FluentStack Orientation="Orientation.Horizontal">
             <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
-                <p id="date" class="start_date" style="margin: 10px;">
+                <p id="date" class="start_date" style="margin: 5px;">
                     Kezdés időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.StartTime)</strong>
                 </p>
-                <p id="date" class="end_date" style="margin: 10px;">
+                <p id="date" class="end_date" style="margin: 5px;">
                     Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
                 </p>
             </FluentStack>
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="300px">
                 <p style="padding: 5px;margin-bottom: 0px;">
                     Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
                 </p>

@@ -8,25 +8,34 @@
 @inject SubjectServices sService
 @inject ILogger<NewTest> _logger
 @inject IToastService toastService
-<h3>Új teszt készítése</h3>
-@if (Questions is not null && Questions.Count>0)
+@if (Questions is not null && Questions.Count > 0)
 {
     if (data.Questions.Count > 0)
     {
-       <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" TesztQ=data.Questions.ToList() Publish="PublishTest" IsSaved="saved" TestId="Id"></AddTest>
+        <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" TesztQ=data.Questions.ToList() Publish="PublishTest" IsSaved="saved" TestId="Id"></AddTest>
+    }
+    else if (saved)
+    {
+        <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" Publish="PublishTest" IsSaved="saved" TestId="Id"></AddTest>
     }
     else
     {
-       <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" Publish="PublishTest"></AddTest>
+        <AddTest questions="@Questions" subjects="Subjects" UserId="@data.UserId" Publish="PublishTest"></AddTest>
     }
+}
+else
+{
+    <h4>Nincsenek kérdések felvéve.</h4>
+    <a href="/question/@(data.UserId)">Új kérdés felvétele</a>
 }
 @code {
     [Parameter] public int Id { get; set; } = 0;
     private List<Question>? Questions = new();
     private List<Subject?>? Subjects = new();
-    bool saved=false;
+    bool saved = false;
     protected override async Task OnInitializedAsync()
     {
+        data.Title = "Új teszt készítése";
         try
         {
             if (String.IsNullOrEmpty(data.UserId))
@@ -39,29 +48,31 @@
                     return;
                 }
                 data.UserId = user.Id.ToString();
-                _logger.LogInformation($"Kértem új Id-t {data.UserId}");
+                _logger.LogInformation($"Newtest: Kértem új Id-t {data.UserId}");
             }
             Questions = await qService.GetQuestions(Guid.Parse(data.UserId));
-            if (Questions is not  null && Id > 0)
+            if (Questions is not null && Id > 0)
             {
                 saved = true;
-                if (data.Test.TestQuestions.Count>0)
+                data.Test.Id = Id;
+                if (data.Test.TestQuestions.Count > 0)
                 {
                     data.Questions.Clear();
                     foreach (var q in data.Test.TestQuestions)
                     {
-                        data.Questions.Add(Questions.FirstOrDefault(k => k.Id == q.QuestionId) ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
+                        data.Questions.Add(q);// ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
                     }
                 }
             }
             if (data.Questions.Count > 0 && Questions is not null && Questions.Count > 0)
             {
-                foreach (Question item in data.Questions)
+                foreach (TestQuestion item in data.Questions)
                 {
-                    if (!Questions.Remove(item))
+                    item.Question = Questions.FirstOrDefault(q => q.Id == item.QuestionId);
+                    if (!Questions.Remove(item.Question))
                     {
-                        toastService.ShowWarning($"A {item.Id} kérdés nem törlődött.");
-                        _logger.LogWarning("A {item.Id} kérdés nem törlődött.", item.Id);
+                        toastService.ShowWarning($"A {item.QuestionId} kérdés nem törlődött.");
+                        _logger.LogWarning("A {item.Id} kérdés nem törlődött.", item.QuestionId);
                     }
                 }
             }
@@ -69,7 +80,7 @@
         }
         catch (Exception e)
         {
-            _logger.LogError("Hiba történt: {e.Message}" ,e.Message);
+            _logger.LogError("Hiba történt: {e.Message}", e.Message);
             throw;
         }
     }

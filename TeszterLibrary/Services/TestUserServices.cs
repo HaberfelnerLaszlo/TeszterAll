@@ -110,7 +110,7 @@ namespace TeszterLibrary.Services
 		}
 		public async Task<QuestionView?> GetQuestionCheck(QuestionView questionView,int tUserId)
 		{
-			var response = await _service.Post<QuestionView>($"TUser/Check/{tUserId}",questionView);
+			var response = await _service.Post<QuestionView>($"TUser/Check",questionView);
 			if (response is null) return null;
 			return response;
 		}

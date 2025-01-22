@@ -24,6 +24,8 @@ button{
     background: rgba(150,239,223,0.31);
     border-color: rgb(8,42,77);
     box-shadow: 1px 1px;
+    text-align: center;
+    font-size: 2vw;
 }
 .box{
     margin-right: 5px;

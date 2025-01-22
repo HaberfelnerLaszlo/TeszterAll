@@ -4,7 +4,7 @@
 @* Header *@
 <FluentDialogHeader ShowDismiss="true">
     <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
         <FluentLabel Typo="Typography.PaneHeader">
             @Dialog.Instance.Parameters.Title
         </FluentLabel>
@@ -191,7 +191,7 @@
                 {
                     foreach (var item in answers)
                     {
-                        if (item.Text.Equals(Content.Answers.FirstOrDefault(a => a.Id == item.AnswerId).Text))
+                        if (item.Text.Equals(Content.Answers?.FirstOrDefault(a => a.Id == item.AnswerId)?.Text))
                         {
                             item.Result = true;
                         }

@@ -31,9 +31,9 @@
         <FluentTabs OnTabChange="HandleOnTabChange">
             @foreach (var answers in qR.ViewAnswers)
             {
-                @if (qR.NoDecided.Contains(answers.Id))
+                @if (qR.NoDecided?.Contains(answers.Id)?? false)
                 {
-                    <FluentTab Id="@("tab-" +tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Icons.Regular.Size20.ArrowDownExclamation()">
+                    <FluentTab Id="@("tab-" +tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowDownExclamation()">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
                             <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
                             <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
@@ -62,8 +62,8 @@
     }
 }
 @code {
-    [Parameter] public List<UserResultToTeacher> UserResults { get; set; }
-    [Parameter] public List<TestQuestion> TestQuestions { get; set; }
+    [Parameter] public List<UserResultToTeacher> UserResults { get; set; } = new();
+    [Parameter] public List<TestQuestion> TestQuestions { get; set; } = new();
     [Parameter] public EventCallback<QuestionResult> Update { get; set; }
     List<ViewResult> questionResult = new();
     PaginationState pagination = new PaginationState { ItemsPerPage = 5 };

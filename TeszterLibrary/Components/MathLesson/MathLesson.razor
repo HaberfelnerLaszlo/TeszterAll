@@ -36,11 +36,11 @@
     {
         if (IsCorrect)
         {
-            <FluentIcon Value="@(new Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
         }
         else
         {
-            <FluentIcon Value="@(new Icons.Regular.Size20.DismissCircle())" Color="@Color.Error" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.DismissCircle())" Color="@Color.Error" />
         }
     }
 </form>
@@ -54,7 +54,7 @@
 	[Parameter] public bool IsCorrect { get; set; }
 	[Parameter] public bool IsFraction { get; set; }
 	[Parameter] public EventCallback<OperationView> Send { get; set; }
-	string[] s;
+	string[] s = [];
 	string errorMessage = string.Empty;
 	int szamlalo, nevezo;
 	protected override void OnParametersSet()

@@ -6,7 +6,7 @@
     <FluentOption Value="">Válasz egy csoportot...</FluentOption>
     <FluentOption Value="8048b263-4106-4925-a316-ffdee54a91a2">6. első csoport</FluentOption>
     <FluentOption Value="b02dc50d-d531-43fb-9c6b-e6a39a1beb8e">6. második csoport</FluentOption>
-    <FluentOption Value="f9a0b4d6-86fb-4eed-947d-503796575f99">7. első csoport</FluentOption>
+    <FluentOption Value="4104e3ae-8252-4bac-9867-16a44487351d">7. első csoport</FluentOption>
     <FluentOption Value="df78676d-0f83-457a-8047-337088de4e0d">8. első csoport</FluentOption>
     <FluentOption Value="6c9e754f-f21c-469e-b58c-ba073a995a5c">8. második csoport</FluentOption>
 </FluentSelect>
@@ -24,20 +24,21 @@
 else if (!string.IsNullOrEmpty(selectClass))
 {
     <h5>Adatok betöltése...</h5>
-    <FluentProgressRing />
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentProgressRing />
+    </FluentStack>
 }
 @code {
     string selectClass = string.Empty;
     public TaskView taskView = new();
-    private OperationView currentOperation = new() { OperationId = 0 };
     private Guid UserId, ClassId;
     private bool IsChecked = false;
     private TaskRecive taskRecive = new();
-    //private string message = string.Empty;
     private List<ClassRecive> recives = new();
 
     private async Task CheckClass(List<ClassRecive> _recives)
     {
+        _recives.ForEach(r => r.Result=r.Result.Replace(',', '.'));
         recives = await mService.ClassResult(_recives);
         IsChecked = true;
         StateHasChanged();
@@ -54,7 +55,7 @@ else if (!string.IsNullOrEmpty(selectClass))
             taskView = await mService.ClassLesson(Guid.Parse(selectClass));
             recives.Clear();
             IsChecked = false;
-            if (taskView.Operations.Count>0)
+            if (taskView is not null ||taskView.Operations.Count>0)
             {
                 foreach (var item in taskView.Operations)
                 {

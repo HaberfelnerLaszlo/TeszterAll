@@ -2,176 +2,388 @@
 
 @inject TestServices tService
 @inject TestQuestionServices tqService
+@inject SectionServices seService
 @inject IDialogService dialogService
 @inject IToastService toastService
 @inject Microsoft.Extensions.Logging.ILogger<AddTest> _logger
-    @*   <FluentAccordion>
+
+ @*   <FluentAccordion>
             <FluentAccordionItem Heading="Szűrő">
                 <QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
             </FluentAccordionItem>
         </FluentAccordion>*@
-    <FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--neutral-layer-3); height:100%;overflow:scroll;">
+    <FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--neutral-layer-3); max-height:90vh;">
         <FluentGridItem xs="12" Justify="JustifyContent.SpaceBetween">
             <FluentStack>
-                <FluentTextField @bind-Value="@newTest.Title" Placeholder="Teszt címe..." Label="Teszt címe" />
-                <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy...">
+                <FluentTextField @bind-Value="@(newTest.Title)" Placeholder="Teszt címe..." Label="Teszt címe" />
+                <FluentCombobox Items="@subjects" OptionText="@(t => t.Name)" OptionValue="@(t => t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." SelectedOptionChanged="subjectChange">
                 </FluentCombobox>
+                <FluentSwitch CheckedMessage="Bekapcsolva" UncheckedMessage="Kikapcsolva" ValueChanged="SectionChange" Label="Felosztás?" Value="hasSection"></FluentSwitch>
                 <FluentButton Appearance="Appearance.Accent" OnClick="TestAdd">Mentés</FluentButton>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="7">
+        <FluentGridItem xs="12" sm="7" Style="overflow-y:auto;height:80vh">
             @if (TesztQ.Count != 0)
             {
                 foreach (var tq in TesztQ)
                 {
-                    <QAView question="tq" Delete="DeleteQ" />
+                    <QAView question="tq" Delete="DeleteQ" sections="sections" />
                 }
             }
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="5">
-            @foreach (var question in questions)
-            {
-                <div style="position:relative; margin:5px 0">
-                    <Qview question="question"></Qview>
-                    <FluentButton Title="Teszthez add"
-                                  OnClick="@(() => AddQuestion(question))"
-                                  Style="position:absolute; top:70px; right:5px;"
-                                  IconStart="@(new Icons.Regular.Size16.AddCircle())" />
-                    <br>
-                    <FluentButton Title="Betekintés"
-                                  OnClick="@(() => ModalOpen(question))"
-                                  Style="position:absolute; top:35px; right:5px;"
-                                  IconStart="@(new Icons.Regular.Size16.Search())" />
-                </div>
-            }
+        <FluentGridItem xs="12" sm="5" Style="overflow-y:auto;height:80vh" >
+           <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                @if (hasSection)
+                {
+                    <FluentStack Orientation="Orientation.Horizontal">
+                        <FluentButton OnClick="NewSection" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Add())" />
+                        <FluentButton OnClick="@(() => EditSection(selectSection))" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Pen())" />
+                        <FluentListbox Items="sections" TOption="Section" OptionText="@(s => s.Name)" OptionValue="@(s => s.Id.ToString())" SelectedOption="selectSection" />
+                    </FluentStack>
+                }
+                @foreach (var question in questions)
+                {
+                    <div style="position:relative;width:100%">
+                        <Qview question="question"></Qview>
+                        <FluentButton Title="Teszthez add"
+                                      OnClick="@(() => AddQuestion(question))"
+                                      Style="position:absolute; top:70px; right:5px;"
+                                      IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.AddCircle())" />
+                        <br>
+                        <FluentButton Title="Betekintés"
+                                      OnClick="@(() => ModalOpen(question))"
+                                      Style="position:absolute; top:35px; right:5px;"
+                                      IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" />
+                    </div>
+                }
+            </FluentStack>
         </FluentGridItem>
     </FluentGrid>
-    @code {
-        [Parameter] public List<Question> questions { get; set; } = new();
-        [Parameter] public List<Subject> subjects { get; set; } = new();
-        [Parameter] public List<Question> TesztQ { get; set; } = new();
-        [Parameter] public string UserId { get; set; } = string.Empty;
-        [Parameter] public EventCallback<Test> Publish { get; set; }
-        [Parameter] public bool IsSaved { get; set; }
-        [Parameter] public int TestId { get; set; } = 0;
+@code {
+    [Parameter] public List<Question> questions { get; set; } = new();
+    [Parameter] public List<Subject> subjects { get; set; } = new();
+    [Parameter] public List<TestQuestion> TesztQ { get; set; } = new();
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<Test> Publish { get; set; }
+    [Parameter] public bool IsSaved { get; set; } = false;
+    [Parameter] public int TestId { get; set; } = 0;
 
-        private Test newTest = new();
-        private bool showQDetail = false;
-        private Question detailQuestion = new();
-        bool publishing = false;
-        private List<Question> allQuestions = new();
-        protected override void OnParametersSet()
+    private Test? newTest = new();
+    private bool hasSection = false;
+    private Question detailQuestion = new();
+    private List<Question> allQuestions = new();
+    private List<Section> sections = new();
+    private Section selectSection = new();
+    protected override async void OnParametersSet()
+    {
+        if (questions.Count == 0 && allQuestions.Count > 0)
         {
-            if (questions.Count == 0 && allQuestions.Count > 0)
-            {
-                questions = allQuestions;
-            }
-            else if (questions.Count > 0 && allQuestions.Count == 0)
-            {
-                allQuestions = questions;
-            }
-            if (IsSaved)
-            {
-                newTest.Id = TestId;
-            }
-            base.OnParametersSet();
+            questions = allQuestions;
         }
-
-        private async void ModalOpen(Question q)
+        else if (questions.Count > 0 && allQuestions.Count == 0)
         {
-            var data = q;
-            var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
-            {
-                //Height = "350px",
-                Width = "75%",
-                Title = "A kérdés megtekintése",
-                PreventDismissOnOverlayClick = true,
-                PreventScroll = true,
-            });
-
-            var result = await dialog.Result;
-            if (!result.Cancelled && result.Data != null)
-            {
-                q = (Question)result.Data;
-            }
+            allQuestions = questions;
         }
-        private void AddQuestion(Question q)
+        if (IsSaved)
         {
-            if (string.IsNullOrEmpty(newTest.Subject))
+            if (newTest == null)
             {
-                newTest.Subject = q.Subject;
+                newTest = new();
             }
-            else if (!newTest.Subject.Equals(q.Subject))
+            newTest = await tService.GetTest(TestId);
+            if (newTest == null)
             {
-                var subj = subjects.Find(s => s.Name == "Egyéb");
-                if (subj is null)
+                toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+                return;
+            }
+            //newTest.Id = TestId;
+            if (TesztQ.Count > 0)
+            {
+                if (newTest.HasSection)
                 {
-                    subj = new() { Name = "Egyéb" };
-                    subjects.Add(subj);
+                    sections = await seService.GetSections(TestId) ?? new();
+                    if (sections is null ||sections.Count == 0)
+                    {
+                        hasSection = false;
+                        newTest.HasSection = false;
+                    }
+                    else
+                    {
+                        hasSection = true;
+                    }
                 }
-                newTest.Subject = subj.Name;
-            }
-            questions.Remove(q);
-            TesztQ.Add(q);
-        }
-
-        private async Task DeleteQ(Question question)
-        {
-            if (IsSaved)
-            {
-                if(await tqService.DeleteTestQuestionAsync(question.Id, newTest.Id)) { toastService.ShowSuccess($"A {question.Id} kérdés törölve."); }
-                else { toastService.ShowWarning($"A {question.Id} kérdés {newTest.Id} tesztből nem törlődött. Hiba: {tqService.ErrorMessage}"); return; }
-            }
-            TesztQ.Remove(question);
-            questions.Add(question);
-        }
-        private void SelectedSubject(ChangeEventArgs e)
-        {
-
-            if (e.Value != null)
-            {
-                newTest.Subject = e.Value.ToString() ?? string.Empty;
+                newTest.Subject = TesztQ[0].Question.Subject;
+                questions = allQuestions.Where(q => q.Subject == newTest.Subject).ToList();
             }
         }
-        private async Task TestAdd()
+        base.OnParametersSet();
+    }
+    private void SectionChange(bool b)
+    {
+        if (newTest == null)
         {
-            try
-            {
-                newTest.CreatedBy = Guid.Parse(UserId);
-                if (newTest.TestQuestions is null)
-                {
-                    newTest.TestQuestions = new();
-                }
-                else
-                {
-                    newTest.TestQuestions.Clear();
-                }
-                foreach (var item in TesztQ)
-                {
-                    newTest.TestQuestions.Add(new() { QuestionId = item.Id, Score = item.Score, Time = item.Time });
-                    newTest.Summa += item.Score;
-                    newTest.Time += item.Time;
-                }
-                if (IsSaved)
-                {
-                    var responde = await tService.UpdateTestAsync(newTest);
-                }
-                else
-                {
-                    newTest = await tService.AddTest(newTest);
-                    IsSaved = true;
-                }
-                TesztQ.Clear();
-                await Publish.InvokeAsync(newTest);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
+            toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+            return;
         }
-        void OnBreakpointEnterHandler(GridItemSize size)
+        newTest.HasSection = b;
+        hasSection = b;
+        if (b && sections.Count == 0)
         {
-            Console.WriteLine($"Page Size: {size}");
+            if(IsSaved) hasSection = false;
+            sections.Add(new() { Id = 1, Name = "Elmélet" });
+            sections.Add(new() { Id = 2, Name = "Gyakorlat" });
+        }
+        else
+        {
+            sections.Clear();
         }
     }
+    private async void NewSection()
+    {
+        DialogParameters parameters = new()
+        {
+            Title = $"Új szekció felvétele {newTest?.Title ?? string.Empty} tesztbe",
+            PrimaryAction = "Yes",
+            PrimaryActionEnabled = false,
+            SecondaryAction = "No",
+            Width = "500px",
+            PreventScroll = true
+        };
+        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(new Section(), parameters);
+        DialogResult? result = await dialog.Result;
+        if (result.Data is not null)
+        {
+            Section? newSection = result.Data as Section;
+            if (newSection is not null)
+            {
+                newSection.Id = sections.Count + 1;
+                if (newTest == null)
+                {
+                    toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+                    return;
+                }
+                if (newTest.Id != 0)
+                {
+                    newSection.TestId = newTest.Id;
+                }
+                else toastService.ShowError($"Hibás teszt azonosító! Id: {newTest.Id}");
+                sections.Add(newSection);
+                StateHasChanged();
+            }
+            else
+            {
+                toastService.ShowError("A szekció felvétele nem sikerült. Helytelen konverzió.");
+            }
+        }
+    }
+
+    private async Task EditSection(Section section)
+    {
+        if (section is null)
+        {
+            toastService.ShowInfo("A szekciók közül válaszon ki egyet.");
+            return;
+        }
+        DialogParameters parameters = new()
+        {
+            Title = $"Szekció szerkesztése {newTest?.Title ?? string.Empty} tesztbe",
+            //PrimaryAction = "Yes",
+            //PrimaryActionEnabled = false,
+            //SecondaryAction = "No",
+            Width = "500px",
+            //PreventScroll = true
+        };
+        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(section, parameters);
+        DialogResult? result = await dialog.Result;
+        if (result.Data is not null)
+        {
+            Section? newSection = result.Data as Section;
+            if (newSection is not null)
+            {
+                sections.Remove(section);
+                sections.Add(newSection);
+                StateHasChanged();
+            }
+            else
+            {
+                toastService.ShowError("A szekció felvétele nem sikerült. Helytelen konverzió.");
+            }
+        }
+    }
+    private async void ModalOpen(Question q)
+    {
+        var data = q;
+        var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+        {
+            //Height = "350px",
+            Width = "75%",
+            Title = "A kérdés megtekintése",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            q = (Question)result.Data;
+        }
+    }
+    private void subjectChange(Subject subject)
+    {
+        questions = allQuestions.Where(q => q.Subject == subject.Name).ToList();
+    }
+    private void AddQuestion(Question q)
+    {
+        if (newTest == null)
+        {
+            toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+            return;
+        }
+        if (string.IsNullOrEmpty(newTest.Subject))
+        {
+            newTest.Subject = q.Subject;
+        }
+        else if (!newTest.Subject.Equals(q.Subject))
+        {
+            var subj = subjects.Find(s => s.Name == "Egyéb");
+            if (subj is null)
+            {
+                subj = new() { Name = "Egyéb" };
+                subjects.Add(subj);
+            }
+            newTest.Subject = subj.Name;
+        }
+        questions.Remove(q);
+        TesztQ.Add(new() { Question = q, QuestionId = q.Id, Score = q.Score, Time = q.Time });
+    }
+
+    private async Task DeleteQ(TestQuestion question)
+    {
+        if (IsSaved)
+        {
+            if (await tqService.DeleteTestQuestionAsync(question.Id)) { toastService.ShowSuccess($"A {question.Id} kérdés törölve."); }
+            else { toastService.ShowWarning($"A {question.Id} kérdés {newTest?.Id ?? 0} tesztből nem törlődött. Hiba: {tqService.ErrorMessage}"); return; }
+        }
+        TesztQ.Remove(question);
+        questions.Add(question.Question);
+    }
+    private void SelectedSubject(ChangeEventArgs e)
+    {
+        if (newTest == null)
+        {
+            toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+            return;
+        }
+        if (e.Value != null)
+        {
+            newTest.Subject = e.Value.ToString() ?? string.Empty;
+        }
+    }
+    private async Task TestAdd()
+    {
+        try
+        {
+            if (newTest == null)
+            {
+                toastService.ShowError("Hiba a tesztnél nem tölthető be!");
+                return;
+            }
+            newTest.CreatedBy = Guid.Parse(UserId);
+            if (newTest.Subject == null)
+            {
+                toastService.ShowError("Nincs megadva a tantárgy!");
+                return;
+            }
+            if (newTest.Title == null)
+            {
+                toastService.ShowError("Nincs megadva a teszt címe!");
+                return;
+            }
+            if(newTest.TestQuestions is null) { newTest.TestQuestions = new(); }
+            if (newTest.TestQuestions.Count > 0)
+            {
+                newTest.TestQuestions.Clear();
+            }
+            foreach (var item in TesztQ)
+            {
+                newTest.TestQuestions.Add(item);
+                newTest.Summa += item.Score;
+                newTest.Time += item.Time;
+            }
+            if (IsSaved)//Ha már mentve volt
+            {
+                var responde = await tService.UpdateTestAsync(newTest);
+                TesztQ.Clear();
+                if (newTest.HasSection)
+                {
+                    if (hasSection && sections.Count > 0)
+                    {
+                        sections.ForEach(async s =>
+                        {
+                            if (s.TestId == 0)
+                            {
+                                s.TestId = newTest.Id;
+
+                                var resp= await seService.UpdateSectionAsync(s);
+                                if (resp is null)
+                                {
+                                    toastService.ShowWarning($"Szekció {s.Name} módósítás sikertelen, hiba: {seService.ErrorMessage}");
+                                }
+                            }
+                        });
+                    }
+                    else if(sections.Count>0)
+                    {
+                        foreach (var s in sections)
+                        {
+                            s.Id = 0;
+                            s.TestId = newTest.Id;
+                            s.CreatedBy = Guid.Parse(UserId);
+                            var resp = await seService.AddSectionsAsync(s);
+                            if (resp is null)
+                            {
+                                toastService.ShowWarning($"Szekció {s.Name} hozzáadás sikertelen, hiba: {seService.ErrorMessage}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        toastService.ShowWarning("A tesztben felosztás van jelezve, de nincsenek megadott szekciók!");
+                    }
+                }
+                await Publish.InvokeAsync(newTest);
+            }
+            else //Ha még nem volt mentve
+            {
+                newTest = await tService.AddTest(newTest);
+                if (newTest != null)
+                {
+                    if (newTest.HasSection)
+                    {
+                        foreach (var s in sections)
+                        {
+                            s.TestId = newTest.Id;
+                            await seService.AddSectionsAsync(s);
+                        }
+                    }
+                    IsSaved = true;
+                    TesztQ.Clear();
+                    await Publish.InvokeAsync(newTest);
+                }
+                else
+                {
+                    await dialogService.ShowErrorAsync("Nem sikerült a teszt mentése.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw;
+        }
+    }
+    void OnBreakpointEnterHandler(GridItemSize size)
+    {
+        Console.WriteLine($"Page Size: {size}");
+    }
+}

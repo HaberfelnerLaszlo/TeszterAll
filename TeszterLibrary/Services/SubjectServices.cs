@@ -63,9 +63,10 @@ namespace TeszterLibrary.Services
 				throw;
 			}
 		}
-		public bool Exits(string subjectName)
+		public async Task<bool> Exits(string subjectName)
 		{
-			return true; //TODO ezt meg kell oldani!! dbContext.Subjects.Any(s => s.Name == subjectName);
+			var response=await _service.Get<bool>(uri: $"Subject/Exits/{subjectName}");
+			return response;
 		}
 	}
 }

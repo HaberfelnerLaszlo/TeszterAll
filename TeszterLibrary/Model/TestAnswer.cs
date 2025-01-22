@@ -26,9 +26,9 @@ namespace TeszterLibrary.Model
 		///// Ha a válasz kép.
 		///// </summary>
 		//public byte[]? Image { get; set; }
-		///// <summary>
-		///// Megjelölt válasz.
-		///// </summary>
+		/// <summary>
+		/// Megjelölt válasz.
+		/// </summary>
 		public bool Sign { get; set; }
 		/// <summary>
 		/// Az adott válasz helyes volt-e.

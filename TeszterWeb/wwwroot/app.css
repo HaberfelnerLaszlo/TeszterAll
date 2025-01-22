@@ -68,9 +68,12 @@ footer {
     justify-content: center;
     width: 200px;
     height: auto;
-    background-color: goldenrod;
-    padding: 5px;
+    background-color: #2094da;
+    padding: 15px;
     margin: 5px;
+    text-decoration: none;
+    color: whitesmoke;
+    align-items:center;
 }
 .NoLesson {
     padding: 5px;
@@ -145,7 +148,7 @@ footer {
 }
 
     .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
+        content: var(--blazor-load-percentage-text, "Betöltés");
     }
 
 code {

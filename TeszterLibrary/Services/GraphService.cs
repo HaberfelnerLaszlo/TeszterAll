@@ -13,15 +13,11 @@ namespace TeszterLibrary.Services
 	public class GraphService
 	{
         private GraphServiceClient? client;
-		public GraphService(GraphServiceClient client) {
+		public string ErrorMessage { get; set; } = string.Empty;
+        public GraphService(GraphServiceClient client) {
 			this.client = client;
 
 		}
-  //      public GraphServiceClient GetGraphServiceClient(GraphServiceClient graphServiceClient)
-		//{
-		//	client = graphServiceClient;
-		//	return client;
-		//}
 		public async Task<List<EducationUser>?> GetStudents(string Id)
 		{
 			//var graphServiceClient = Gsc();
@@ -57,13 +53,65 @@ namespace TeszterLibrary.Services
 			}
 			catch (ServiceException ex)
 			{
-				Console.WriteLine($"Error getting signed-in user: {ex.Message}");
+                ErrorMessage = $"Error getting signed-in user: {ex.Message}";
+                Console.WriteLine(ErrorMessage);
 				return null;
 			}
 		}
-		public async Task<Student?> GetMe()
+		public async Task<List<EducationAssignment>?> GetAssignments(string ClassId)
+        {
+            //var graphServiceClient = Gsc();
+            List<EducationAssignment> Assignments = new();
+            try
+            {
+                if (ClassId != null && client is not null)
+                {
+                    var response = await client.Education.Classes[ClassId].Assignments.GetAsync();
+                    Assignments = response.Value.ToList();
+                }
+                return Assignments;
+            }
+            catch (ServiceException ex)
+            {
+				ErrorMessage = $"Error getting signed-in user: {ex.Message}";
+                Console.WriteLine(ErrorMessage);
+                return null;
+            }
+        }
+ 		public async Task<bool> CreateAssignments(EducationAssignment assignment,string ClassId, string link)
+        {
+ 			if (client is null)
+			{
+				return false;
+			}
+           // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp
+            var result = await client.Education.Classes[ClassId].Assignments.PostAsync(assignment);
+			if (result == null) {
+                ErrorMessage = "Error creating assignment";
+				Console.WriteLine(ErrorMessage);
+                return false; }
+			
+            var requestBody = new EducationAssignmentResource
+            {
+                DistributeForStudentWork = false,
+                Resource = new EducationLinkResource
+                {
+                    DisplayName = assignment.DisplayName,
+                    Link = link,
+                    OdataType = "#microsoft.graph.educationLinkResource",
+                    AdditionalData = new Dictionary<string, object>
+        {
+            {
+                "thumbnailPreviewUrl" , null
+            },
+        },
+                },
+            };
+            var result2 = await client.Education.Classes["{educationClass-id}"].Assignments["{educationAssignment-id}"].Resources.PostAsync(requestBody);
+            return result2 != null;
+        }
+        public async Task<Student?> GetMe()
 		{
-			//var graphServiceClient = Gsc();
 			string token = string.Empty;
 			if (client is null)
 			{
