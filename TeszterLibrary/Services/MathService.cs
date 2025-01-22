@@ -4,15 +4,12 @@ using TeszterLibrary.ViewModel;
 
 namespace TeszterLibrary.Services
 {
-	public class MathService
-	{
-		private readonly TeszterApiService _service;
+	public class MathService(TeszterApiService teszterApiService)
+    {
+		private readonly TeszterApiService _service = teszterApiService;
 		public string ErrorMessage = string.Empty;
-		public MathService(TeszterApiService teszterApiService)
-		{
-			_service = teszterApiService;
-		}
-		public async Task<List<TaskList>> GetTaskList() => await _service.Get<List<TaskList>>("Math");
+
+        public async Task<List<TaskList>> GetTaskList() => await _service.Get<List<TaskList>>("Math");
 		public async Task<List<Lesson>> SetLessons(List<Lesson> lessons) => await _service.Post("Math", lessons);
 		public async Task<List<ClassLesson>> SetClassLessons(List<ClassLesson> lessons) => await _service.Post("Math/Class", lessons);
 		public async Task<List<HasLesson>> HasLessons(List<HasLesson> hasLessons) => await _service.Post("Math/has", hasLessons);

@@ -1,19 +1,21 @@
-﻿@*using Microsoft.JSInterop;*@
-@using Plk.Blazor.DragDrop
+﻿@using Plk.Blazor.DragDrop
 @using System.Numerics;
 @using System.Text.RegularExpressions
-@*@inject IJSRuntime _js*@
 <div style="position:relative; margin:5px 0">
     <FluentCard>
         <FluentStack>
             <FluentNumberField style="width:60px" @bind-Value="question.Score">Pontszám:</FluentNumberField>
             <FluentNumberField style="width:70px" @bind-Value="question.Time" Step="5">Idő:</FluentNumberField>
-            <FluentButton IconEnd="@(new Icons.Regular.Size20.Delete())"
+            @if (sections.Count > 0)
+            {
+                <FluentCombobox Items="sections" TOption="Section" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Id.ToString())" SelectedOptionChanged="@((e)=>SectionChanged(e))" />
+            }
+            <FluentButton IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())"
                           Title="Törlés"
                           OnClick="@(OnDelete)"
                           Style="position:absolute; top:5px; right:5px;" />
         </FluentStack>
-        @if (question.QType == QuestionType.Comp)
+        @if (question.Question.QType == QuestionType.Comp)
         {
             <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
         }
@@ -22,7 +24,7 @@
             <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
         }
         <hr />
-        @switch (question.QType)
+        @switch (question.Question.QType)
         {
             case QuestionType.SC:
                 <Test_choise Type="@("radio")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
@@ -53,22 +55,24 @@
 </div>
     @code {
         [Parameter]
-        public Question question { get; set; } = new Question();
+        public TestQuestion question { get; set; } = new();
         [Parameter]
-        public EventCallback<Question> questionChanged { get; set; }
+        public List<Section> sections { get; set; } = new();
         [Parameter]
-        public EventCallback<Question> Delete { get; set; }
+        public EventCallback<TestQuestion> questionChanged { get; set; }
+        [Parameter]
+        public EventCallback<TestQuestion> Delete { get; set; }
         private List<AnswerView> answers = new List<AnswerView>();
         private bool IsChecking = false;
         QuestionView questionView = new() { Answers = new(), QuestionText = string.Empty };
 
         protected override Task OnInitializedAsync()
         {
-            questionView.QuestionText = question.Text;
+            questionView.QuestionText = question.Question.Text;
 
-            if (question.QType == QuestionType.Pair)
+            if (question.Question.QType == QuestionType.Pair)
             {
-                foreach (var item in question.Answers)
+                foreach (var item in question.Question.Answers)
                 {
                     if (!item.Right)
                     {
@@ -94,7 +98,7 @@
             }
             else
             {
-                foreach (var item in question.Answers)
+                foreach (var item in question.Question.Answers)
                 {
                     questionView.Answers!.Add(new() { AnswerId = item.Id, Result = false, Sequence = item.Sequence, Sign = false, Text = item.Text });
                 }
@@ -108,6 +112,13 @@
             //}
             return base.OnInitializedAsync();
         }
+        private void SectionChanged(Section arg)
+        {
+            if (arg is not null)
+            {
+                question.SectionId = arg.Id;
+            }
+        }
         private void Check(List<AnswerView>? answerView)
         {
             if (answerView != null)
@@ -115,19 +126,19 @@
                 answers = answerView;
             }
             IsChecking = true;
-            switch (question.QType)
+            switch (question.Question.QType)
             {
                 case QuestionType.SC:
                     foreach (var item in answers)
                     {
-                        item.Result = (item.Sign == question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
+                        item.Result = (item.Sign == question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
                     }
                     break;
                 case QuestionType.MC:
                     {
                         foreach (var item in answers)
                         {
-                            item.Result = (item.Sign == question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
+                            item.Result = (item.Sign == question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
                         }
                     }
                     break;
@@ -135,7 +146,7 @@
                     {
                         foreach (var item in answers)
                         {
-                            item.Result = (item.Sign == question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
+                            item.Result = (item.Sign == question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Right) ? true : false;
                         }
                     }
                     break;
@@ -143,7 +154,7 @@
                     {
                         foreach (var item in answers)
                         {
-                            if (item.Text.Equals(question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Text))
+                            if (item.Text.Equals(question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)!.Text))
                             { item.Result = true; }
                         }
                     }
@@ -152,7 +163,7 @@
                     {
                         foreach (var item in answers)
                         {
-                            if (item.Sequence == question.Answers.FirstOrDefault(a => a.Id == item.AnswerId).Sequence)
+                            if (item.Sequence == question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)?.Sequence)
                             { item.Result = true; }
                         }
                     }
@@ -160,14 +171,14 @@
                 case QuestionType.Pair:
                     foreach (var item in answers)
                     {
-                        item.Result = question.Answers.FirstOrDefault(a => a.Id == item.AnswerId).Sequence == item.Sequence ? true : false;
+                        item.Result = question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)?.Sequence == item.Sequence ? true : false;
                     }
                     break;
                 case QuestionType.Comp:
                     {
                         foreach (var item in answers)
                         {
-                            if (item.Text.Equals(question.Answers.FirstOrDefault(a => a.Id == item.AnswerId).Text))
+                            if (item.Text.Equals(question.Question.Answers.FirstOrDefault(a => a.Id == item.AnswerId)?.Text))
                             {
                                 item.Result = true;
                             }

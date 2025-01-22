@@ -1,0 +1,178 @@
+﻿@implements IDialogContentComponent<List<Section>>
+@inject IDialogService dialogService
+@inject IToastService toastService
+<FluentDialogBody>
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentButton OnClick="OnOpenAdd" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Add())" />
+            <FluentButton OnClick="OnOpenEdit" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Pen())" Disabled="@(selectSection is null)" />
+            <FluentButton OnClick="OnOpenDelete" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.SlideEraser())" Color="red"/>
+        </FluentStack>
+        <FluentListbox Items="Content" TOption="Section" OptionText="@(s => s.Name)" OptionValue="@(s => s.Name)" SelectedOptionChanged="ListboxValueChanged" Value="@selectSection.Name" />
+    </FluentStack>
+</FluentDialogBody>
+<div>
+    <FluentDialog @ref="_myFluentDialog" @bind-Hidden="@Hidden" aria-label="Szekció" Modal=@_modal TrapFocus=@_trapFocus PreventScroll=@_preventScroll @ondialogdismiss=OnDismiss>
+        <FluentDialogHeader Visible="false" />
+        <FluentTextField @bind-Value="sectionName">Szekció neve:</FluentTextField>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Accent" Autofocus="true" @onclick="OnClose">Mentés</FluentButton>
+            <FluentButton OnClick="@(()=>_myFluentDialog!.Hide())">Mégsem</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+</div>
+<div>
+    <FluentDialog @ref="_deleteDialog" @bind-Hidden="@HiddenDelete" aria-label="Szekció törlés" Modal=@_modalD TrapFocus=@_trapFocusD PreventScroll=@_preventScrollD @ondialogdismiss=OnDismiss>
+        <FluentDialogHeader Visible="false" />
+        <FluentHeader>Biztosan törli a következő szekciót?</FluentHeader>
+        <FluentLabel>Törlendő szekció neve: @sectionName</FluentLabel>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Accent" BackgroundColor="red" Autofocus="true" @onclick="DeleteSection">Törlés</FluentButton>
+            <FluentButton OnClick="@(()=>_deleteDialog!.Hide())">Mégsem</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+</div>
+@code {
+    [Parameter] public List<Section> Content { get; set; } = default!;
+    private Section selectSection = new(), oldSection = new();
+    private FluentDialog? _myFluentDialog, _deleteDialog;
+    private string sectionName = "ide";
+    private bool _trapFocus = true;
+    private bool _trapFocusD = true;
+    private bool _modal = true;
+    private bool _modalD = true;
+    private bool _preventScroll = true;
+    private bool _preventScrollD = true;
+    private bool Hidden { get; set; } = true;
+    private bool HiddenDelete { get; set; } = true;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _myFluentDialog!.Hide();
+            _deleteDialog.Hide();
+        }
+    }
+    private void ListboxValueChanged(Section section)
+    {
+        if (section is null) return;
+        selectSection = section;
+        sectionName = section.Name;
+    }
+    private void OnOpenAdd()
+    {
+        selectSection = new();
+        sectionName = "üres";
+        _myFluentDialog!.Show();
+    }
+    private void OnOpenEdit()
+    {
+        oldSection = selectSection;
+        sectionName = selectSection.Name;
+        _myFluentDialog!.Show();
+    }
+    private void OnOpenDelete()
+    {
+        _deleteDialog!.Show();
+    }
+    private void OnClose()
+    {
+        if (!string.IsNullOrEmpty(sectionName))
+        {
+            selectSection.Name = sectionName;
+            if (oldSection is not null)
+            {
+                Content.Remove(oldSection);
+            }
+            Content.Add(selectSection);
+        }
+        _myFluentDialog!.Hide();
+    }
+
+    private void OnDismiss(DialogEventArgs args)
+    {
+        if (args is not null && args.Reason is not null && args.Reason == "dismiss")
+        {
+            _myFluentDialog!.Hide();
+            _deleteDialog.Hide();
+        }
+    }
+    protected override void OnInitialized()
+    {
+        if (Content is not null)
+        {
+            Content.Add(new Section() { Name = "Elmélet" });
+            Content.Add(new Section() { Name = "Gyakorlat" });
+            selectSection = Content.FirstOrDefault();
+        }
+        else
+        {
+            toastService.ShowWarning("A szekciók lista null értéket vett fel");
+            return;
+        }
+
+        base.OnInitialized();
+    }
+    private async void NewSection()
+    {
+        DialogParameters parameters = new()
+        {
+            Title = $"Új szekció felvétele a tesztbe",
+            PrimaryAction = "Hozzáad",
+            PrimaryActionEnabled = false,
+            SecondaryAction = "Mégsem",
+            Width = "500px",
+            PreventScroll = true
+        };
+        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(new Section(), parameters);
+        DialogResult? result = await dialog.Result;
+        if (result.Data is not null)
+        {
+            Section? newSection = result.Data as Section;
+            if (newSection is not null)
+            {
+                newSection.Id = Content.Count + 1;
+                Content.Add(newSection);
+                StateHasChanged();
+            }
+            else
+            {
+                toastService.ShowError("A szekció felvétele nem sikerült. Helytelen konverzió.");
+            }
+        }
+    }
+    private async Task EditSection(Section section)
+    {
+        if (section is null)
+        {
+            toastService.ShowInfo("A szekciók közül válaszon ki egyet.");
+            return;
+        }
+        DialogParameters parameters = new()
+        {
+            Title = $"Szekció szerkesztése.",
+            Width = "500px",
+        };
+        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(selectSection, parameters);
+        DialogResult? result = await dialog.Result;
+        if (result.Data is not null)
+        {
+            Section? newSection = result.Data as Section;
+            if (newSection is not null)
+            {
+                Content.Remove(selectSection);
+                Content.Add(newSection);
+                StateHasChanged();
+            }
+            else
+            {
+                toastService.ShowError("A szekció felvétele nem sikerült. Helytelen konverzió.");
+            }
+        }
+    }
+    private void DeleteSection()
+    {
+        Content.Remove(selectSection);
+    }
+}

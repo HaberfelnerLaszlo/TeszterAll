@@ -1,4 +1,6 @@
 ﻿@using TeszterLibrary.Extensions;
+@inject IToastService toastService
+@inject ILogger<Test_pair> logger
 @if (Answers is not null)
 {
     <FluentDragContainer TItem="string"
@@ -12,6 +14,8 @@
                         var text = pairs.GetValueOrDefault(item.Sequence);
                         @if (text is null)
                         {
+                            toastService.ShowError("Hiba történt a kérdés megjelenítése során!");
+                            logger.LogError("Hiba történt a kérdés megjelenítése során!");
                             return;
                         }
                         <FluentStack Orientation="Orientation.Horizontal">
@@ -25,14 +29,14 @@
                             </FluentDropZone>
                             @if (!text.Equals("Ide kerül a párja..."))
                             {
-                                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" OnClick="@(()=>BackList(item.Sequence))"/>
+                                <FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())" OnClick="@(()=>BackList(item.Sequence))" />
                             }
                         </FluentStack>
                     }
                     @if (IsChecked && !item.Sign)
                     {
-                        <span hidden="@item.Result"><FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" /></span>
+                        <span hidden="@item.Result"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
+                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" /></span>
                     }
                     <FluentDivider Orientation="Orientation.Horizontal" Role="DividerRole.Separator"></FluentDivider>
                 }
@@ -49,17 +53,17 @@
             </FluentStack>
         </FluentStack>
     </FluentDragContainer> <div class="container">
-</div>
-<div class="container text-center">
-    @if (IsCheck)
-    {
-        <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Answers))">Ellenőrzés</FluentButton>
-    }
-    @if (Next.HasDelegate)
-    {
-        <FluentButton OnClick="@((async)=> Send())">Következő</FluentButton>
-    }
-</div>
+    </div>
+    <div class="container text-center">
+        @if (IsCheck)
+        {
+            <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Answers))">Ellenőrzés</FluentButton>
+        }
+        @if (Next.HasDelegate)
+        {
+            <FluentButton OnClick="@((async)=> Send())">Következő</FluentButton>
+        }
+    </div>
 }
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();
@@ -70,18 +74,21 @@
     List<AnswerView> selectList = new();
     List<AnswerView> tempList = new();
     Dictionary<int, string> pairs = new();
-    protected override void OnInitialized()
+    protected override void OnAfterRender(bool firstRender)
     {
+        //if (firstRender)
+        //{
         foreach (var item in Answers)
         {
             if (IsChecked)
             {
                 if (!item.Sign)
                 {
-                    pairs.Add(item.Sequence,item.Text);
+                    pairs.Add(item.Sequence, item.Text);
                 }
             }
-            else {
+            else
+            {
                 if (item.Sequence == -1)
                 {
                     selectList.Add(item);
@@ -96,11 +103,11 @@
         {
             selectList.Shuffle();
         }
-        base.OnInitialized();
+        //}
     }
     void Send()
     {
-        if (selectList.Count==0)
+        if (selectList.Count == 0)
         {
             Next.InvokeAsync(Answers);
         }
@@ -109,6 +116,12 @@
     {
         var masol = selectList.Find(j => j.AnswerId == Convert.ToInt32(source));
         var cel = Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target));
+        if (masol is null || cel is null)
+        {
+            toastService.ShowError("Hiba történt a sorbarendezés során!");
+            logger.LogError("Hiba történt a sorbarendezés során!");
+            return;
+        }
         pairs[cel.Sequence] = masol.Text;
         masol.Sequence = cel.Sequence;
         tempList.Add(masol);

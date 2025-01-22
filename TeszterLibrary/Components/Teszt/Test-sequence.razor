@@ -6,23 +6,32 @@
         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
             @foreach (var item in Items.OrderBy(i => i.Sequence))
             {
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
                     <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="true" Droppable="true">
-                        <div style=" margin-bottom: 5px; margin-top: 5px; border-radius: 10px; background: rgba(150,239,223,0.31); border-color: rgb(8,42,77); box-shadow: 1px 1px; padding: 10px; ">
+                        <div style="margin-bottom: 5px;
+                                    margin-top: 5px;
+                                    border-radius: 10px;
+                                    background: rgba(150,239,223,0.31);
+                                    border-color: rgb(8,42,77);
+                                    box-shadow: 1px 1px;
+                                    padding: 10px;
+                                    max-width: @(maxLenght)px;
+                                    text-align: center;
+                                    font-size: 2vw;">
                             @item.Text
                         </div>
                     </FluentDropZone>
                     @if (IsChecked)
                     {
-                        <span hidden="@item.Result"><FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" /></span>
+                        <span hidden="@item.Result"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
+                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" /></span>
                     }
                 </FluentStack>
             }
         </FluentStack>
     </FluentDragContainer>
 
-    <div class="container text-center">
+    <div class="container text-center" style="margin:10px">
         @if (IsCheck)
         {
             <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Items))">
@@ -43,8 +52,22 @@
     [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
     bool first = true;
     string row = string.Empty;
+    int maxLenght = 0;
     //void Send() => Next.InvokeAsync(QView);
     List<AnswerView> Items = new();
+    protected override void OnParametersSet()
+    {
+        maxLenght = 10;
+        foreach (var item in Answers)
+        {
+            if (maxLenght < item.Text.Length)
+            {
+                maxLenght = item.Text.Length;
+            }
+        }
+        maxLenght = maxLenght * 15;
+        base.OnParametersSet();
+    }
     protected override void OnInitialized()
     {
         if (first)

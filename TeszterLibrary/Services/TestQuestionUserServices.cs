@@ -35,11 +35,11 @@ namespace TeszterLibrary.Services
 		/// </summary>
 		/// <param name="testUserId"></param>
 		/// <returns>Lista</returns>
-		//public async Task<List<TestQuestionUser>> GetTestQuestionUsers(int testUserId)
-		//{
-		//	var list = await _service.Get<List<TestQuestionUser>>($"Tqu/All/{testUserId}");
-		//	return list;
-		//}
+		public async Task<List<TestQuestionUser>> GetTestQuestionUsers(int testUserId)
+		{
+			var list = await _service.Get<List<TestQuestionUser>>($"Tqu/All/{testUserId}");
+			return list;
+		}
 		//public async Task<List<TestQuestionUser>> GetTestQuestionUsers(int testUserId, int rNumber)
 		//{
 		//	var list = await _service.Get<List<TestQuestionUser>>($"Tqu/{testUserId}/{rNumber}");

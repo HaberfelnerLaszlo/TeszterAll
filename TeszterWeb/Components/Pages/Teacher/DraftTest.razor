@@ -4,8 +4,6 @@
 @inject NavigationManager navi
 @inject GlobalData data
 @inject IToastService toastService
-<h3>Piszkozat tesztek</h3>
-
 @if (tests is not null && tests.Count>0)
 {
     <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
@@ -22,9 +20,16 @@ else { <FluentLabel>@errorMesage</FluentLabel>}
     private Test test = new();
     bool ispublish = false;
     string userId = string.Empty,errorMesage=string.Empty;
+    protected override void OnParametersSet()
+    {
+        data.Title = "Piszkozat tesztek";
+        StateHasChanged();
+        base.OnParametersSet();
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        data.Title = "Piszkozat tesztek";
         if (String.IsNullOrEmpty(data.UserId))
         {
             var me=await gService.GetMe();
@@ -37,6 +42,7 @@ else { <FluentLabel>@errorMesage</FluentLabel>}
             errorMesage = tService.ErrorMessage;
             toastService.ShowInfo(tService.ErrorMessage);
         }
+        StateHasChanged();
     }
     private void PublishTest(Test test)
     {

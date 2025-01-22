@@ -4,7 +4,7 @@
 @inject SubjectServices sService
 @inject IToastService tService
 @inject IDialogService dService
-<h3>SubjectView</h3>
+<h3>Tárolt tantárgyak</h3>
 <FluentDataGrid Items="@subjects.AsQueryable()">
     <PropertyColumn Property="c=>c.Name" Title="Tantárgy neve"></PropertyColumn>
     <TemplateColumn Title="Műveletek">

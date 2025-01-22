@@ -1,4 +1,4 @@
-﻿<FluentCard Style="max-width:300px;">
+﻿<FluentCard Style="max-width:400px;">
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
             <h3>
@@ -6,8 +6,8 @@
             </h3>
         </FluentStack>
         <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" />
-            <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" />
         </FluentStack>
     </FluentStack>
     <FluentGrid>
@@ -40,6 +40,6 @@
     </FluentGrid>
 </FluentCard>
 @code {
-    [Parameter] public TestResultToStudent TestResult { get; set; }
+    [Parameter] public TestResultToStudent TestResult { get; set; }= new TestResultToStudent();
     [Parameter] public EventCallback<int> Open { get; set; }
 }

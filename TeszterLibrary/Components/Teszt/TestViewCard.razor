@@ -7,22 +7,22 @@
             </h3>
         </FluentStack>
         <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
-            <FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
-            <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
-            <FluentIcon Value="@(new Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
         </FluentStack>
     </FluentStack>
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
-            <p id="date" class="end_date" style="margin: 10px;">
+            <p id="date" class="end_date" style="margin: 5px;">
                 Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
             </p>
-            <p id="date" class="start_date" style="margin: 10px;">
+            <p id="date" class="start_date" style="margin: 5px;">
                 Tesztet elvégezte / maximális ismétlések száma:&nbsp;<wbr><strong>@TestItem.UserReplaceNumber / @TestItem.TestReplaceNumber</strong>
             </p>
         </FluentStack>
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="300px">
             <p style="padding: 5px;margin-bottom: 0px;">
                 Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
             </p>
@@ -34,10 +34,15 @@
             </p>
         </FluentStack>
     </FluentStack>
-    <FluentButton OnClick="@(() => Start.InvokeAsync(TestItem))">Teszt indítása</FluentButton>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Start.InvokeAsync(TestItem))">Teszt indítása</FluentButton>
+    if (TestItem.UserReplaceNumber>0)
+    {
+        <FluentButton BackgroundColor="rgba(0,179,0,0.8)" Color="rgba(255,255,255,1)" OnClick="@(() => Results.InvokeAsync(TestItem.TestUserId.ToString()))" Style="margin:5px;">Eredmények</FluentButton>
+    }
 }
 @code {
     [Parameter] public TestView TestItem { get; set; } = new();
     [Parameter] public EventCallback<TestView> Start { get; set; }
+[Parameter] public EventCallback<string> Results { get; set; }
 
 }

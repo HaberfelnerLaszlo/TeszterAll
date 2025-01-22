@@ -17,12 +17,12 @@ namespace TeszterLibrary.Services
         }
         #endregion
         #region Public methods
-        public async Task<Test> GetTest(int id)
+        public async Task<Test?> GetTest(int id)
         {
             var t= await _service.Get<Test>($"Test/{id}");
             return t;
         }
-        public async Task<List<Test>> GetTests()
+        public async Task<List<Test>?> GetTests()
         {
             var t= await _service.Get<List<Test>>("Test");
             return t;
@@ -32,7 +32,7 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="id">teszt azonosító</param>
         /// <returns></returns>
-        public async Task<Test> GetPublishedTest(int id)
+        public async Task<Test?> GetPublishedTest(int id)
         {
             var test = await _service.Get<Test>($"Test/Publish/{id}");
             if (test != null)
@@ -50,7 +50,7 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="uId">Tesztkészítő azonosító</param>
         /// <returns></returns>
-        public async Task<List<Test>> GetNoActiveTest(Guid uId)
+        public async Task<List<Test>?> GetNoActiveTest(Guid uId)
         {
             var list = await _service.Get<List<Test>>($"Test/NoActive/{uId}");
             return list;
@@ -105,7 +105,7 @@ namespace TeszterLibrary.Services
         /// </summary>
         /// <param name="test">Teszt egy példánya</param>
         /// <returns></returns>
-        public async Task<Test> AddTest(Test test)
+        public async Task<Test?> AddTest(Test test)
         {
             try
             {
@@ -123,7 +123,7 @@ namespace TeszterLibrary.Services
             var response=await _service.Delete($"Test/{id}"); //TODO Sikertelenség esetén teendők
             return response;
         }
-        public async Task<Test> UpdateTestAsync(Test test)
+        public async Task<Test?> UpdateTestAsync(Test test)
         {
             try
             {

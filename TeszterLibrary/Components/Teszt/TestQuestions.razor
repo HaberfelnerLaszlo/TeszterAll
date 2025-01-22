@@ -1,5 +1,5 @@
 ﻿@inject IDialogService DialogService
-<FluentDataGrid Id="questiongrid" Items=@FilteredItems.AsQueryable() Pagination="pagination" GridTemplateColumns="1fr 1fr 2fr 30px 1fr 1fr 1fr" TGridItem=QuestionListView>
+<FluentDataGrid Id="questiongrid" Items=@FilteredItems?.AsQueryable() Pagination="pagination" GridTemplateColumns="1fr 0.8fr 2.4fr 0.2fr 0.6fr 0.6fr 1fr" TGridItem=QuestionListView ResizableColumns=true>
     <PropertyColumn Title="Tantárgy" Property="@(c => c!.Subject)" Sortable="true" Align=Align.Center>
         <ColumnOptions>
             <div class="search-box">
@@ -7,7 +7,7 @@
             </div>
         </ColumnOptions>
     </PropertyColumn>
-    <TemplateColumn Title="Témakör" Align="Align.Center" Sortable="true">
+    <TemplateColumn Title="Témakör" Align="Align.Center" Sortable="true" >
         <ColumnOptions>
             <div class="search-box">
                 <FluentSearch type="search" Autofocus=true @bind-Value=titleFilter @oninput="HandleTitleFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
@@ -62,16 +62,16 @@
     <PropertyColumn Title="Időtartam" Property="@(c => c!.Time.ToTime())" Sortable="false" Align=Align.Center />
     <TemplateColumn Title="Műveletek" Align="@Align.End">
         @*<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
-        <FluentButton Title="Betekintés" IconEnd="@(new Icons.Regular.Size16.Search())" OnClick="@(()=>OpenAsync(context))"></FluentButton>
-        <FluentButton Title="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => SetQuestionForUpdate(context))" />
-        <FluentButton Title="Törlés" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@((async () => await DeleteQ(context)))" />
-        <FluentButton Title="Teszthez add" IconEnd="@(new Icons.Regular.Size16.Add())" OnClick="@(() => Add(context))" Disabled="context.SelectedTest"/>
+        <FluentButton Title="Betekintés" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" OnClick="@(()=>OpenAsync(context))"></FluentButton>
+        <FluentButton Title="Szerkesztés" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => SetQuestionForUpdate(context))" />
+        <FluentButton Title="Törlés" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@((async () => await DeleteQ(context)))" />
+        <FluentButton Title="Teszthez add" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Add())" OnClick="@(() => Add(context))" Disabled="context.SelectedTest"/>
     </TemplateColumn>
 </FluentDataGrid>
 <FluentPaginator State="@pagination" />
 @code {
     [Parameter] public Guid UserId { get; set; }
-    [Parameter] public List<Question> questions { get; set; }
+    [Parameter] public List<Question> questions { get; set; } = new();
     [Parameter] public EventCallback<Question> Delete { get; set; }
     [Parameter] public EventCallback<Question> Update { get; set; }
     [Parameter] public EventCallback<Question> AddTest { get; set; }
@@ -221,9 +221,16 @@
             question = (Question)result.Data;
         }
     }
-    async Task DeleteQ(QuestionListView question) 
+    async Task DeleteQ(QuestionListView question)
     {
-        FilteredItems.Remove(question);
+        if (question == null )
+        {
+            return;
+        }
+        if ( FilteredItems is not null)
+        {
+            FilteredItems.Remove(question);
+        }
         allQuestions.Remove(question);
         await Delete.InvokeAsync(question);
     }

@@ -11,7 +11,12 @@ namespace TeszterLibrary.Model
         public Guid QuestionId { get; set; }
         public int Score { get; set; }
         public int Time { get; set; }
-        public Test Test { get; set; }
+        //public Test Test { get; set; }
         public Question Question { get; set; }
+        /// <summary>
+        /// A szakasz azonosítója 0 esetén teszt nincs szakaszolva. A 0 az alapéertelmezett érték.
+        /// </summary>
+        public int SectionId { get; set; } = 0;
+
     }
 }

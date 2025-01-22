@@ -2,19 +2,19 @@
 {
     @if (Type.Equals("checkbox"))
     {
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Wrap="true">
                 @foreach (var answer in Answers)
                 {
-                    <FluentCheckbox Label="@answer.Text" @bind-Value="@answer.Sign" ReadOnly="IsChecked"></FluentCheckbox>
+                    <FluentCheckbox @bind-Value="@answer.Sign" ReadOnly="IsChecked"><span> @answer.Text</span></FluentCheckbox>
                     @if (IsChecked)
                     {
                         if (answer.Result)
                         {
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
                         }
                         else
                         {
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                         }
                     }
                 }
@@ -28,36 +28,36 @@
         {
             @if (IsChecked)
             {
-                <p style="margin:5px;padding:5px;border:2px solid blue; border-radius:10px;background-color:@bgColor">@a.Text</p>
+                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;background-color:@bgColor; text-align:center; font-size:2vw">@a.Text</p>
                 @if (a.Result)
                 {
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
                 }
                 else
                 {
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
                 }
             }
             else
             {
-                <p style="margin:5px;padding:5px;border:2px solid blue; border-radius:10px;background-color:@bgColor" @onclick="() => selected(a.AnswerId)">@a.Text</p>
+                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;background-color:@bgColor; text-align:center; font-size:2vw" @onclick="() => selected(a.AnswerId)">@a.Text</p>
             }
         }
         else
         {
             @if (IsChecked)
             {
-                <p style="margin:5px;padding:5px;border:2px solid blue; border-radius:10px;">@a.Text</p>
+                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;text-align:center; font-size:2vw">@a.Text</p>
             }
             else
             {
-            <p style="margin:5px;padding:5px;border:2px solid blue; border-radius:10px;" @onclick="() => selected(a.AnswerId)">@a.Text</p>
+            <p class="answer" style=" min-width:@(maxLenght)px; width:@(width)%;text-align:center; font-size:2vw " @onclick="() => selected(a.AnswerId)">@a.Text</p>
              }
         }
     }
 </FluentStack>
         }
-<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="margin:10px">
     @if (IsCheck)
     {
         <FluentButton Appearance="Appearance.Outline" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
@@ -80,7 +80,22 @@
     [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
     private string bgColor = System.Drawing.Color.GreenYellow.Name;
+    int maxLenght = 0, width=0;
 
+    protected override void OnParametersSet()
+    {
+        maxLenght = 0;
+        foreach (var item in Answers)
+        {
+            if (item.Text.Length > maxLenght)
+            {
+                maxLenght = item.Text.Length;
+            }
+        }
+        maxLenght = maxLenght * 10;
+        width = (100 / Answers.Count)-5;
+        base.OnParametersSet();
+    }
     private void selected(int ID)
     {
         IsChecked = false;

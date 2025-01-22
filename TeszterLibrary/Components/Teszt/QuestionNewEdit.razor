@@ -3,6 +3,7 @@
 @using Microsoft.JSInterop;
 @using Plk.Blazor.DragDrop;
 @inject IJSRuntime js
+@inject IToastService toastService
 
 <div class="row m-3">
     <Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
@@ -13,155 +14,159 @@
             <h4>@errorMessage</h4>
         </BodyContent>
     </Modal>
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical">
-            <div class="col bg-light m-2 justify-content-start">
-                <div class="p-3 mb-3 bg-primary text-white text-center">@(New? "Új kérdés":"Kérdés módosítása")</div>
-                <EditForm Model="@newQuestion">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                    <div class="form-group">
-                        <label for="qType">Kérdés típusa: </label>
-                        <FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New>
-                            <FluentOption Value="All">Válassza ki a kérdés fajtáját...</FluentOption>
-                            <FluentOption Value="SC" Selected=@(QuestionType.SC==newQuestion.QType)>Felelet választás</FluentOption>
-                            <FluentOption Value="MC" Selected=@(QuestionType.MC==newQuestion.QType)>Több válaszos</FluentOption>
-                            <FluentOption Value="TF" Selected=@(QuestionType.TF==newQuestion.QType)>Igaz-Hamis</FluentOption>
-                            <FluentOption Value="Open" selected="@(QuestionType.Open==newQuestion.QType)">Nyílt végű</FluentOption>
-                            <FluentOption Value="Seq" selected="@(QuestionType.Seq==newQuestion.QType)">Sorbarendezés</FluentOption>
-                            <FluentOption Value="Pair" selected="@(QuestionType.Pair==newQuestion.QType)">Párosítás</FluentOption>
-                            <FluentOption Value="Comp" selected="@(QuestionType.Comp==newQuestion.QType)">Kiegészítő</FluentOption>
-                        </FluentSelect>
-                    </div>
-                    <div class="form-group" hidden="@hiddenForm">
-                        @if (subjects.Count > 0)
-                        {
-                            <FluentSelect Id="Subject" TOption="Subject" Value="@newQuestion.Subject" Label="Tantárgy">
-                                @foreach (var item in subjects)
-                                {
-                                    <FluentOption Value="@item.Name">@item.Name</FluentOption>
-                                }
+    <FluentGrid>
+        <FluentGridItem xs="12" sm="6">
+            <FluentStack Orientation="Orientation.Vertical">
+                @*A kérdés általános adatai*@
+                <div class="col bg-light m-2 justify-content-start">
+                    <div class="p-3 mb-3 bg-primary text-white text-center">@(New? "Új kérdés":"Kérdés módosítása")</div>
+                    <EditForm Model="@newQuestion">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div style="margin:10px 0px">
+                            <label for="qType">Kérdés típusa: </label>
+                            <FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New Placeholder="Válassza ki a kérdés fajtáját..,">
+                                <FluentOption Value="SC" Selected=@(QuestionType.SC==newQuestion.QType)>Felelet választás</FluentOption>
+                                <FluentOption Value="MC" Selected=@(QuestionType.MC==newQuestion.QType)>Több válaszos</FluentOption>
+                                <FluentOption Value="TF" Selected=@(QuestionType.TF==newQuestion.QType)>Igaz-Hamis</FluentOption>
+                                <FluentOption Value="Open" selected="@(QuestionType.Open==newQuestion.QType)">Nyílt végű</FluentOption>
+                                <FluentOption Value="Seq" selected="@(QuestionType.Seq==newQuestion.QType)">Sorbarendezés</FluentOption>
+                                <FluentOption Value="Pair" selected="@(QuestionType.Pair==newQuestion.QType)">Párosítás</FluentOption>
+                                <FluentOption Value="Comp" selected="@(QuestionType.Comp==newQuestion.QType)">Kiegészítő</FluentOption>
                             </FluentSelect>
-                        }
-                        <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
-                            <HeaderContent>
-                                <p>Új tantárgy felvétele</p>
-                            </HeaderContent>
-                            <BodyContent>
-                                <label for="Name">Tantárgy neve: </label>
-                                <input type="text" id="Name" @bind-value="subjectName" />
-                            </BodyContent>
-                        </Modal>
-                        <FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
-                        <div class="form-group">
-                            <label for="title">Kérdés címe / témaköre</label>
-                            <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
                         </div>
-                        <div class="form-group">
-                            <label for="subtitle">Kérdés alcím</label>
-                            <input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
-                        </div>
-                        <div class="form-group">
-                            <label for="name">Kérdés</label>
-                            <TinyMCE.Blazor.Editor ApiKey="daoqhbmyha3b59wlsjs6wtqie6ty9scx3tjaxzxznnzzg4v9" JsConfSrc="editor" Conf="editorConf" @bind-Value="@newQuestion.Text" Field="()=>newQuestion.Text" />
-                            <div hidden="@(newQuestion.QType!=QuestionType.Comp)">
-                                <p>Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
-                                <a @onclick="Insert">{@k} beszúrása</a>
+                        <div hidden="@hiddenForm">
+                            @if (subjects.Count > 0)
+                            {
+                                <FluentSelect Id="Subject" Items="subjects" TOption="Subject" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Name)">
+                                </FluentSelect>
+                            }
+                            <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
+                                <HeaderContent>
+                                    <p>Új tantárgy felvétele</p>
+                                </HeaderContent>
+                                <BodyContent>
+                                    <label for="Name">Tantárgy neve: </label>
+                                    <input type="text" id="Name" @bind-value="subjectName" />
+                                </BodyContent>
+                            </Modal>
+                            <FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
+                            <div style="margin:10px 0px">
+                                <label for="title">Kérdés címe / témaköre</label>
+                                <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
                             </div>
-                        </div>
-                        <div class="form-group input-group">
-                            <div class="row">
+                            <div style="margin:10px 0px">
+                                <label for="subtitle">Kérdés alcím</label>
+                                <input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
+                            </div>
+                            <div style="margin:10px 0px">
+                                <FluentTextArea Id="qText" @bind-Value="@newQuestion.Text" Style="width:100%" />
+                                <div hidden="@(newQuestion.QType!=QuestionType.Comp)">
+                                    <p>Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
+                                    <FluentButton @onclick="Insert">{@k} beszúrása</FluentButton>
+                                </div>
+                            </div>
+                            <div style="margin:10px 0px">
+                                <FluentGrid>
+                                    <FluentGridItem xs="12" sm="6">
+                                        <FluentNumberField Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
+                                    </FluentGridItem>
+                                    <FluentGridItem xs="12" sm="6">
+                                        <FluentNumberField Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
+                                    </FluentGridItem>
+                                </FluentGrid>
+                                @*<div class="row">
                                 <div class="col">
                                     <label for="score">Pontszám</label>
-                                    <InputNumber id="score" class="form-control" @bind-Value="@newQuestion.Score" />
                                 </div>
                                 <div class="col">
-                                    <label for="time">Időtartam /másodperc/</label>
-                                    <input type="number" id="time" class="form-control ido-sec" @bind="@newQuestion.Time" />
+                                    <label for="time"></label>
+                                </div>
+                            </div>*@
+                            </div>
+                            <div>
+                                @*<label for="grade"></label>*@
+                                <div class="input-group">
+                                    <FluentNumberField Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
+                                    <span> -  </span>
+                                    <FluentNumberField Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="grade">Évfolyam</label>
-                            <div class="input-group">
-                                <input type="number" id="grade" class="form-control" @bind="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" />
-                                <span class="input-group-text"> -  </span>
-                                <input type="number" id="grade" class="form-control" @bind="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
-                            </div>
-                        </div>
-
-                    </div>
-                </EditForm>
-            </div>
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Vertical">
-            <div class="col bg-light m-2 justify-content-start" hidden="@hiddenForm">
-                <div class="p-3 mb-3 bg-primary text-white text-center">Válaszok</div>
-                @switch (newQuestion.QType)
-                {
-                    case QuestionType.SC:
-                    case QuestionType.MC:
-                    case QuestionType.Comp:
-                        {
-                            @foreach (var item in newAnswers)
+                    </EditForm>
+                </div>
+            </FluentStack>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="6">
+            <FluentStack Orientation="Orientation.Vertical">
+                <div class="col bg-light m-2 justify-content-start" hidden="@hiddenForm">
+                    <div class="p-3 mb-3 bg-primary text-white text-center">Válaszok</div>
+                    @switch (newQuestion.QType)
+                    {
+                        case QuestionType.SC:
+                        case QuestionType.MC:
+                        case QuestionType.Comp:
                             {
-                                <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                @foreach (var item in newAnswers)
+                                {
+                                    <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                }
                             }
-                        }
-                        break;
-                    case QuestionType.TF:
-                        {
-                            <p class="bg-info text-center">Az eldöntendő állításokat írja le.</p>
-                            @foreach (var item in newAnswers)
+                            break;
+                        case QuestionType.TF:
                             {
-                                <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                <p class="bg-info text-center">Az eldöntendő állításokat írja le.</p>
+                                @foreach (var item in newAnswers)
+                                {
+                                    <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                }
                             }
-                        }
-                        break;
-                    case QuestionType.Open:
-                        {
-                            foreach (var item in newAnswers)
+                            break;
+                        case QuestionType.Open:
                             {
-                                <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                foreach (var item in newAnswers)
+                                {
+                                    <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                }
                             }
-                        }
-                        break;
-                    case QuestionType.Seq:
-                        {
-                            <p class="bg-info text-center">A válaszokat a helyes sorrendbe állítsa be.</p>
-                            <Dropzone Items="newAnswers" TItem="Answer" OnItemDrop="drop">
-                                <NewAnswer newAnswer="@context" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
-                            </Dropzone>
-                        }
+                            break;
+                        case QuestionType.Seq:
+                            {
+                                <p class="bg-info text-center">A válaszokat a helyes sorrendbe állítsa be.</p>
+                                <Dropzone Items="newAnswers" TItem="Answer" OnItemDrop="drop">
+                                    <NewAnswer newAnswer="@context" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                </Dropzone>
+                            }
 
-                        break;
-                    case QuestionType.Pair:
-                        newAnswers[1].Sequence = 1;
-                        newAnswers[1].Right = false;
-                        for (int i = 0; i < newAnswers.Count; i = i + 2)
-                        {
-                            <label>@(i/2+1). pár:</label>
-                            <div class="row">
-                                <div class="col">
-                                    <NewAnswer newAnswer="newAnswers[i]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                            break;
+                        case QuestionType.Pair:
+                            newAnswers[1].Sequence = 1;
+                            newAnswers[1].Right = false;
+                            for (int i = 0; i < newAnswers.Count; i = i + 2)
+                            {
+                                <label>@(i/2+1). pár:</label>
+                                <div class="row">
+                                    <div class="col">
+                                        <NewAnswer newAnswer="newAnswers[i]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                    </div>
+                                    <div class="col">
+                                        <NewAnswer newAnswer="newAnswers[i+1]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                    </div>
+                                    <div class="col-1">
+                                        <button class="btn btn-danger" @onclick="()=>deletePairAnswers(i)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Delete())" Color="Color.Error" /></button>
+                                    </div>
                                 </div>
-                                <div class="col">
-                                    <NewAnswer newAnswer="newAnswers[i+1]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
-                                </div>
-                                <div class="col-1">
-                                    <button class="btn btn-danger" @onclick="()=>deletePairAnswers(i)"><i class="oi oi-trash"></i></button>
-                                </div>
-                            </div>
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
 
-                <button class="m-3" @onclick="AddAnswer" type="button"><FluentIcon Value="@(new Icons.Regular.Size24.Add())" Color="Color.Info" /></button>
-            </div>
-        </FluentStack>
-    </FluentStack>
+                    <button class="m-3" @onclick="AddAnswer" type="button"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Add())" Color="Color.Info" /></button>
+                </div>
+            </FluentStack>
+        </FluentGridItem>
+    </FluentGrid>
     <div class="text-center p-3 mb-3" hidden="@hiddenForm">
         <button type="submit" class="btn btn-info" @onclick="SaveQuestion">Kérdés mentése</button>
         @*<button class="btn btn-info" @onclick="SaveNewQuestion">Kérdés mentése + új</button>*@
@@ -169,8 +174,7 @@
     </div>
 </div>
 @code {
-    [Parameter]
-    public bool New { get; set; } = true;
+    [Parameter] public bool New { get; set; } = true;
     [Parameter] public Question newQuestion { get; set; } = new Question();
     [Parameter] public List<Subject> subjects { get; set; } = new List<Subject>();
     [Parameter] public EventCallback<Question> Save { get; set; }
@@ -178,10 +182,10 @@
     [Parameter] public EventCallback Cancel { get; set; }
     string errorMessage = string.Empty, subjectName = string.Empty;
     bool showModal = false, hiddenForm = true;
-    private Dictionary<string, object> editorConf = new Dictionary<string, object>{
-   { "menubar", true },
-   { "plugins", "link image" },
-   { "toolbar", "undo redo | styleselect | forecolor | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | link image" }};
+    // private Dictionary<string, object> editorConf = new Dictionary<string, object>{
+    //{ "menubar", true },
+    //{ "plugins", "link image" },
+    //{ "toolbar", "undo redo | styleselect | forecolor | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | link image" }};
     public Answer newAnswer { get; set; } = new Answer();
     public List<Answer> newAnswers = new List<Answer>();
 
@@ -218,7 +222,19 @@
     private async Task Insert()
     {
         string text = " {" + k + "}";
-        await js.InvokeVoidAsync("insertText", "name", text);
+        var select = await js.InvokeAsync<string>("addToTextArea", text);
+        if (!string.IsNullOrEmpty(select))
+        {
+            if (newAnswers.Count>=k)
+            {
+                newAnswers[k - 1].Text = select;
+            }
+            else
+            {
+                newAnswers.Add(new() { Sequence = k, Right = false, Text = select });
+            }
+        }
+        StateHasChanged();
         k++;
     }
     private void deletePairAnswers(int j)
@@ -243,135 +259,146 @@
             newAnswers[i].Sequence = i + 1;
         }
     }
-    @*	private async Task AddNewQuestion()
-        {
-        }
-    *@ private async Task SaveQuestion()
+    private async Task SaveQuestion()
     {
         if (newQuestion.QType == 0)
         {
             errorMessage = "Kérem állítson be egy kérdés típust!";
         }
-        newQuestion.Answers = newAnswers.ToList();
-        //await AddNewQuestion();
-        await Save.InvokeAsync(newQuestion);
-    }
-    @*private async Task SaveNewQuestion()
+        var valasz = IsValidAnswer(newQuestion.QType);
+        if (string.IsNullOrEmpty(valasz))
         {
-            await AddNewQuestion();
-        }*@
-private void minGradeChange()
-{
-    if (newQuestion.MaxGrade < newQuestion.MinGrade)
-    {
-        var v = newQuestion.MaxGrade;
-        newQuestion.MaxGrade = newQuestion.MinGrade;// + 1;
-        newQuestion.MinGrade = v;
-        StateHasChanged();
+            newQuestion.Answers = newAnswers.ToList();
+            await Save.InvokeAsync(newQuestion);
+            return;
+        }
+        else errorMessage = valasz;
+        //newAnswers.Clear();
+        //await AddNewQuestion();
     }
-}
-private string IsValidAnswer(QuestionType type)
-{
-    int i = 0;
-    switch (type)
+    private void minGradeChange()
     {
-        case QuestionType.SC:
-            {
-                foreach (var item in newAnswers)
+        if (newQuestion.MaxGrade < newQuestion.MinGrade)
+        {
+            var v = newQuestion.MaxGrade;
+            newQuestion.MaxGrade = newQuestion.MinGrade;// + 1;
+            newQuestion.MinGrade = v;
+            StateHasChanged();
+        }
+    }
+    private string IsValidAnswer(QuestionType type)
+    {
+        int i = 0;
+        switch (type)
+        {
+            case QuestionType.SC:
                 {
-                    if (item.Right)
+                    foreach (var item in newAnswers)
                     {
-                        i++;
+                        if (item.Right)
+                        {
+                            i++;
+                        }
+                        if (item.Text == null)
+                        {
+                            errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                        }
                     }
-                    if (item.Text == null)
+                    if (i == 0 || i > 1)
                     {
-                        errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                        errorMessage = errorMessage + "Pontosan egy helyes megoldás lehet! ";
                     }
-                }
-                if (i == 0 || i > 1)
-                {
-                    errorMessage = errorMessage + "Pontosan egy helyes megoldás lehet! ";
-                }
-            }
-            break;
-        case QuestionType.MC:
-            {
-                foreach (var item in newAnswers)
-                {
-                    if (item.Right)
-                    {
-                        i++;
-                    }
-                    if (item.Text == null)
-                    {
-                        errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
-                    }
-                }
-                if (i == 0)
-                {
-                    errorMessage = "Legalább egy helyes válasz kell!";
                 }
                 break;
-            }
-        case QuestionType.TF:
-            break;
-        case QuestionType.Open:
-            foreach (var item in newAnswers)
-            {
-                if (item.Text == null)
+            case QuestionType.MC:
                 {
-                    errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                    foreach (var item in newAnswers)
+                    {
+                        if (item.Right)
+                        {
+                            i++;
+                        }
+                        if (item.Text == null)
+                        {
+                            errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                        }
+                    }
+                    if (i == 0)
+                    {
+                        errorMessage = "Legalább egy helyes válasz kell!";
+                    }
+                    break;
                 }
-            }
-            break;
-        case QuestionType.Seq:
-            foreach (var item in newAnswers)
-            {
-                if (item.Text == null)
+            case QuestionType.TF:
+                break;
+            case QuestionType.Open:
+                foreach (var item in newAnswers)
                 {
-                    errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                    if (item.Text == null)
+                    {
+                        errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                    }
                 }
-            }
-            break;
-        case QuestionType.Pair:
-            break;
-        default:
-            break;
+                break;
+            case QuestionType.Seq:
+                foreach (var item in newAnswers)
+                {
+                    if (item.Text == null)
+                    {
+                        errorMessage = errorMessage + "A " + item.Sequence.ToString() + " válasz nem lehet üres! ";
+                    }
+                }
+                break;
+            case QuestionType.Pair:
+                break;
+            default:
+                break;
+        }
+        return errorMessage;
     }
-    return errorMessage;
-}
-private void AddAnswer()
-{
-    var i = newAnswers.Last().Sequence;
-    newAnswers.Add(new Answer() { Sequence = i + 1 });
-    if (newQuestion.QType == QuestionType.Pair)
+    private void AddAnswer()
     {
-        newAnswers.Add(new Answer() { Sequence = i + 1 , Right=false});
-    }
-    StateHasChanged();
-}
-private void qTypeChanged(string type)
-{
-    QuestionType qt;
-    if (Enum.TryParse<QuestionType>(type, out qt))
-    {
-        newQuestion.QType = qt;
-        hiddenForm = false;
+        var i = newAnswers.Last().Sequence;
+        newAnswers.Add(new Answer() { Sequence = i + 1 });
+        if (newQuestion.QType == QuestionType.Pair)
+        {
+            newAnswers.Add(new Answer() { Sequence = i + 1 , Right=false});
+        }
         StateHasChanged();
     }
-}
-private void drop()
-{
-    foreach (var a in newAnswers)
+    private void qTypeChanged(string type)
     {
-        a.Sequence = newAnswers.IndexOf(a) + 1;
+        QuestionType qt;
+        if (Enum.TryParse<QuestionType>(type, out qt))
+        {
+            newQuestion.QType = qt;
+            hiddenForm = false;
+            StateHasChanged();
+        }
+        if (newQuestion.QType == QuestionType.Comp || newQuestion.QType==QuestionType.Pair)
+        {
+            newAnswers.Clear();
+            newAnswers.Add(new Answer() { Sequence = 1 });
+            newAnswers.Add(new Answer() { Sequence = 2 });
+        }
+        else
+        {
+            newAnswers.Clear();
+            newAnswers.Add(new Answer() { Sequence = 1 });
+        }
     }
-}
-private void CloseModal() => errorMessage = string.Empty;
-private void SaveSubject()
-{
-    showModal = false;
-    SubjectsSave.InvokeAsync(subjectName);
-}
-void CloseSubjectModal() => showModal = false;
+    private void drop()
+    {
+        foreach (var a in newAnswers)
+        {
+            a.Sequence = newAnswers.IndexOf(a) + 1;
+        }
+    }
+    private void CloseModal() => errorMessage = string.Empty;
+    private void SaveSubject()
+    {
+        showModal = false;
+        SubjectsSave.InvokeAsync(subjectName);
+    }
+    void CloseSubjectModal() => showModal = false;
 }

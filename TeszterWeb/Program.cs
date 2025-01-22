@@ -12,7 +12,7 @@ using TeszterWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
+var initialScopes = builder.Configuration["TeszterApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
 
 // Add services to the container.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
@@ -20,8 +20,8 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
      .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
 .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
             .AddInMemoryTokenCaches()
-.AddDownstreamApi("DownstreamApi", builder.Configuration.GetSection("DownstreamApi"))
-            .AddInMemoryTokenCaches();
+.AddDownstreamApi("DownstreamApi", builder.Configuration.GetSection("TeszterApi"))
+                .AddInMemoryTokenCaches();
 //builder.Services.AddAuthorization(options =>
 //{
 //    // By default, all incoming requests will be authorized according to the default policy
@@ -36,15 +36,17 @@ builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
 builder.Services.AddFluentUIComponents();
 
-builder.Services.AddSingleton<TeszterApiService>();
-builder.Services.AddSingleton<EduUserServices>();
-builder.Services.AddSingleton<TestServices>();
-builder.Services.AddSingleton<QuestionServices>();
-builder.Services.AddSingleton<SubjectServices>();
-builder.Services.AddSingleton<TestUserServices>();
-builder.Services.AddSingleton<TestQuestionServices>();
-builder.Services.AddSingleton<TestQuestionUserServices>();
-builder.Services.AddSingleton<MathService>();
+builder.Services.AddScoped<TeszterApiService>();
+builder.Services.AddScoped<EduUserServices>();
+builder.Services.AddScoped<TestServices>();
+builder.Services.AddScoped<QuestionServices>();
+builder.Services.AddScoped<SubjectServices>();
+builder.Services.AddScoped<SectionServices>();
+builder.Services.AddScoped<TestUserServices>();
+builder.Services.AddScoped<TestQuestionServices>();
+builder.Services.AddScoped<TestQuestionUserServices>();
+builder.Services.AddScoped<MathService>();
+
 builder.Services.AddScoped<PageHistoryState>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();

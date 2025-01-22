@@ -1,17 +1,19 @@
 ﻿@page "/Question/{userid}"
+@page "/Question"
 @inject QuestionServices qService
 @inject SubjectServices sService
 @inject ILogger<QuestionView> logger 
 @inject GlobalData data
 @inject NavigationManager navi
-<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
+@inject IToastService toastService 
+@*<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
 	<HeaderContent>
 		<p>Figyelmeztetés!</p>
 	</HeaderContent>
 	<BodyContent>
 		<h4>@errorMessage</h4>
 	</BodyContent>
-</Modal>
+</Modal>*@
 <ListQuestions Questions="questions" Refresh="RefreshQuestions" Delete="DeleteQ" New="SaveNew" Updete="Update" SaveSubject="SaveSubject" UserId="@UserId" Subjects="Subjects" CreateTest="CreateTest">
 
 </ListQuestions>
@@ -23,10 +25,11 @@
 	private List<Subject> Subjects = new();
 	protected override async Task OnInitializedAsync()
 	{
-			await RefreshQuestions();
-			Subjects = await sService.GetSubjects();
-			isLoading = false;
-			StateHasChanged();
+		data.Title = "Kérdések";
+		await RefreshQuestions();
+		Subjects = await sService.GetSubjects();
+		isLoading = false;
+		StateHasChanged();
 	}
 	private async Task RefreshQuestions()
 	{
@@ -39,14 +42,17 @@
 		if (questions == null)
 		{
 			errorMessage = qService.Error;
-			StateHasChanged();
+			toastService.ShowError(errorMessage);
+			logger.LogError(errorMessage);
 		}
+		StateHasChanged();
 	}
 	private async Task DeleteQ(Question question)
 	{
 		try
 		{
 			await qService.DeleteQuestionAsync(question);
+			toastService.ShowSuccess($"A következő kérdés törlésre került: { question.Text}");
 			logger.LogInformation($"A következő kérdés törlésre került: {question.Text}", question);
 			await RefreshQuestions();
 		}
@@ -57,7 +63,10 @@
 	}
 	private void CreateTest(List<Question> questions)
 	{
-		data.Questions = questions.ToList();
+		foreach (var q in questions)
+		{
+			data.Questions.Add(new() { Question = q, QuestionId = q.Id, Score = q.Score, Time = q.Time });
+		}
 		navi.NavigateTo("newtest");
 	}
 	private async Task SaveNew(Question question)
@@ -74,12 +83,15 @@
 			if (q == null)
 			{
 				errorMessage = "Nem sikerült elmenteni a kérdést! "+ qService.Error;
+				toastService.ShowWarning(errorMessage);
 				logger.LogWarning(errorMessage);
 			}
 			else
 			{
 				questions.Add(question);
 				errorMessage = "Kérdés mentése sikerült!";
+				toastService.ShowSuccess(errorMessage);
+				await RefreshQuestions();
 				logger.LogInformation(errorMessage);
 				StateHasChanged();
 			}
@@ -99,11 +111,13 @@
 			if (q == null)
 			{
 				errorMessage = "Nem sikerült elmenteni a módosításokat!";
+				toastService.ShowWarning(errorMessage);
 				logger.LogWarning(errorMessage);
 			}
 			else
 			{
 				errorMessage = "Módosítások mentése sikerült!";
+				toastService.ShowSuccess(errorMessage);
 				logger.LogInformation(errorMessage);
 			}
 
@@ -121,6 +135,8 @@
 			if (s == null)
 			{
 				errorMessage = "Nem sikerült elmenteni a tantárgyat!";
+				toastService.ShowWarning(errorMessage);
+				logger.LogWarning(errorMessage);
 			}
 			else Subjects.Add(s);
 		}

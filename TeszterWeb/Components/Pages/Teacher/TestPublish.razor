@@ -1,16 +1,51 @@
 ﻿@page "/publish"
+@using Microsoft.Graph.Models
+@inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
 @inject NavigationManager navi
-<PublicTest Teszt="NewTest" UserId="@userId" Published="@(()=>navi.NavigateTo("/"))"></PublicTest>
- 
-@code {
-	public Test NewTest { get; set; }
-	string userId = string.Empty;
+@inject SectionServices seService
+@inject ILogger<TestPublish> _logger
+@inject IToastService toastService
 
-	protected override Task OnInitializedAsync()
-	{
-		NewTest = data.Test;
-		userId = data.UserId;
-		return base.OnInitializedAsync();
-	}
+@if (NewTest.HasSection)
+{
+    <PublicTest Teszt="NewTest" UserId="@userId" Published="@(() => navi.NavigateTo("/"))" sections="sections"></PublicTest>
+}
+else
+{
+    <PublicTest Teszt="NewTest" UserId="@userId" Published="@(() => navi.NavigateTo("/"))"></PublicTest>
+}
+@code {
+    public Test NewTest { get; set; } = new();
+    string userId = string.Empty;
+    List<Section> sections = new();
+
+    protected async override Task OnInitializedAsync()
+    {
+        NewTest = data.Test;
+        if (String.IsNullOrEmpty(data.UserId))
+        {
+            var user = await GraphServiceClient.Me.GetAsync();
+            if (user is null || user.Id is null)
+            {
+                toastService.ShowWarning("Hiba lépet fel a user.Id lekérdezésekor.");
+                _logger.LogWarning("A userId lekérdezésénél hiba lépet fel.");
+                return;
+            }
+            data.UserId = user.Id.ToString();
+            _logger.LogInformation($"Newtest: Kértem új Id-t {data.UserId}");
+        }
+        userId = data.UserId;
+        if (NewTest.HasSection)
+        {
+            var list = await seService.GetSections(NewTest.Id);
+            if (list is null)
+            {
+                toastService.ShowError("Hiba lépet fel a szekciók lekérdezésekor!");
+                _logger.LogWarning("Hiba lépet fel a szekciók lekérdezésekor. Test.Id: {NewTest.Id}", NewTest.Id);
+                return;
+            }
+            sections =  list;
+        }
+    }
 }

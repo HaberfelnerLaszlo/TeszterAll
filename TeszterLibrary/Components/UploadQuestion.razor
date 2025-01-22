@@ -23,6 +23,7 @@
     int score = 0, time = 0, minGrade = 1, maxGrade = 12, k = 1;
     string title = string.Empty, subtitle = string.Empty, subject = string.Empty, modalHeader = string.Empty, modalBody = string.Empty;
     bool isOk = true, IsUpload = false, showModal = false;
+    List<Subject> subjects = [];
     Question question = new();
 
     private async Task UploadFiles(InputFileChangeEventArgs e)
@@ -73,8 +74,11 @@
                                     }
                                     #endregion
                                     question = await AddQuestion(row, QuestionType.SC);
-                                    if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
-                                    { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                    if (!subjects.Any(s=>s.Name==question.Subject) ||! await sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                    {
+                                        var resp=await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject });
+                                        if (resp !=null) subjects.Add(resp);
+                                    }
                                     if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
                                     {
                                         answers.Clear();
@@ -109,8 +113,11 @@
                                     #endregion
                                     QuestionType type = Enum.Parse<QuestionType>(sheet.SheetName);
                                     question = await AddQuestion(row, type);
-                                    if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
-                                    { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                    if (!subjects.Any(s => s.Name == question.Subject) || !await sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                    {
+                                        var resp = await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject });
+                                        if (resp != null) subjects.Add(resp);
+                                    }
                                     if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
                                     {
                                         answers.Clear();
@@ -151,8 +158,11 @@
                                     }
                                     QuestionType type = Enum.Parse<QuestionType>(sheet.SheetName);
                                     question = await AddQuestion(row, type);
-                                    if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
-                                    { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                    if (!subjects.Any(s => s.Name == question.Subject) || !await sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                    {
+                                        var resp = await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject });
+                                        if (resp != null) subjects.Add(resp);
+                                    }
                                     if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
                                     {
                                         answers.Clear();
@@ -184,8 +194,11 @@
                                     }
                                     #endregion
                                     question = await AddQuestion(row, QuestionType.Pair);
-                                    if (!sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
-                                    { await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject }); }
+                                    if (!subjects.Any(s => s.Name == question.Subject) || !await sservice.Exits(question.Subject)) //A hiányzó tantárgyakat feltölti.
+                                    {
+                                        var resp = await sservice.AddSubjectsAsync(new Subject() { Name = question.Subject });
+                                        if (resp != null) subjects.Add(resp);
+                                    }
                                     if (question != null) //Válaszok hozzáadása mely egyedi típustól függően
                                     {
                                         answers.Clear();

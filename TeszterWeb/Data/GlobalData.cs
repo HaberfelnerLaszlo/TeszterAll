@@ -17,8 +17,8 @@ namespace TeszterWeb.Data
                 //Userchangedevent?.Invoke();
             }
         }
-
-        public List<Question> Questions { get; set; } = new List<Question>();
+        public string Title { get; set; } = "Kezdőlap";
+        public List<TestQuestion> Questions { get; set; } = new();
         public Test Test { get; set; } = new Test();
         public List<TeszterLibrary.ViewModel.QuestionView> TestResults { get; set; } = new();
         //public event Action Userchangedevent;
