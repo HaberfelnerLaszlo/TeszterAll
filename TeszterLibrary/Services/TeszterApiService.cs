@@ -12,19 +12,11 @@ using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services
 {
-    public class TeszterApiService
+    public class TeszterApiService(IAuthorizationHeaderProvider authorizationHeaderProvider)
     {
         public string ErrorMessage { get; set; } = String.Empty;
         private static readonly HttpClient client = new();
-        //private readonly IAuthorizationHeaderProviderFactory _authorizationHeaderProviderFactory;
-        private readonly IAuthorizationHeaderProvider authorizationHeaderProvider;
-
-        public TeszterApiService(IAuthorizationHeaderProvider authorizationHeaderProvider)
-        {
-            this.authorizationHeaderProvider = authorizationHeaderProvider;
-        }
-
-        private static readonly string[] scopes = new string[] { "api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user" };
+        private static readonly string[] scopes = ["api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user"];
 
         protected static string URI = "https://teszter-api.haberfelner.eu/";
         //protected static string URI = "http://localhost:7025/";
@@ -32,7 +24,7 @@ namespace TeszterLibrary.Services
         //protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
         //protected static string URI = "http://192.168.1.69:7025"; //laptop
         private string? _token;
-        private DateTime _tokenExpiration;
+        private readonly DateTime _tokenExpiration;
         private async Task CreateAuthorizationHeaderForUserAsync()
         {
                 _token = await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
@@ -42,15 +34,9 @@ namespace TeszterLibrary.Services
 
         public async Task<Tv?> Get<Tv>(string uri)
         {
-            var valasz = string.Empty;
             try
             {
-                if (client.BaseAddress is null)
-                {
-                    client.BaseAddress = new Uri(URI);
-                }
-                //var authorizationHeaderProvider = _authorizationHeaderProviderFactory.Create();
-                //   var token=await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
+                client.BaseAddress ??= new Uri(URI);
                 if (string.IsNullOrEmpty(_token) && !uri.Contains("Math"))
                 {
                     await CreateAuthorizationHeaderForUserAsync();
@@ -58,21 +44,21 @@ namespace TeszterLibrary.Services
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
-                //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                HttpResponseMessage response = await client.GetAsync(uri);
+                using HttpResponseMessage response = await client.GetAsync(uri);
+                string? valasz;
                 if (response.IsSuccessStatusCode)
                 {
                     valasz = await response.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                     {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        if (deserilizeResponse.IsSuccess)
+                        var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        if (deserilizeResponse != null)
                         {
-                            return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
+                            if (deserilizeResponse.IsSuccess)
+                            {
+                                return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
+                            }
                         }
-                    }
                     }
                     return JsonConvert.DeserializeObject<Tv>(valasz);
                 }
@@ -82,12 +68,13 @@ namespace TeszterLibrary.Services
                     if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                     {
                         var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                        if (r?.IsSuccess??false)
+                        if (r?.IsSuccess ?? false)
                         {
                             ErrorMessage = r.ErrorMessage;
                         }
-                        else ErrorMessage = r?.ErrorMessage??"Null eredmény lett a hiba üzenet";
-                    }else ErrorMessage = "Nem elérhető a szerver!";
+                        else ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                    }
+                    else ErrorMessage = "Nem elérhető a szerver!";
                     return default;
                 }
                 else

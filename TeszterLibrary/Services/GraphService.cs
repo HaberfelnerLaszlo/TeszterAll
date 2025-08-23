@@ -40,7 +40,6 @@ namespace TeszterLibrary.Services
 		}
 		public async Task<List<EducationClass>?> GetClasses(string UserId)
 		{
-			//var graphServiceClient = Gsc();
 			List<EducationClass> Groups = new();
 			try
 			{
@@ -121,9 +120,8 @@ namespace TeszterLibrary.Services
 			if (user == null) return default;
 			return new Student() { Id = Guid.Parse(user.Id), DisplayName = user.DisplayName, Role = user.PrimaryRole.ToString(), AccessToken = token };
 		}
-		public async Task<List<DriveItem>> GetFolders()
+		public List<DriveItem> GetFolders()
 		{
-			//var graphServiceClient = Gsc();
 			var ChildrenCollection = client.Me.Drive.GetAsync().Result.Root.Children.ToList();
 			return ChildrenCollection.Where(item => item.Folder != null).ToList();
 		}

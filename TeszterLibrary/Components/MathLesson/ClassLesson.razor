@@ -1,41 +1,43 @@
 ﻿@using TeszterLibrary.ViewModel;
-<form style="width:300px;margin:5px auto;">
-	@if (assignments.Count>0)
-	{
-		<table>
-		@foreach (var a in assignments)
-		{
-			<tr>
-				<td style="text-align:end">
-					@((MarkupString)a.First)
-				</td>
-				<td>
-					<input class="valasz" type="text" value="@a.Result" @onchange="@((e)=>Result(a,e))"/>
-				</td>
-				<td>
-					@((MarkupString)a.Last)
-				</td>
-				@if (Recives.Count>0 && IsChecked)
-				{
-					<td>
-						@if (a.IsCorrect)
-						{
-							<FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
-						}
-						else
-						{
-							<FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Dismiss())" Color="@Color.Error" />
-						}
-					</td>
-				}
-			</tr>
-		}
-		</table>
-	}
-	else
-	{
-		<p>Az osztálynak még nem adtak mértékegység átváltás feladatot.</p>
-	}
+<form style="min-width:300px;margin:5px auto;">
+    <h3 style="text-align:center">Mértékegység átváltás</h3>
+    <FluentNumberField Value="size" TValue="int" ValueChanged="(e)=>SizeChange(e)" Placeholder="Betűméret (ex)" Min="1" Max="10" Step="1" Style="width:80px;margin:auto" Label="Betűméret: " />
+    @if (assignments.Count > 0)
+    {
+        <table style="font-size:@fontsize">
+            @foreach (var a in assignments)
+            {
+                <tr>
+                    <td style="text-align:end">
+                        @((MarkupString)a.First)
+                    </td>
+                    <td>
+                        <input class="valasz" type="text" value="@a.Result" @onchange="@((e)=>Result(a,e))" />
+                    </td>
+                    <td>
+                        @( (MarkupString)a.Last)
+                    </td>
+                    @if (Recives.Count > 0 && IsChecked)
+                    {
+                        <td>
+                            @if (a.IsCorrect)
+                            {
+                                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Checkmark())" Color="@Color.Success" />
+                            }
+                            else
+                            {
+                                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Dismiss())" Color="@Color.Error" />
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </table>
+    }
+    else
+    {
+        <p>Az osztálynak még nem adtak mértékegység átváltás feladatot.</p>
+    }
 </form>
 <div style="text-align:center">
     @if (Send.HasDelegate)
@@ -49,36 +51,43 @@
     }
 </div>
 @code{
-		[Parameter] public TaskView TaskView { get; set; } = new();
-		[Parameter] public List<ClassRecive> Recives { get; set; } = new();
-		[Parameter] public bool IsChecked { get; set; }
-		[Parameter] public EventCallback<List<ClassRecive>> Send { get; set; }
-		[Parameter] public EventCallback Next { get; set; }
-		List<ClassAssignment> assignments = new();
-	protected override void OnParametersSet()
-	{
-		assignments.Clear();
-		foreach (var item in TaskView.Operations)
-		{
-			var s = item.Sequence.Split("Ł");
-			if (Recives.Count>0)
-			{
-				var a = Recives.FirstOrDefault(r => r.OperationId == item.OperationId);
-				if (a is not null)
-				{
-					assignments.Add(new ClassAssignment(s[0] + " = ", a.Result ??= string.Empty, s.Last(), a.IsTipp));
-				}
-			}
-		}
-		base.OnParametersSet();
-	}
-	private void Result(ClassAssignment assignment, ChangeEventArgs args) => assignment.Result = args.Value?.ToString() ?? string.Empty;
-	private async Task Sending()
-	{
-		for (int i = 0; i < Recives.Count; i++)
-		{
-			Recives[i].Result = assignments[i].Result;
-		}
-		await Send.InvokeAsync(Recives);
-	}
+    [Parameter] public TaskView TaskView { get; set; } = new();
+    [Parameter] public List<ClassRecive> Recives { get; set; } = new();
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<List<ClassRecive>> Send { get; set; }
+    [Parameter] public EventCallback Next { get; set; }
+    List<ClassAssignment> assignments = new();
+    private string fontsize = "5ex";
+    private int size = 5;
+    protected override void OnParametersSet()
+    {
+        assignments.Clear();
+        foreach (var item in TaskView.Operations)
+        {
+            var s = item.Sequence.Split("Ł");
+            if (Recives.Count > 0)
+            {
+                var a = Recives.FirstOrDefault(r => r.OperationId == item.OperationId);
+                if (a is not null)
+                {
+                    assignments.Add(new ClassAssignment(s[0] + " = ", a.Result ??= string.Empty, s.Last(), a.IsTipp));
+                }
+            }
+        }
+        base.OnParametersSet();
+    }
+    private void Result(ClassAssignment assignment, ChangeEventArgs args) => assignment.Result = args.Value?.ToString() ?? string.Empty;
+    private async Task Sending()
+    {
+        for (int i = 0; i < Recives.Count; i++)
+        {
+            Recives[i].Result = assignments[i].Result;
+        }
+        await Send.InvokeAsync(Recives);
+    }
+    private void SizeChange(int arg)
+    {
+        fontsize = arg + "ex";
+        StateHasChanged();
+    }
 }

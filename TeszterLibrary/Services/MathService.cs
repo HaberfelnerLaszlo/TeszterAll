@@ -23,5 +23,6 @@ namespace TeszterLibrary.Services
 		public async Task<List<ResultClassView>> ResultClassView(string ids) => await _service.Get<List<ResultClassView>>($"Math/ResultClass/{ids}");
 		public async Task<List<ResultStudentView>> ResultStudentViews(string id) => await _service.Get<List<ResultStudentView>>($"Math/ResultStudent/{id}");
 		public async Task<List<ResultTaskView>> ResultTaskViews(int id) => await _service.Get<List<ResultTaskView>>($"Math/ResultTask/{id}");
-	}
+		public async Task<List<Guid>?> GetGroups() => await _service.Get<List<Guid>>("Math/Groups");
+    }
 }

@@ -17,6 +17,7 @@ namespace TeszterWeb.Data
                 //Userchangedevent?.Invoke();
             }
         }
+        public string? UserName { get; set; } = string.Empty;
         public string Title { get; set; } = "Kezdőlap";
         public List<TestQuestion> Questions { get; set; } = new();
         public Test Test { get; set; } = new Test();
