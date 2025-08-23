@@ -4,6 +4,7 @@
 @inject GlobalData data
 @inject MathService mService
 @inject EduUserServices uService
+@inject GroupsService gService
 @inject IToastService ToastService
 @inject ILogger<AddMathClassCourse> _logger
 <h3>Osztály feladatainak beállítása</h3>
@@ -20,7 +21,7 @@
 <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
 
 @code {
-    private List<Microsoft.Graph.Models.EducationClass> Groups = new List<Microsoft.Graph.Models.EducationClass>();
+    private List<Microsoft.Graph.Models.EducationClass>? Groups = new List<Microsoft.Graph.Models.EducationClass>();
     private List<TeszterLibrary.Model.ClassLesson> Lessons = new();
     private string SelectGroupId = string.Empty;
     private bool BtnDidabled = false, IsCompletMember = false, IsClass = false;
@@ -47,6 +48,19 @@
 
             }
             Groups = await graphService.GetClasses(data.UserId); //Az osztályok lekérése
+            if (Groups is null || Groups.Count == 0)
+            {
+                ToastService.ShowError("Nincsenek osztályaid!");
+                _logger.LogError("Nincsenek osztályaid!");
+                return;
+            }
+            Groups.ForEach(async g =>
+            {
+                if (!gService.GroupExists(Guid.Parse(g.Id)))
+                {
+                    await gService.AddGroupAsync(new Group(Guid.Parse(g.Id), g.DisplayName ?? string.Empty, g.Description));
+                }
+            });
             StateHasChanged();
         }
     }
@@ -56,35 +70,25 @@
         {
             ClassId = Guid.Parse(id);
             Lessons.Clear();
-            Lessons= await mService.GetClassLessons(ClassId);
+            Lessons = await mService.GetClassLessons(ClassId);
         }
-        else return;
+        else
+        {
+            ToastService.ShowError("Hiba történt az azonosító null értéket vett fel.");
+            _logger.LogError("Hiba történt az azonosító null értéket vett fel.");
+            return;
+        }
         StateHasChanged();
     }
     private async Task SaveClass(List<TeszterLibrary.Model.ClassLesson> lessons)
     {
         var resp = await mService.SetClassLessons(lessons);
-        if (resp.Count>0)
+        if (resp.Count > 0)
         {
             ToastService.ShowInfo("A feladatok mentése sikerült!");
+            gService.SetHasLessons(ClassId);
             Lessons.Clear();
             Lessons = resp.ToList();
         }
-        //resp = await mService.UpdateClassLessons(lessons.Where(l => l.Id != 0).ToList());
     }
-    //private async Task AddLessons()
-    //{
-    //    if (IsClass)
-    //    {
-    //        ClassId = Guid.Parse(SelectGroupId);
-    //        Lessons.Clear();
-    //        Lessons = await mService.GetLessons(ClassId);
-    //        IsCompletMember = true;
-    //        StateHasChanged();
-    //        return;
-    //    }
-    //    IsCompletMember = true;
-    //    Lessons.Clear();
-    //    StateHasChanged();
-    //}
 }

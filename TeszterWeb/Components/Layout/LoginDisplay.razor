@@ -1,9 +1,80 @@
-﻿<AuthorizeView>
+﻿@using Microsoft.Graph.Models
+@inject Microsoft.Graph.GraphServiceClient GraphServiceClient
+@inject EduUserServices uService
+@inject IToastService ToastService
+@inject TeszterWeb.Data.GlobalData data
+@inject ILogger<LoginDisplay> logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
     <Authorized>
-        Hello, @context.User.Identity?.Name!
+        @if (string.IsNullOrEmpty(Nev))
+        {
+            <span>Hello, @context.User.Identity?.Name!</span> }
+        else
+        {
+            <span> Hello, @Nev!</span>
+        }
         <a href="MicrosoftIdentity/Account/SignOut">Kijelentkezés</a>
     </Authorized>
     <NotAuthorized>
         <a href="MicrosoftIdentity/Account/SignIn">Belépés</a>
     </NotAuthorized>
 </AuthorizeView>
+@code{
+    EducationUser? user;
+    private bool isAuthenticated;
+
+    private string Nev = string.Empty;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || string.IsNullOrEmpty(Nev))
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState is null)
+            {
+                return;
+            }
+            isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+            Nev = data.UserName ?? string.Empty;
+            if (!string.IsNullOrEmpty(Nev))
+            {
+                StateHasChanged();
+            }
+            else if(isAuthenticated)
+            {
+                try
+                {
+                    user = await GraphServiceClient.Education.Me.GetAsync();
+                    if (user is not null)
+                    {
+                        if (user.Id is null)
+                        {
+                            ToastService.ShowError("Nem található felhasználó azonosító!");
+                            logger.LogError("Nem található felhasználó azonosító!");
+                            return;
+                        }
+                        data.UserId = user.Id;
+                        data.UserName = user.DisplayName;
+                        Nev = user.DisplayName ?? string.Empty;
+                        if (!(await uService.UserExits(Guid.Parse(data.UserId))))
+                        {
+                            if (string.IsNullOrEmpty(uService.ErrorMessage))
+                            {
+                                await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole.Value.ToString() ?? EducationUserRole.Student.ToString() });
+                            }
+                        }
+                        StateHasChanged();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ToastService.ShowError("Hiba történt a felhasználó lekérdezésekor.");
+                    logger.LogError(ex, "Hiba történt a felhasználó lekérdezésekor.");
+                    return;
+                }
+            }
+
+        }
+    }
+}

@@ -1,0 +1,17 @@
+﻿@page "/editor"
+@using Blazored.TextEditor
+<RichTextEditorWithImage Context="Ez az alap" @ref="Edit">
+
+</RichTextEditorWithImage>
+<hr />
+<FluentButton OnClick="Mentes">Mentés itt</FluentButton>
+
+@code {
+    RichTextEditorWithImage Edit = new();
+
+    private async void Mentes()
+    {
+        await Edit.SaveContent();
+        Console.WriteLine(Edit.Context);
+    }
+}

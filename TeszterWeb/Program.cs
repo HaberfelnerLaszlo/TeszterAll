@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-
+using Blazored.TextEditor;
 using Plk.Blazor.DragDrop;
 
 using TeszterLibrary.Services;
 
 using TeszterWeb.Components;
 using TeszterWeb.Data;
+using Microsoft.EntityFrameworkCore;
+using TeszterWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,7 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
 //    // By default, all incoming requests will be authorized according to the default policy
 //    options.FallbackPolicy = options.DefaultPolicy;
 //});
+builder.Services.AddDbContext<TeszterLocalDB>(opt => opt.UseInMemoryDatabase("Teszter"));
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 builder.Services.AddRazorComponents()
@@ -37,6 +40,7 @@ builder.Services.AddBlazorDragDrop();
 builder.Services.AddFluentUIComponents();
 
 builder.Services.AddScoped<TeszterApiService>();
+builder.Services.AddScoped<FeladatApiService>();
 builder.Services.AddScoped<EduUserServices>();
 builder.Services.AddScoped<TestServices>();
 builder.Services.AddScoped<QuestionServices>();
@@ -46,7 +50,8 @@ builder.Services.AddScoped<TestUserServices>();
 builder.Services.AddScoped<TestQuestionServices>();
 builder.Services.AddScoped<TestQuestionUserServices>();
 builder.Services.AddScoped<MathService>();
-
+builder.Services.AddScoped<PontServices>();
+builder.Services.AddScoped<GroupsService>();
 builder.Services.AddScoped<PageHistoryState>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();

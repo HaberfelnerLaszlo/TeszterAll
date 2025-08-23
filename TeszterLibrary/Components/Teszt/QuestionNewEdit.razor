@@ -24,75 +24,78 @@
                         <DataAnnotationsValidator />
                         <ValidationSummary />
                         <div style="margin:10px 0px">
-                            <label for="qType">Kérdés típusa: </label>
-                            <FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New Placeholder="Válassza ki a kérdés fajtáját..,">
-                                <FluentOption Value="SC" Selected=@(QuestionType.SC==newQuestion.QType)>Felelet választás</FluentOption>
-                                <FluentOption Value="MC" Selected=@(QuestionType.MC==newQuestion.QType)>Több válaszos</FluentOption>
-                                <FluentOption Value="TF" Selected=@(QuestionType.TF==newQuestion.QType)>Igaz-Hamis</FluentOption>
-                                <FluentOption Value="Open" selected="@(QuestionType.Open==newQuestion.QType)">Nyílt végű</FluentOption>
-                                <FluentOption Value="Seq" selected="@(QuestionType.Seq==newQuestion.QType)">Sorbarendezés</FluentOption>
-                                <FluentOption Value="Pair" selected="@(QuestionType.Pair==newQuestion.QType)">Párosítás</FluentOption>
-                                <FluentOption Value="Comp" selected="@(QuestionType.Comp==newQuestion.QType)">Kiegészítő</FluentOption>
+                            <FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New Placeholder="Válassza ki a kérdés fajtáját.." Label="Kérdés típusa:">
+                                <FluentOption Value="SC">Felelet választás</FluentOption>
+                                <FluentOption Value="MC">Több válaszos</FluentOption>
+                                <FluentOption Value="TF">Igaz-Hamis</FluentOption>
+                                <FluentOption Value="Open">Nyílt végű</FluentOption>
+                                <FluentOption Value="Seq">Sorbarendezés</FluentOption>
+                                <FluentOption Value="Pair">Párosítás</FluentOption>
+                                <FluentOption Value="Comp">Kiegészítő</FluentOption>
                             </FluentSelect>
                         </div>
-                        <div hidden="@hiddenForm">
-                            @if (subjects.Count > 0)
-                            {
-                                <FluentSelect Id="Subject" Items="subjects" TOption="Subject" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Name)">
-                                </FluentSelect>
-                            }
-                            <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
-                                <HeaderContent>
-                                    <p>Új tantárgy felvétele</p>
-                                </HeaderContent>
-                                <BodyContent>
-                                    <label for="Name">Tantárgy neve: </label>
-                                    <input type="text" id="Name" @bind-value="subjectName" />
-                                </BodyContent>
-                            </Modal>
-                            <FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
-                            <div style="margin:10px 0px">
-                                <label for="title">Kérdés címe / témaköre</label>
-                                <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
-                            </div>
-                            <div style="margin:10px 0px">
-                                <label for="subtitle">Kérdés alcím</label>
-                                <input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
-                            </div>
-                            <div style="margin:10px 0px">
-                                <FluentTextArea Id="qText" @bind-Value="@newQuestion.Text" Style="width:100%" />
-                                <div hidden="@(newQuestion.QType!=QuestionType.Comp)">
-                                    <p>Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
-                                    <FluentButton @onclick="Insert">{@k} beszúrása</FluentButton>
-                                </div>
-                            </div>
-                            <div style="margin:10px 0px">
-                                <FluentGrid>
-                                    <FluentGridItem xs="12" sm="6">
-                                        <FluentNumberField Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
-                                    </FluentGridItem>
-                                    <FluentGridItem xs="12" sm="6">
-                                        <FluentNumberField Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
-                                    </FluentGridItem>
-                                </FluentGrid>
-                                @*<div class="row">
-                                <div class="col">
-                                    <label for="score">Pontszám</label>
-                                </div>
-                                <div class="col">
-                                    <label for="time"></label>
-                                </div>
-                            </div>*@
-                            </div>
+                        @if (!hiddenForm)
+                        {
                             <div>
-                                @*<label for="grade"></label>*@
-                                <div class="input-group">
-                                    <FluentNumberField Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
-                                    <span> -  </span>
-                                    <FluentNumberField Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
+                                @if (subjects.Count > 0)
+                                {
+                                    <FluentSelect Id="Subject" Items="subjects" TOption="Subject" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Name)">
+                                    </FluentSelect>
+                                }
+                                <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
+                                    <HeaderContent>
+                                        <p>Új tantárgy felvétele</p>
+                                    </HeaderContent>
+                                    <BodyContent>
+                                        <label for="Name">Tantárgy neve: </label>
+                                        <input type="text" id="Name" @bind-value="subjectName" />
+                                    </BodyContent>
+                                </Modal>
+                                <FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
+                                <div style="margin:10px 0px">
+                                    <label for="title">Kérdés címe / témaköre</label>
+                                    <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
+                                </div>
+                                <div style="margin:10px 0px">
+                                    <label for="subtitle">Kérdés alcím</label>
+                                    <input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
+                                </div>
+                                <div style="margin:10px 0px">
+                                    <FluentTextArea Id="qText" @bind-Value="@newQuestion.Text" Style="width:100%" />
+                                    <TeszterLibrary.Components.RichTextEditorWithImage @ref="textEditor" Context="@newQuestion.Text" />
+                                    <div hidden="@(newQuestion.QType!=QuestionType.Comp)">
+                                        <p>Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
+                                        <FluentButton @onclick="Insert">{@k} beszúrása</FluentButton>
+                                    </div>
+                                </div>
+                                <div style="margin:10px 0px">
+                                    <FluentGrid>
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentNumberField Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
+                                        </FluentGridItem>
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentNumberField Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
+                                        </FluentGridItem>
+                                    </FluentGrid>
+                                    @*<div class="row">
+                        <div class="col">
+                            <label for="score">Pontszám</label>
+                        </div>
+                        <div class="col">
+                            <label for="time"></label>
+                        </div>
+                    </div>*@
+                                </div>
+                                <div>
+                                    @*<label for="grade"></label>*@
+                                    <div class="input-group">
+                                        <FluentNumberField Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
+                                        <span> -  </span>
+                                        <FluentNumberField Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     </EditForm>
                 </div>
             </FluentStack>
@@ -174,18 +177,15 @@
     </div>
 </div>
 @code {
-    [Parameter] public bool New { get; set; } = true;
-    [Parameter] public Question newQuestion { get; set; } = new Question();
-    [Parameter] public List<Subject> subjects { get; set; } = new List<Subject>();
-    [Parameter] public EventCallback<Question> Save { get; set; }
-    [Parameter] public EventCallback<string> SubjectsSave { get; set; }
-    [Parameter] public EventCallback Cancel { get; set; }
-    string errorMessage = string.Empty, subjectName = string.Empty;
-    bool showModal = false, hiddenForm = true;
-    // private Dictionary<string, object> editorConf = new Dictionary<string, object>{
-    //{ "menubar", true },
-    //{ "plugins", "link image" },
-    //{ "toolbar", "undo redo | styleselect | forecolor | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | link image" }};
+        [Parameter] public bool New { get; set; } = true;
+        [Parameter] public Question newQuestion { get; set; } = new Question();
+        [Parameter] public List<Subject> subjects { get; set; } = new List<Subject>();
+        [Parameter] public EventCallback<Question> Save { get; set; }
+        [Parameter] public EventCallback<string> SubjectsSave { get; set; }
+        [Parameter] public EventCallback Cancel { get; set; }
+        string errorMessage = string.Empty, subjectName = string.Empty;
+        RichTextEditorWithImage textEditor = new();
+        bool showModal = false, hiddenForm = true;
     public Answer newAnswer { get; set; } = new Answer();
     public List<Answer> newAnswers = new List<Answer>();
 
@@ -264,6 +264,17 @@
         if (newQuestion.QType == 0)
         {
             errorMessage = "Kérem állítson be egy kérdés típust!";
+            return;
+        }
+        await textEditor.SaveContent();
+        if (string.IsNullOrEmpty(textEditor.Context))
+        {
+            toastService.ShowWarning("A kérdés mező nem lehet üres!");
+            return;
+        }
+        else
+        {
+            newQuestion.Text = textEditor.Context;
         }
         var valasz = IsValidAnswer(newQuestion.QType);
         if (string.IsNullOrEmpty(valasz))
@@ -373,7 +384,7 @@
         {
             newQuestion.QType = qt;
             hiddenForm = false;
-            StateHasChanged();
+            //StateHasChanged();
         }
         if (newQuestion.QType == QuestionType.Comp || newQuestion.QType==QuestionType.Pair)
         {

@@ -1,14 +1,9 @@
 ﻿@page "/"
 @inject MathService mService
-@inject IToastService toastService 
+@inject GroupsService gService
+@inject IToastService toastService
 <h3>Válasz osztályt!</h3>
-<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="string">
-    <FluentOption Value="">Válasz egy csoportot...</FluentOption>
-    <FluentOption Value="8048b263-4106-4925-a316-ffdee54a91a2">6. első csoport</FluentOption>
-    <FluentOption Value="b02dc50d-d531-43fb-9c6b-e6a39a1beb8e">6. második csoport</FluentOption>
-    <FluentOption Value="4104e3ae-8252-4bac-9867-16a44487351d">7. első csoport</FluentOption>
-    <FluentOption Value="df78676d-0f83-457a-8047-337088de4e0d">8. első csoport</FluentOption>
-    <FluentOption Value="6c9e754f-f21c-469e-b58c-ba073a995a5c">8. második csoport</FluentOption>
+<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="Group" Items="Groups" OptionText="g=>g.Name" OptionValue="g=>g.Id.ToString()" Placeholder="Válasz egy csoportot...">
 </FluentSelect>
 @if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
 {
@@ -35,10 +30,33 @@ else if (!string.IsNullOrEmpty(selectClass))
     private bool IsChecked = false;
     private TaskRecive taskRecive = new();
     private List<ClassRecive> recives = new();
+    private List<Group> Groups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Groups = await gService.GetGroupsHasLessonsAsync();
+        var GroupsId = await mService.GetGroups();
+        if (GroupsId is not null && GroupsId.Count > 0)
+        {
+            foreach (var item in GroupsId)
+            {
+                var group = Groups.FirstOrDefault(g => g.Id == item);
+                if (group is not null && !group.HasLessons)
+                {
+                    Groups.Add(group);
+                    gService.SetHasLessons(item);
+                }
+            }
+        }
+        else
+        {
+            toastService.ShowInfo("Nincsen feladat osztályoknak kiadva!");
+        }
+    }
 
     private async Task CheckClass(List<ClassRecive> _recives)
     {
-        _recives.ForEach(r => r.Result=r.Result.Replace(',', '.'));
+        _recives.ForEach(r => r.Result = r.Result.Replace(',', '.'));
         recives = await mService.ClassResult(_recives);
         IsChecked = true;
         StateHasChanged();
@@ -46,7 +64,15 @@ else if (!string.IsNullOrEmpty(selectClass))
     private async void SelectedClass(string arg)
     {
         selectClass = arg;
-        await NextClass();
+        if (string.IsNullOrEmpty(arg))
+        {
+            toastService.ShowMention("Kérlek válasz osztályt!");
+            return;
+        }
+        else
+        {
+            await NextClass();
+        }
     }
     private async Task NextClass()
     {
@@ -55,7 +81,7 @@ else if (!string.IsNullOrEmpty(selectClass))
             taskView = await mService.ClassLesson(Guid.Parse(selectClass));
             recives.Clear();
             IsChecked = false;
-            if (taskView is not null ||taskView.Operations.Count>0)
+            if (taskView is not null && taskView.Operations.Count > 0)
             {
                 foreach (var item in taskView.Operations)
                 {

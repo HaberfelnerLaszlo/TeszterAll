@@ -3,7 +3,7 @@
 <FluentLayout>
     <FluentHeader>
         @data.Title
-        <FluentStack HorizontalAlignment="HorizontalAlignment.End" Width="70%">
+        <FluentStack HorizontalAlignment="HorizontalAlignment.End" Width="95%">
             <LoginDisplay />
         </FluentStack>
     </FluentHeader>
@@ -18,10 +18,10 @@
     <FluentFooter>
         <div id="version">
             <span>
-                Verzió: 0.5.1
+                Verzió: 0.8.1
             </span>
             <FluentTooltip Anchor="version">
-                2025.01.22
+                2025.08.23
             </FluentTooltip>
         </div>
     </FluentFooter>
@@ -34,3 +34,13 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+@code{
+    private string Title = string.Empty;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender || string.IsNullOrEmpty(Title)) {
+            Title = data.Title ?? string.Empty;
+        }
+        base.OnAfterRender(firstRender);
+    }
+}

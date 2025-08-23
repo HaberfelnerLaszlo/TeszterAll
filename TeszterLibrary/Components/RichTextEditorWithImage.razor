@@ -1,0 +1,91 @@
+﻿@using Blazored.TextEditor
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.JSInterop
+
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment Environment
+
+<BlazoredTextEditor @ref="textEditor" DebugLevel="warn">
+    <ToolbarContent>
+        <span class="ql-formats">
+            <button class="ql-bold"></button>
+            <button class="ql-italic"></button>
+            <button class="ql-underline"></button>
+            <button class="ql-image"></button>
+        </span>
+    </ToolbarContent>
+    <EditorContent>
+        @((MarkupString)Context)
+    </EditorContent>
+</BlazoredTextEditor>
+
+<button @onclick="SaveContent">Mentés</button>
+
+@code {
+    [Parameter] public string Context { get; set; } = string.Empty;
+    private BlazoredTextEditor textEditor;
+    private string htmlContent;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            htmlContent = Context;
+            //await this.textEditor.LoadHTMLContent(htmlContent);
+        }
+    }
+    public async Task SaveContent()
+    {
+        // Mentés előtt dolgozd fel a képeket
+        htmlContent = await textEditor.GetHTML();
+        htmlContent = await ProcessImages(htmlContent);
+        await textEditor.LoadHTMLContent(htmlContent);
+        // Itt mentheted az htmlContent változó tartalmát az adatbázisba vagy más tárolóba
+        Context = htmlContent;
+        //Console.WriteLine(htmlContent);
+    }
+
+    private async Task<string> ProcessImages(string html)
+    {
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(html);
+        var images = doc.DocumentNode.SelectNodes("//img");
+
+        if (images != null)
+        {
+            foreach (var img in images)
+            {
+                var base64Data = img.GetAttributeValue("src", null);
+                if (base64Data.StartsWith("data:image"))
+                {
+                    var filePath = await SaveImage(base64Data);
+                    img.SetAttributeValue("src", filePath);
+                }
+            }
+        }
+
+        return doc.DocumentNode.OuterHtml;
+    }
+
+    private async Task<string> SaveImage(string base64Data)
+    {
+        var base64 = base64Data.Substring(base64Data.IndexOf(",") + 1);
+        var bytes = Convert.FromBase64String(base64);
+        var fileName = Guid.NewGuid().ToString() + ".png";
+        var filePath = Path.Combine(Environment.WebRootPath, "uploads", fileName);
+
+        await File.WriteAllBytesAsync(filePath, bytes);
+
+        // Mentés az adatbázisba
+        var image = new Image
+        {
+            FilePath = filePath,
+            FileName = fileName,
+            UploadDate = DateTime.Now
+        };
+
+        //DbContext.Images.Add(image);
+        //await DbContext.SaveChangesAsync();
+
+        return "/uploads/" + fileName;
+    }
+}
