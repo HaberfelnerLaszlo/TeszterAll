@@ -1,0 +1,95 @@
+﻿@implements IDisposable
+<style>
+    .time-section {
+        background-image: linear-gradient(160deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        padding: 10px;
+        border-radius: 10px;
+        color:azure;
+        text-align: center;
+    }
+
+        .time-section span {
+            display: block;
+            font-size: 2rem;
+            padding:5px;
+        }
+
+            .time-section span:last-child {
+                font-size: 1rem;
+                color: #666;
+            }
+</style>
+
+@if (!_renderedOnClient)
+{
+    <h5 class="text-center my-3">Launching at: @_remainingTime.ToString("hh\\:mm\\:ss") IST <small>(India Standard Time)</small></h5>
+}
+else
+{
+    if (!_launched)
+    {
+        // We can have countdown timer display
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="5" Width="50%">
+            @if (_remainingTime.TotalDays >= 1)
+            {
+                <div class="time-section">
+                    <span class="">@_remainingTime.Days.PadLeft()</span>
+                    <span class="">nap</span>
+                </div>
+            }
+            @if (_remainingTime.TotalHours >= 1)
+            {
+                <div class="time-section">
+                    <span class="">@_remainingTime.Hours.PadLeft()</span>
+                    <span class="">óra</span>
+                </div>
+            }
+            <div class="time-section">
+                <span class="">@_remainingTime.Minutes.PadLeft()</span>
+                <span class="">perc</span>
+            </div>
+            <div class="time-section">
+                <span class="">@_remainingTime.Seconds.PadLeft()</span>
+                <span class="">másodperc</span>
+            </div>
+        </FluentStack>
+    }
+    else
+    {
+        <h2 class="text-center text-white my-3">Website is launched. Please refresh the page</h2>
+    }
+}
+@code {
+    [Parameter]
+    public TimeSpan _remainingTime { get; set; } = TimeSpan.Zero;
+    [Parameter]
+    public EventCallback<bool> IsEnd { get; set;}
+    private bool _renderedOnClient;
+    private Timer? _timer;
+    private bool _launched;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _renderedOnClient = true;
+            _timer = new Timer(UpdateCountdown, state: null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    private async void UpdateCountdown(object? state)
+    {
+        TimeSpan span = new TimeSpan(0, 0, 1);
+        _remainingTime -= span;
+        if (_remainingTime <= TimeSpan.Zero)
+        {
+            await InvokeAsync(() => IsEnd.InvokeAsync(true));
+            _launched = true;
+            _timer!.Dispose();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

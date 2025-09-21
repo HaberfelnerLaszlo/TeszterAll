@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using TeszterLibrary.Services.Feladat;
 using TeszterLibrary.ViewModel;
 
 namespace TeszterLibrary.Services

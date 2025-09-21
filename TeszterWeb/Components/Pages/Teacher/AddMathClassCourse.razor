@@ -8,6 +8,12 @@
 @inject IToastService ToastService
 @inject ILogger<AddMathClassCourse> _logger
 <h3>Osztály feladatainak beállítása</h3>
+@if (Groups is null || Groups.Count == 0)
+{
+    <p>Nincsenek osztályaid!</p>
+    <FluentButton OnClick="@(() => NavigationManager.NavigateTo("/home"))">Vissza a főoldalra</FluentButton>
+    return;
+}
 <EditForm Model="Groups">
     <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
         <option disabled selected>Válasz csoportot...</option>
@@ -19,6 +25,7 @@
 </EditForm>
 <hr />
 <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
+<FluentButton OnClick="AddGroupDb">Felvétel adatbázisba</FluentButton>
 
 @code {
     private List<Microsoft.Graph.Models.EducationClass>? Groups = new List<Microsoft.Graph.Models.EducationClass>();
@@ -47,7 +54,7 @@
                 }
 
             }
-            Groups = await graphService.GetClasses(data.UserId); //Az osztályok lekérése
+            Groups = await graphService.GetClasses(data.UserId!); //Az osztályok lekérése
             if (Groups is null || Groups.Count == 0)
             {
                 ToastService.ShowError("Nincsenek osztályaid!");
@@ -56,9 +63,9 @@
             }
             Groups.ForEach(async g =>
             {
-                if (!gService.GroupExists(Guid.Parse(g.Id)))
+                if (!gService.GroupExists(Guid.Parse(g.Id!)))
                 {
-                    await gService.AddGroupAsync(new Group(Guid.Parse(g.Id), g.DisplayName ?? string.Empty, g.Description));
+                    await gService.AddGroupAsync(new Group(Guid.Parse(g.Id!), g.DisplayName ?? string.Empty, g.Description));
                 }
             });
             StateHasChanged();
@@ -89,6 +96,24 @@
             gService.SetHasLessons(ClassId);
             Lessons.Clear();
             Lessons = resp.ToList();
+        }
+    }
+    private async void AddGroupDb()
+    {
+        try
+        {
+            if (gService.GroupExists(ClassId)) gService.SetHasLessons(ClassId);
+
+            else
+            {
+                await gService.AddGroupAsync(new Group(ClassId, Groups.FirstOrDefault(g => g.Id == SelectGroupId).DisplayName, ""));
+                gService.SetHasLessons(ClassId);
+            }
+            ToastService.ShowInfo("A csoport mentve.");
+        }
+        catch (Exception e)
+        {
+            ToastService.ShowError($"Hiba: {e.Message}");
         }
     }
 }
