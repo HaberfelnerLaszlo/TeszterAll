@@ -2,19 +2,45 @@
 @inject MathService mService
 @inject GroupsService gService
 @inject IToastService toastService
+@inject GraphService graphService
+@inject GlobalData data
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 <h3>Válasz osztályt!</h3>
 <FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="Group" Items="Groups" OptionText="g=>g.Name" OptionValue="g=>g.Id.ToString()" Placeholder="Válasz egy csoportot...">
 </FluentSelect>
 @if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
 {
-    <AuthorizeView>
-        <Authorized>
-            <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
-        </Authorized>
-        <NotAuthorized>
-            <ClassLesson TaskView="taskView" Recives="recives" IsChecked=IsChecked></ClassLesson>
-        </NotAuthorized>
-    </AuthorizeView>
+    @if (!IsLessonTime)
+    {
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+            <h4 style="text-align:center;">Jelenleg nincs tanóra!<br />A következő tanóra kezdéséig hátralévő idő:</h4>
+            <CountDown _remainingTime="remainingTime"></CountDown>
+        </FluentStack>
+    }
+    else
+    {
+        <AuthorizeView>
+            <Authorized>
+                <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
+            </Authorized>
+            <NotAuthorized>
+                @if (IsViewCheck)
+                {
+                    <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked></ClassLesson>
+                }
+                else
+                {
+                    <ClassLesson TaskView="taskView" Recives="recives" IsChecked=IsChecked></ClassLesson>
+                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                        <CountDown _remainingTime="remainingTime" IsEnd="CounterChange"></CountDown>
+                    </FluentStack>
+                }
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+
 }
 else if (!string.IsNullOrEmpty(selectClass))
 {
@@ -31,19 +57,44 @@ else if (!string.IsNullOrEmpty(selectClass))
     private TaskRecive taskRecive = new();
     private List<ClassRecive> recives = new();
     private List<Group> Groups = new();
+    private List<Guid>? GroupsId = new();
+    bool IsLessonTime = false,IsViewCheck=false;
+    TimeSpan waitTime = new TimeSpan(0, 6, 0);
+    TimeSpan remainingTime = TimeSpan.Zero;
+
 
     protected override async Task OnInitializedAsync()
     {
         Groups = await gService.GetGroupsHasLessonsAsync();
-        var GroupsId = await mService.GetGroups();
-        if (GroupsId is not null && GroupsId.Count > 0)
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        //if ((Groups is null || Groups.Count == 0) && authState is not null)
+        //{
+        //    var user = authState.User;
+        //    if (user.Identity is not null && user.Identity.IsAuthenticated)
+        //    {
+        //        var userIdClaim = user.FindFirst(c => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier");
+        //        if (userIdClaim is not null)
+        //        {
+        //            if (string.IsNullOrEmpty(data.UserId)) data.UserId = userIdClaim.Value;
+        //            UserId = Guid.Parse(userIdClaim.Value);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        toastService.ShowError("Nincs bejelentkezve a felhasználó!");
+        //        return;
+        //    }
+        //}
+        if (Groups is null) { toastService.ShowInfo("Nincs feltöltve a csoport adatbázis!"); return; }
+        GroupsId = await mService.GetGroups();
+        if (GroupsId is not null && GroupsId.Count > 0 && Groups.Count > 0)
         {
             foreach (var item in GroupsId)
             {
                 var group = Groups.FirstOrDefault(g => g.Id == item);
                 if (group is not null && !group.HasLessons)
                 {
-                    Groups.Add(group);
+                    //Groups.Add(group);
                     gService.SetHasLessons(item);
                 }
             }
@@ -53,7 +104,34 @@ else if (!string.IsNullOrEmpty(selectClass))
             toastService.ShowInfo("Nincsen feladat osztályoknak kiadva!");
         }
     }
-
+    private async Task LoadGroups()
+    {
+        Groups = await gService.GetGroupsAsync();
+        if (Groups is null || Groups.Count == 0)
+        {
+            if (Groups is null) Groups = new List<Group>();
+            if (string.IsNullOrEmpty(data.UserId))
+            {
+                toastService.ShowError("Nincs bejelentkezve a felhasználó!");
+                return;
+            }
+            if (UserId == Guid.Empty) UserId = Guid.Parse(data.UserId);
+            var teamsGroups = await graphService.GetClasses(UserId.ToString());
+            if (teamsGroups is null || teamsGroups.Count == 0)
+            {
+                toastService.ShowInfo("Nincsenek elérhető osztályok!");
+                return;
+            }
+            foreach (var item in teamsGroups)
+            {
+                if (item.Id is not null && item.DisplayName is not null)
+                {
+                    Groups.Add(new Group(Guid.Parse(item.Id), item.DisplayName, item.Description));
+                }
+            }
+            toastService.ShowInfo("Nincsen feladat osztályoknak kiadva!");
+        }
+    }
     private async Task CheckClass(List<ClassRecive> _recives)
     {
         _recives.ForEach(r => r.Result = r.Result.Replace(',', '.'));
@@ -92,6 +170,7 @@ else if (!string.IsNullOrEmpty(selectClass))
             {
                 toastService.ShowInfo("Nem található művelet");
             }
+            IsLessonTime = ViewLesson();
             StateHasChanged();
         }
         catch (Exception e)
@@ -99,5 +178,51 @@ else if (!string.IsNullOrEmpty(selectClass))
             toastService.ShowError(e.Message);
             throw;
         }
+    }
+    public bool ViewLesson()
+    {
+        if (DateTime.Now.DayOfWeek == DayOfWeek.Sunday || DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
+        {
+            toastService.ShowInfo("Hétvége van, jó gyakorlást!");
+            remainingTime = waitTime;
+            return true;
+        }
+        var Periods = new LessonPeriod().GetLessonPeriod();
+        if (Periods is null || Periods.Count == 0)
+        {
+            toastService.ShowError("Nincsenek beállítva tanórák!");
+            return true;
+        }
+        TimeSpan CurrentTime = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, 0);
+        if (Periods[0].StartTime - CurrentTime > TimeSpan.Zero)
+        {//Nem kezdődött el az első óra
+            remainingTime = Periods[0].StartTime-CurrentTime;
+            return false;
+        }
+        if (Periods[^1].EndTime - CurrentTime < TimeSpan.Zero)
+        {//Nincs több óra
+            remainingTime = waitTime; //Periods[0].StartTime + new TimeSpan(24, 0, 0) - CurrentTime;
+            return true;
+        }
+
+        foreach (var item in Periods)
+        {
+            if (item.StartTime.CompareTo(CurrentTime) <= 0 && item.EndTime.CompareTo(CurrentTime) >= 0)
+            {
+                //Óra van
+                remainingTime = waitTime;
+                return true;
+            }
+            else if (Periods[item.Id].StartTime.CompareTo(CurrentTime) > 0)
+            {//Még nincs óra, de lesz
+                remainingTime = Periods[item.Id].StartTime-CurrentTime;
+                return false;
+            }
+        }
+        return false;
+    }
+    private void CounterChange(bool value)
+    {
+        IsViewCheck = value;
     }
 }

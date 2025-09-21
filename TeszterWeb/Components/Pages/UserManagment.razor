@@ -1,0 +1,49 @@
+﻿@page "/usermanagment"
+@using Microsoft.Identity.Web
+@inject EduUserServices userServices
+@inject IToastService toastService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+<PageTitle>Felhasználók</PageTitle>
+<h3>UserManagment</h3>
+@if (users is not null && users.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Név</th>
+                <th>Szerepkör</th>
+                <th>Műveletek</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.DisplayName</td>
+                    <td>@user.Role</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <h5>Adatok betöltése...</h5>
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentProgressRing />
+    </FluentStack>
+}
+
+@code {
+    List<EduUser>? users;
+    protected override async Task OnInitializedAsync()
+    {
+        users = await userServices.GetAllEduUsers();
+        if (users is null || users.Count == 0)
+        {
+            toastService.ShowError("Nincs felhasználó");
+            if (!string.IsNullOrEmpty(userServices.ErrorMessage)) toastService.ShowError(userServices.ErrorMessage);
+        }
+        await base.OnInitializedAsync();
+    }
+}

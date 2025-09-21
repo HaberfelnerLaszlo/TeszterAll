@@ -18,6 +18,7 @@ namespace TeszterLibrary.Extensions
             if (value < 60) { return value.ToString() + " mp"; }
             else { return $"{value / 60} p : {value % 60} mp"; }
         }
-
+        public static string PadLeft(this int number) =>
+    number.ToString().PadLeft(2, '0');
     }
 }

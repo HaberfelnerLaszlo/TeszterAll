@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TeszterLibrary.Model.Feladat
+{
+    public class Szorgalmi
+    {
+        [Required]
+        [Key]
+        public int Id { get; set; }
+        public required Guid TanuloId { get; set; }
+        public required string Osztaly { get; set; }
+        public DateTime Datum { get; set; } = DateTime.UtcNow;
+        public int Feladatok_szama { get; set; }
+        public int Pont { get; set; }
+        public string Jegyzet { get; set; }= string.Empty;
+        public Tipus FeladatTipus { get; set; } = Tipus.Egyéb;
+    }
+    public enum Tipus
+    {
+        Órai,
+        Házi,
+        Program,
+        Egyéb
+    }
+}

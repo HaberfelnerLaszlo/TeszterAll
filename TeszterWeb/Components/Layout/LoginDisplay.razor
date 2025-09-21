@@ -45,7 +45,6 @@
             {
                 try
                 {
-                    user = await GraphServiceClient.Education.Me.GetAsync();
                     if (user is not null)
                     {
                         if (user.Id is null)

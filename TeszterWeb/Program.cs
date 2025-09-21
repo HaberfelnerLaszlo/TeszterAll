@@ -1,15 +1,22 @@
+using Blazored.TextEditor;
+
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using Blazored.TextEditor;
+
 using Plk.Blazor.DragDrop;
 
 using TeszterLibrary.Services;
+using TeszterLibrary.Services.Feladat;
 
 using TeszterWeb.Components;
 using TeszterWeb.Data;
-using Microsoft.EntityFrameworkCore;
 using TeszterWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +48,7 @@ builder.Services.AddFluentUIComponents();
 
 builder.Services.AddScoped<TeszterApiService>();
 builder.Services.AddScoped<FeladatApiService>();
+builder.Services.AddScoped<TanuloService>();
 builder.Services.AddScoped<EduUserServices>();
 builder.Services.AddScoped<TestServices>();
 builder.Services.AddScoped<QuestionServices>();
@@ -61,6 +69,19 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
+    app.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandler = async ctx => {
+            var feature = ctx.Features.Get<IExceptionHandlerFeature>();
+            if (feature?.Error is MsalUiRequiredException
+                or { InnerException: MsalUiRequiredException }
+                or { InnerException.InnerException: MsalUiRequiredException })
+            {
+                ctx.Response.Cookies.Delete($"{CookieAuthenticationDefaults.CookiePrefix}{CookieAuthenticationDefaults.AuthenticationScheme}");
+                ctx.Response.Redirect(ctx.Request.GetEncodedPathAndQuery());
+            }
+        }
+    });
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();

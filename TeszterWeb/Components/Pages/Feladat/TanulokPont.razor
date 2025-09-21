@@ -1,0 +1,300 @@
+﻿@using TeszterLibrary.Model.Feladat
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@inject TeszterLibrary.Services.Feladat.TanuloService tService
+@inject GroupsService gService
+@inject GraphService graphService
+@inject GlobalData data
+@inject IToastService toastService
+@inject IDialogService dialogService
+
+@page "/feladat/tanulokpont"
+
+<h3>Tanulok pontjai</h3>
+@if (tanulokByCsoport == null)
+{
+    <p><em>Betöltés...</em></p>
+}
+else if (tanulokByCsoport.Count() == 0)
+{
+    <p>Nincs tanuló az adatbázisban.</p>
+}
+else
+{
+    <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@(SelectedCsoport)" />
+    <FluentSelect Items="@(Enum.GetValues<DataGridSelectMode>())"
+                  @bind-SelectedOption="@Mode" />
+    <FluentDataGrid Items="tanulokByCsoport.AsQueryable()" Pagination="pagination" ShowHover="true">
+        <SelectColumn TGridItem="TanuloWithSelect"
+                      SelectMode="@Mode"
+                      SelectFromEntireRow="@true"
+                      @bind-SelectedItems="@SelectedItems" />
+        <PropertyColumn Property="@(t=>t.Tanulo.Name)" Title="Tanuló neve" />
+        <PropertyColumn Property="@(t=>t.Tanulo.Pont)" Title="Elért pontszám" />
+        <TemplateColumn Title="Műveletek" Align="@Align.End">
+            <FluentButton aria-label="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => EditDialog(context))" />
+            <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(async() =>await DeleteTanulo(context))" />
+        </TemplateColumn>
+    </FluentDataGrid>
+    <FluentPaginator State="@pagination" />
+    @if (SelectedItems != null && SelectedItems.Count() > 1)
+    {
+        @*<FluentButton OnClick="@(() => EditDialog(SelectedItems.First()))">Kiválasztott tanuló pontszámának módosítása</FluentButton>*@
+        <FluentButton OnClick="@(() => DeleteTanulok(SelectedItems))">Kiválasztott tanulók törlése</FluentButton>
+    }
+    <FluentButton OnClick="NewTanulo">Új tanuló hozzáadás</FluentButton>
+    <FluentButton OnClick="@(()=>toastService.ShowInfo($" Összesen {tanulokByCsoport.Count()} tanuló van a listában."))">Lista elemeinek száma</FluentButton>
+}
+
+@code {
+    List<Tanulo>? tanulok = new List<Tanulo>();
+    List<TanuloWithSelect> tanulokByCsoport = new();
+    IEnumerable<Csoport> csoportok = Enumerable.Empty<Csoport>();
+    Csoport selectedCsoport = new Csoport(string.Empty, string.Empty);
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
+    DataGridSelectMode Mode = DataGridSelectMode.Single;
+    IEnumerable<TanuloWithSelect>? SelectedItems = Enumerable.Empty<TanuloWithSelect>(); //tanulokByCsoport.Where(p => p.Selected) ?? default;
+
+    record TanuloWithSelect()
+    {
+        public Tanulo? Tanulo { get; set; }
+        public bool Selected { get; set; }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        tanulok = await tService.GetTanulokAsync();
+        if (tanulok == null)
+        {
+            //tanulokByCsoport = null;
+            toastService.ShowError($"Hiba a tanulók lekérésekor: {tService.ErrorMessage}");
+            return;
+        }
+        var temp = tanulok.DistinctBy(t => t.Osztaly).Select(t => t.Osztaly).ToList();
+        List<Group> groupsFromDb = await gService.GetGroupsAsync();
+        if (groupsFromDb == null || temp == null || groupsFromDb.Count == 0)
+        {
+            var classes = await graphService.GetClasses(data.UserId);
+            if (classes is null) return;
+            classes.ForEach(c => groupsFromDb.Add(new Group(Guid.Parse(c.Id), c.DisplayName, c.Description)));
+        }
+        temp.ForEach(c => csoportok.Append(new Csoport(c, groupsFromDb?.FirstOrDefault(i => i.Id == Guid.Parse(c))?.Name ?? c)));
+        if ((csoportok == null || csoportok.Count() == 0) && (groupsFromDb != null || groupsFromDb.Count != 0))
+        {
+            groupsFromDb.ForEach(g => csoportok = csoportok.Append(new Csoport(g.Id.ToString(), g.Name)));
+        }
+        tanulok.ForEach(t => tanulokByCsoport.Add(new TanuloWithSelect() { Tanulo = t, Selected = false }));
+        await base.OnInitializedAsync();
+    }
+    private async void EditDialog(TanuloWithSelect selectedTanulo)
+    {
+        if (selectedTanulo == null || selectedTanulo.Tanulo == null)
+        {
+            toastService.ShowWarning("Nincs kiválasztva tanuló.");
+            return;
+        }
+        var dialogInstance = await dialogService.ShowDialogAsync(
+        @<div>
+            <p>Szeretnéd módosítani a(z) <strong>@selectedTanulo.Tanulo.Name</strong> tanuló pontszámát?</p>
+            <FluentNumberField @bind-Value="selectedTanulo.Tanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
+            <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOption="@(csoportok.FirstOrDefault(c=>c.Id==selectedTanulo.Tanulo.Osztaly))" SelectedOptionChanged="@((e)=>OnSelectedItemsChanged(e,selectedTanulo))" />
+
+        </div>
+        , new DialogParameters
+        {
+            Title = "Pontszám módosítás",
+            PrimaryAction = "Mentés",
+            SecondaryAction = "Mégse",
+        });
+
+        var result = await dialogInstance.Result;
+        if (!result.Cancelled)
+        {
+            var response = await tService.UpdateTanuloAsync(selectedTanulo.Tanulo);
+            if (!response)
+            {
+                toastService.ShowError($"Hiba a tanuló módosításakor: {tService.ErrorMessage}");
+                return;
+            }
+            else
+            {
+                var index = tanulok.FindIndex(t => t.Id == selectedTanulo.Tanulo.Id);
+                if (index != -1)
+                {
+                    tanulok[index] = selectedTanulo.Tanulo;
+                    StateHasChanged();
+                }
+                toastService.ShowSuccess($"Sikeres mentés.");
+                return;
+            }
+        }
+    }
+    private async Task DeleteTanulo(TanuloWithSelect selectedTanulo)
+    {
+        if (selectedTanulo == null || selectedTanulo.Tanulo == null)
+        {
+            toastService.ShowWarning("Nincs kiválasztva tanuló.");
+            return;
+        }
+        var dialogInstance = await dialogService.ShowDialogAsync(
+        @<div>
+            <p>Biztosan törölni szeretnéd a(z) <strong>@selectedTanulo.Tanulo.Name</strong> tanulót?</p>
+        </div>
+        , new DialogParameters
+        {
+            Title = "Tanuló törlése",
+            PrimaryAction = "Törlés",
+            SecondaryAction = "Mégse"
+        });
+        var result = await dialogInstance.Result;
+        if (!result.Cancelled)
+        {
+            var response = await tService.DeleteTanuloAsync(selectedTanulo.Tanulo.Id);
+            if (!response)
+            {
+                toastService.ShowError($"Hiba a tanuló törlésekor: {tService.ErrorMessage}");
+                return;
+            }
+            else
+            {
+                var index = tanulok.FindIndex(t => t.Id == selectedTanulo.Tanulo.Id);
+                if (index != -1)
+                {
+                    tanulok.RemoveAt(index);
+                    tanulokByCsoport.Remove(selectedTanulo);
+                    StateHasChanged();
+                }
+                toastService.ShowSuccess($"Sikeres törlés.");
+                return;
+            }
+        }
+    }
+    private async void DeleteTanulok(IEnumerable<TanuloWithSelect> selectedTanulok)
+    {
+        if (tanulok is null || tanulok.Count() == 0)
+        {
+            toastService.ShowInfo("Nincs tanuló kiválasztva!");
+            return;
+        }
+        foreach (var item in selectedTanulok)
+        {
+            if (item.Tanulo != null)
+            {
+                var dialogInstance = await dialogService.ShowDialogAsync(
+                @<div>
+                    <p>Biztosan törölni szeretnéd a(z) <strong>@item.Tanulo.Name</strong> tanulót?</p>
+                </div>
+                , new DialogParameters
+                {
+                    Title = "Tanuló törlése",
+                    PrimaryAction = "Törlés",
+                    SecondaryAction = "Mégse"
+                });
+                var result = await dialogInstance.Result;
+                if (!result.Cancelled)
+                {
+                    var response = await tService.DeleteTanuloAsync(item.Tanulo.Id);
+                    if (!response)
+                    {
+                        toastService.ShowError($"Hiba a tanuló törlésekor: {tService.ErrorMessage}");
+                        return;
+                    }
+                    else
+                    {
+                        var index = tanulok.FindIndex(t => t.Id == item.Tanulo.Id);
+                        if (index != -1)
+                        {
+                            tanulok.RemoveAt(index);
+                            tanulokByCsoport.Remove(item);
+                            StateHasChanged();
+                        }
+                        toastService.ShowSuccess($"Sikeres törlés.");
+                    }
+                }
+            }
+        }
+        return;
+    }
+    private async void NewTanulo()
+    {
+        if (csoportok == null || csoportok.Count() == 0)
+        {
+            toastService.ShowWarning("Nincs elérhető csoport. Előbb hozz létre egy csoportot.");
+            return;
+        }
+        var member = await graphService.GetStudents(selectedCsoport.Id);
+        if (member == null || member.Count == 0)
+        {
+            toastService.ShowWarning("Nincs elérhető tanuló a kiválasztott csoportban.");
+            return;
+        }
+        var newMembers = member.Where(m => !tanulok.Any(t => t.Name == m.DisplayName)).ToList();
+        if (newMembers.Count == 0)
+        {
+            toastService.ShowWarning("Nincs elérhető új tanuló a kiválasztott csoportban.");
+            return;
+        }
+        var newTanulo = new Tanulo() { Name = "Új tanuló", Pont = 20, Osztaly = selectedCsoport.Id ?? string.Empty };
+        var dialogInstance = await dialogService.ShowDialogAsync(
+        @<div>
+            <p>Új tanuló hozzáadás</p>
+            <FluentSelect Items="@newMembers" TOption="Microsoft.Graph.Models.EducationUser" OptionText="@(c=>c.DisplayName)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@((e)=> { newTanulo.Name = newMembers.FirstOrDefault(m => m.Id == e.Id)?.DisplayName ?? ""; newTanulo.Id=Guid.Parse(newMembers.FirstOrDefault(m => m.Id == e.Id)?.Id ?? Guid.Empty.ToString()) ; StateHasChanged(); })" Placeholder="Válasz egy tanulót..." />
+            @*<FluentTextField @bind-Value="newTanulo.Name" Label="Tanuló neve:" Placeholder="Név" />*@
+            <FluentNumberField @bind-Value="newTanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
+            <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOption="@(csoportok.FirstOrDefault(c=>c.Id==newTanulo.Osztaly))" SelectedOptionChanged="@((e)=>newTanulo.Osztaly=e.Id)" />
+        </div>
+        , new DialogParameters
+        {
+            Title = "Új tanuló hozzáadás",
+            PrimaryAction = "Mentés",
+            SecondaryAction = "Mégse",
+        });
+        var result = await dialogInstance.Result;
+        if (!result.Cancelled)
+        {
+            var response = await tService.AddTanuloAsync(newTanulo);
+            if (response is null)
+            {
+                toastService.ShowError($"Hiba az új tanuló hozzáadásakor: {tService.ErrorMessage}");
+                return;
+            }
+            else
+            {
+                tanulok.Add(newTanulo);
+                if (newTanulo.Osztaly == csoportok.FirstOrDefault()?.Id)
+                {
+                    tanulokByCsoport.Add(new TanuloWithSelect() { Tanulo = newTanulo, Selected = false });
+                }
+                StateHasChanged();
+                toastService.ShowSuccess($"Sikeres mentés.");
+                return;
+            }
+        }
+    }
+    private void SelectedCsoport(Csoport csoport)
+    {
+        if (csoport == null || string.IsNullOrEmpty(csoport.Id))
+        {
+            toastService.ShowWarning("Nincs kiválasztva csoport.");
+            return;
+        }
+        else
+        {
+            selectedCsoport = csoport;
+        }
+        tanulokByCsoport.Clear();
+        tanulok.ForEach(t => tanulokByCsoport.Add(new TanuloWithSelect() { Tanulo = t, Selected = false }));
+
+        tanulokByCsoport = tanulokByCsoport.Where(t => t.Tanulo.Osztaly == csoport.Id).ToList();
+
+    }
+    private void OnSelectedItemsChanged(Csoport csoport, TanuloWithSelect tanulo)
+    {
+        if (tanulo.Tanulo != null)
+        {
+            tanulo.Tanulo.Osztaly = csoport.Id;
+        }
+        //StateHasChanged();
+    }
+    private record class Csoport(string Id, string Name);
+}

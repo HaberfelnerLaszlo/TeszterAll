@@ -11,15 +11,24 @@ namespace TeszterLibrary.Services
 		{
 			_service = service;
 		}
-
-		public async Task<Student> GetEduUser(Guid id)
+		public async Task<List<EduUser>> GetAllEduUsers()
 		{
-			return await _service.Get<Student>($"User/{id}");
+			var list = await _service.Get<List<EduUser>>("User");
+			if (list == null)
+			{
+				ErrorMessage = _service.ErrorMessage;
+				return new List<EduUser>();
+			}
+			return list;
+        }
+        public async Task<EduUser?> GetEduUser(Guid id)
+		{
+			return await _service.Get<EduUser>($"User/{id}");
 		}
 
 		public async Task<bool> UserExits(Guid id)
 		{
-			var list = await _service.Get<List<Student>>("User");
+			var list = await _service.Get<List<EduUser>>("User");
 			if (list == null)
 			{
 				ErrorMessage = _service.ErrorMessage;
@@ -28,7 +37,7 @@ namespace TeszterLibrary.Services
 			return list?.Any(t => t.Id == id) ?? false;
 		}
 
-		public async Task<EduUser> AddUser(EduUser user)
+		public async Task<EduUser?> AddUser(EduUser user)
 		{
 			try
 			{
@@ -42,11 +51,11 @@ namespace TeszterLibrary.Services
 			}
 		}
 
-		public async Task<Student> UpdateUser(Student user)
+		public async Task<EduUser?> UpdateUser(EduUser user)
 		{
 			try
 			{
-				var u = await _service.Put<Student>($"User/{user.Id}", user);
+				var u = await _service.Put<EduUser>($"User/{user.Id}", user);
 				return u;
 			}
 			catch (Exception e)
@@ -56,15 +65,15 @@ namespace TeszterLibrary.Services
 			}
 		}
 
-		public async Task DeleteUser(Student user)
+		public async Task DeleteUser(EduUser user)
 		{
 			try
 			{
 				var v = await _service.Delete($"User/{user.Id}");
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
-				throw;
+				ErrorMessage = e.Message;
 			}
 		}
 	}
