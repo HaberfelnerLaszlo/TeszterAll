@@ -14,7 +14,7 @@
 <PageTitle>Teszt kezdete</PageTitle>
 <AuthorizeView>
     <Authorized>
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
             <h4>Üdvözöllek @(user?.DisplayName ?? "Ismeretlen")!</h4>
             <hr />
             <FluentLabel>@(test?.Subject ?? string.Empty) tantárgyból egy tesztet készítettek Neked!</FluentLabel>
@@ -62,7 +62,7 @@
                 {
                     if (string.IsNullOrEmpty(uService.ErrorMessage))
                     {
-                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole.Value.ToString() ?? EducationUserRole.Student.ToString() });
+                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole!.Value.ToString() ?? EducationUserRole.Student.ToString() });
                     }
                 }
                 var id = test.TestUsers.FirstOrDefault(t => t.UserId.ToString() == user.Id)?.Id ?? 0;

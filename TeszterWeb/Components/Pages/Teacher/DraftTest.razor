@@ -4,22 +4,23 @@
 @inject NavigationManager navi
 @inject GlobalData data
 @inject IToastService toastService
-@if (tests is not null && tests.Count>0)
+@if (tests is not null && tests.Count > 0)
 {
-    <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
         @foreach (var item in tests)
         {
-            <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="DeleteTest"/>
+            <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="DeleteTest" />
         }
     </FluentStack>
 }
-else { <FluentLabel>@errorMesage</FluentLabel>}
+else
+{ <FluentLabel>@errorMesage</FluentLabel>}
 
 @code {
-    private List<Test> tests = new();
+    private List<Test>? tests = new();
     private Test test = new();
     bool ispublish = false;
-    string userId = string.Empty,errorMesage=string.Empty;
+    string userId = string.Empty, errorMesage = string.Empty;
     protected override void OnParametersSet()
     {
         data.Title = "Piszkozat tesztek";
@@ -32,7 +33,12 @@ else { <FluentLabel>@errorMesage</FluentLabel>}
         data.Title = "Piszkozat tesztek";
         if (String.IsNullOrEmpty(data.UserId))
         {
-            var me=await gService.GetMe();
+            var me = await gService.GetMe();
+            if (me is null)
+            {
+                toastService.ShowError("Hiba a felhasználó adatainak lekérésekor.");
+                return;
+            }
             data.UserId = me.Id.ToString();
         }
         userId = data.UserId;
@@ -58,8 +64,12 @@ else { <FluentLabel>@errorMesage</FluentLabel>}
     }
     private async Task DeleteTest(Test test)
     {
-        if(await tService.DeleteTestAsync(test.Id))
+        if (await tService.DeleteTestAsync(test.Id))
         {
+            if (tests is null) {
+                tests = new List<Test>();
+                toastService.ShowInfo("A teszt null értéket vett fel törölve lett.");
+                return; }
             tests.Remove(test);
             toastService.ShowInfo("A teszt törölve lett.");
         }

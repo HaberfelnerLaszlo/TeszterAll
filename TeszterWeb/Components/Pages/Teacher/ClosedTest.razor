@@ -12,7 +12,7 @@
     }
     else
     {
-        <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalAlignment="HorizontalAlignment.Center">
             @foreach (var item in tests)
             {
                 <FluentCard Width="48%" Style="min-width:400px">
@@ -24,10 +24,10 @@
 }
 else
 {
-    <FluentLabel Typo="Typography.Header" Color="Color.Error">@errorMessage</FluentLabel>
+    <FluentLabel Typo="Typography.Header" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Error">@errorMessage</FluentLabel>
 }
 @code {
-    List<TestResultToTeacher> tests = new();
+    List<TestResultToTeacher>? tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
 
@@ -39,11 +39,17 @@ else
     }
     protected override async Task OnInitializedAsync()
     {
+        if (string.IsNullOrEmpty(data.UserId))
+        {
+            noError = false;
+            errorMessage = "Nincs bejelentkezve a felhasználó!";
+            return;
+        }
         tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
     }
     private async void TestResult(TestResultToTeacher test)
     {
-        List<TestQuestion> questions = await tqService.GetTestQuestions(test.TestId);
+        List<TestQuestion>? questions = await tqService.GetTestQuestions(test.TestId);
         if (questions is null)
         {
             return;

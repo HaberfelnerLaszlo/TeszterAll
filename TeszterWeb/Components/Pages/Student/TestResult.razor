@@ -9,7 +9,7 @@
 <h4>Teszt eredménye</h4>
 @if (noError)
 {
-    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start">
+    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start">
         @foreach (var j in tabs)
         {
             if (actual == j) { apperance = Appearance.Accent; }
@@ -133,13 +133,13 @@ else
             foreach (var tqu in testQuestionUsers.Where(t => t.ReplacedNumber == i))
             {
                 var actualQ = questions.First(q => q.TestQuestionId == tqu.TestQuestionId);
-                tqu.Answers.ForEach(tqa =>
+                tqu.Answers!.ForEach(tqa =>
                 {
-                    var actualA = actualQ.Answers.First(a => a.AnswerId == tqa.AnswerId);
+                    var actualA = actualQ.Answers!.First(a => a.AnswerId == tqa.AnswerId);
                     actualA.Result = tqa.Result;
                     actualA.Sequence = tqa.Sequence;
                     actualA.Sign = tqa.Sign;
-                    actualA.Text = tqa.Text;
+                    actualA.Text = tqa.Text?? string.Empty;
                 });
             }
         }

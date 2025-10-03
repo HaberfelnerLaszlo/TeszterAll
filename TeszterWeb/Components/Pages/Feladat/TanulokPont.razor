@@ -1,6 +1,5 @@
 ﻿@using TeszterLibrary.Model.Feladat
 @using Microsoft.FluentUI.AspNetCore.Components
-@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 
 @inject TeszterLibrary.Services.Feladat.TanuloService tService
 @inject GroupsService gService
@@ -32,7 +31,7 @@ else
                       @bind-SelectedItems="@SelectedItems" />
         <PropertyColumn Property="@(t=>t.Tanulo.Name)" Title="Tanuló neve" />
         <PropertyColumn Property="@(t=>t.Tanulo.Pont)" Title="Elért pontszám" />
-        <TemplateColumn Title="Műveletek" Align="@Align.End">
+        <TemplateColumn Title="Műveletek" Align="@Microsoft.FluentUI.AspNetCore.Components.Align.End">
             <FluentButton aria-label="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => EditDialog(context))" />
             <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(async() =>await DeleteTanulo(context))" />
         </TemplateColumn>

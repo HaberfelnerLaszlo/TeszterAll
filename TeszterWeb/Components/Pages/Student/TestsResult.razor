@@ -11,8 +11,8 @@
 <h3>Lezárt tesztek</h3>
 @if (noError)
 {
-    <FluentStack Orientation=" Orientation.Horizontal" Wrap="true">
-        @foreach (var test in tests)
+    <FluentStack Orientation=" Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true">
+        @foreach (var test in tests??new())
         {
             <TestResultToStudentCard TestResult="test" Open="OpenResult" />
         }
@@ -23,7 +23,7 @@ else
     <p>@errorMessage</p>
 }
 @code {
-    List<TestResultToStudent> tests = new();
+    List<TestResultToStudent>? tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
 
@@ -45,7 +45,7 @@ else
             }
 
         }
-        tests = await tuService.GetReadyTests(Guid.Parse(data.UserId));
+        tests = await tuService.GetReadyTests(Guid.Parse(data.UserId!));
         if (tests is null)
         {
             noError = false;
