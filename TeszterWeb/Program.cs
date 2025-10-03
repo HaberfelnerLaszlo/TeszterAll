@@ -1,3 +1,5 @@
+using ApexCharts;
+
 using Blazored.TextEditor;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -45,7 +47,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
 builder.Services.AddFluentUIComponents();
-
+builder.Services.AddApexCharts();
 builder.Services.AddScoped<TeszterApiService>();
 builder.Services.AddScoped<FeladatApiService>();
 builder.Services.AddScoped<TanuloService>();

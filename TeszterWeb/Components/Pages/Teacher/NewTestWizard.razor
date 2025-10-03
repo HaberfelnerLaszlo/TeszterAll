@@ -30,7 +30,7 @@
                           OnChange="@OnStepChange">
             <FluentEditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
                 <DataAnnotationsValidator />
-                <FluentStack Orientation="Orientation.Vertical">
+                <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
                     <FluentTextField Placeholder="Teszt neve..." @bind-Value="newTest.Title" Required="true" />
                     <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." SelectedOptionChanged="subjectChange" Required="true">
                     </FluentCombobox>
@@ -63,7 +63,7 @@
                         }
                     </FluentGridItem>
                     <FluentGridItem xs="12" sm="5" Style="overflow-y:auto;height:80vh">
-                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" VerticalGap="5">
                             @*@if (newTest.HasSection)
                             {
                                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
@@ -161,7 +161,7 @@
 
 <FluentOverlay @bind-Visible=@_overlayIsVisible
                Opacity="0.4"
-               Alignment="Align.Center"
+               Alignment="Microsoft.FluentUI.AspNetCore.Components.Align.Center"
                Justification="@JustifyContent.Center">
     <FluentProgressRing />
 </FluentOverlay>

@@ -42,6 +42,17 @@
             { <FluentLabel Typo="Typography.H3">Gratulálok! A legjobbak között vagy! </FluentLabel>
             }
         </FluentCard>
+        @if (datas is not null || datas.Count > 0)
+        {
+            <ApexChart TItem="PontData" Title="Az utolsó 20 pont" Height="300" Width="600" XAxisType="XAxisType.Datetime">
+                <ApexPointSeries TItem="PontData"
+                                 Items="datas"
+                                 Name="Pontszámok"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(e => e.Datum)"
+                                 YAggregate="@(e => e.Sum(e=>e.Pontszam))" />
+            </ApexChart>
+        }
         <FluentLabel Typo="Typography.H4" Style="margin: 10px">Az utolsó pontjaid (maximum 20 darab): </FluentLabel>
         <FluentCard MinimalStyle="true">
             <FluentDataGrid Items="@pontok" AutoItemsPerPage="true">
@@ -50,6 +61,10 @@
                 <PropertyColumn Property="@(p=>p.PontSzam)" Title="Pontszám" />
             </FluentDataGrid>
         </FluentCard>
+    }
+    else
+    {
+        <FluentLabel Typo="Typography.H4" Style="margin: 10px">Nem elérhetők a pontjaid. </FluentLabel>
     }
     <nav class="d-flex flex-row w-100">
         <NavLink class="nav-doboz nav-link" href="studenttests">Tesztjeim</NavLink>
@@ -61,6 +76,7 @@
 @code{
     EducationUser? user;
     TanuloData? tanuloData = new();
+    List<PontData> datas = new();
     IQueryable<Pont>? pontok;
     string qHref = string.Empty;
     protected override async Task OnInitializedAsync()
@@ -73,7 +89,7 @@
                 if (user.Id is null)
                 {
                     ToastService.ShowError("Nem található felhasználó azonosító!");
-                    logger.LogError("Nem található felhasználó azonosító! {user}",user);
+                    logger.LogError("Nem található felhasználó azonosító! {user}", user);
                     return;
                 }
                 data.UserId = user.Id;
@@ -84,7 +100,34 @@
                     tanuloData = await pService.GetTanuloData(user.Id);
                     if (tanuloData is not null)
                     {
+                        //Teszthez
+                        //if (tanuloData.Pontok.Count == 0)
+                        //{
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.20 15:29"), PontSzam = 2, Id = 1, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.21 14:00"), PontSzam = 2, Id = 2, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.22 5:55"), PontSzam = -2, Id = 3, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.23 6:20"), PontSzam = 2, Id = 4, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.23 6:23"), PontSzam = 1, Id = 5, PontTipus = PontTipus.Pótlás });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.24 6:44"), PontSzam = 2, Id = 6, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.24 12:24"), PontSzam = 3, Id = 7, PontTipus = PontTipus.Szorgalmi });
+                        //}
                         pontok = tanuloData.Pontok.AsQueryable();
+                        MakeData();
+                    }
+                }
+                else if (!string.IsNullOrEmpty(user.Id))
+                {
+                    tanuloData = await pService.GetTanuloData(user.Id);
+                    if (tanuloData is not null)
+                    {
+                        pontok = tanuloData.Pontok.AsQueryable();
+                        MakeData();
+                    }
+                    else
+                    {
+                        ToastService.ShowWarning("Nincsenek pontjaid rögzítve.");
+                        ToastService.ShowInfo($"Szerepköröd {user.PrimaryRole}");
+                        return;
                     }
                 }
                 if (!(await uService.UserExits(Guid.Parse(data.UserId))))
@@ -102,5 +145,17 @@
             logger.LogError(ex, "Kivétel történt.");
             ConsentHandler.HandleException(ex);
         }
+    }
+    private void MakeData()
+    {
+        datas.Clear();
+        int aktualpont = tanuloData.PontSzam;
+        tanuloData.Pontok.Reverse();
+        tanuloData.Pontok.ForEach(p => { datas.Add(new PontData() { Datum = p.Datum, Pontszam = aktualpont }); aktualpont -= p.PontSzam; }); ;
+    }
+    public class PontData()
+    {
+        public DateTime Datum { get; set; }
+        public int Pontszam { get; set; }
     }
 }

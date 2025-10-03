@@ -14,9 +14,9 @@
 {
     @if (!IsLessonTime)
     {
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
             <h4 style="text-align:center;">Jelenleg nincs tanóra!<br />A következő tanóra kezdéséig hátralévő idő:</h4>
-            <CountDown _remainingTime="remainingTime"></CountDown>
+            <CountDown _remainingTime="remainingTime" IsEnd="()=>IsLessonTime=true"></CountDown>
         </FluentStack>
     }
     else
@@ -33,7 +33,7 @@
                 else
                 {
                     <ClassLesson TaskView="taskView" Recives="recives" IsChecked=IsChecked></ClassLesson>
-                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
                         <CountDown _remainingTime="remainingTime" IsEnd="CounterChange"></CountDown>
                     </FluentStack>
                 }
@@ -58,7 +58,7 @@ else if (!string.IsNullOrEmpty(selectClass))
     private List<ClassRecive> recives = new();
     private List<Group> Groups = new();
     private List<Guid>? GroupsId = new();
-    bool IsLessonTime = false,IsViewCheck=false;
+    bool IsLessonTime = false, IsViewCheck = false;
     TimeSpan waitTime = new TimeSpan(0, 6, 0);
     TimeSpan remainingTime = TimeSpan.Zero;
 
@@ -145,7 +145,6 @@ else if (!string.IsNullOrEmpty(selectClass))
         if (string.IsNullOrEmpty(arg))
         {
             toastService.ShowMention("Kérlek válasz osztályt!");
-            return;
         }
         else
         {
@@ -193,10 +192,14 @@ else if (!string.IsNullOrEmpty(selectClass))
             toastService.ShowError("Nincsenek beállítva tanórák!");
             return true;
         }
-        TimeSpan CurrentTime = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, 0);
+        TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+        var cestDateTime =TimeZoneInfo.ConvertTime(DateTime.Now, timeZone);
+        
+        TimeSpan CurrentTime = new TimeSpan(cestDateTime.Hour, cestDateTime.Minute, 0);
+
         if (Periods[0].StartTime - CurrentTime > TimeSpan.Zero)
         {//Nem kezdődött el az első óra
-            remainingTime = Periods[0].StartTime-CurrentTime;
+            remainingTime = Periods[0].StartTime - CurrentTime;
             return false;
         }
         if (Periods[^1].EndTime - CurrentTime < TimeSpan.Zero)
@@ -215,7 +218,7 @@ else if (!string.IsNullOrEmpty(selectClass))
             }
             else if (Periods[item.Id].StartTime.CompareTo(CurrentTime) > 0)
             {//Még nincs óra, de lesz
-                remainingTime = Periods[item.Id].StartTime-CurrentTime;
+                remainingTime = Periods[item.Id].StartTime - CurrentTime;
                 return false;
             }
         }

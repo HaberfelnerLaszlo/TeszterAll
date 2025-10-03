@@ -11,7 +11,7 @@
 <h5 hidden="@noError">@errorMessage</h5>
 @if (tests != null && tests.Any())
 {
-    <FluentStack Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
         @foreach (var item in tests)
         {
             <FluentCard Width="450px">
@@ -24,7 +24,7 @@ else
 {
     <FluentOverlay @bind-Visible=@noError
                    Opacity="0.4"
-                   Alignment="Align.Center"
+                   Alignment="Microsoft.FluentUI.AspNetCore.Components.Align.Center"
                    Justification="@JustifyContent.Center">
         <FluentProgressRing />
     </FluentOverlay>
