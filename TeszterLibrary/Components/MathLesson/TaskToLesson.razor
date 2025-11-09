@@ -4,13 +4,28 @@
 @inject IToastService toastService
 @if (lessons.Count > 0)
 {
-    <button class="btn btn-primary" @onclick="()=>SaveLesson.InvokeAsync(Lessons)">@Name feladatlistájának mentése</button>
+    <button class="btn btn-primary" @onclick="()=> { SaveLesson.InvokeAsync(Lessons); SaveButton(); }">@Name feladatlistájának mentése</button>
 }
 else
 {
     <p>@Name feladatlistájának szerkesztése</p>
 }
 <hr />
+<FluentCheckbox @bind-Value="default_Sablon">Alapértelmezett beállítás hozzáadása</FluentCheckbox>
+@if (default_Sablon)
+{
+    <FluentAccordion>
+        <FluentAccordionItem Heading="Feladat hozzáadásakor a következő sablon értékek lesznek alkalmazva:">
+            <FluentLabel>Maximális próbálkozások száma: @sablon.MaxCount</FluentLabel>
+            <FluentLabel>Legalább ennyi feladat: @sablon.MinCount</FluentLabel>
+            <FluentLabel>A feladat ennyi százaléka helyes: @sablon.WrongPercent</FluentLabel>
+            <FluentLabel>A feladat ennyi rossz válasz lehet: @sablon.WrongCount</FluentLabel>
+            <FluentLabel>A feladat időtartama: @sablon.Time</FluentLabel>
+        </FluentAccordionItem>
+    </FluentAccordion>
+}
+<hr />
+<FluentLabel> </FluentLabel>
 <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="20">
     <FluentStack Orientation="Orientation.Vertical">
         <FluentSelect Items="topics" TOption="string" Title="Kategóriák: " SelectedOptionChanged="(e)=>Select(e)" />
@@ -46,7 +61,8 @@ else
     private Sablon sablon = new();
     private bool IsLessonSave = true;
     private List<string> topics = new();
-    private bool tipp = false;
+    private bool tipp = false, default_Sablon = false;
+    private string selectedTopic = string.Empty;
     protected override void OnParametersSet()
     {
         lessons.Clear();
@@ -83,9 +99,13 @@ else
     {
         return !task.HasCompleted;
     }
+    private void SaveButton()
+    {
+        filteredTasks = listTasks.Where(t => t.Topic == selectedTopic).ToList();
+    }
     private void Save()
     {
-        if (Guid.Empty==StudentId || lastdropped.Id<=0 )
+        if (Guid.Empty == StudentId || lastdropped.Id <= 0)
         {
             toastService.ShowError("Nem sikerült a mentés,mert az utolsó elem nem lett mentve.");
             return;
@@ -99,6 +119,7 @@ else
     {
         if (!string.IsNullOrEmpty(e))
         {
+            selectedTopic = e;
             filteredTasks = listTasks.Where(t => t.Topic == e).ToList();
             StateHasChanged();
             return true;
@@ -125,31 +146,45 @@ else
 
         sablon = item.Sablon;
         IsLessonSave = false;
-        var dialog = await dialogService.ShowDialogAsync<SetTaskSablonDialog>(sablon, new DialogParameters()
+        if (sablon is null)
         {
-            //Height = "340px",
-            Title = $"{item.Topic} beállítása",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
-        });
-        lastdropped = item;
+            sablon = new Sablon()
+            {
+                MaxCount = 10,
+                MinCount = 3,
+                Time = 0,
+                WrongCount = 5,
+                WrongPercent = 70
+            };
+        }
+        if (!default_Sablon)
+        {
+            var dialog = await dialogService.ShowDialogAsync<SetTaskSablonDialog>(sablon, new DialogParameters()
+            {
+                //Height = "340px",
+                Title = $"{item.Topic} beállítása",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
-        {
-            sablon = (Sablon)result.Data;
-            Save();
+            var result = await dialog.Result;
+            if (!result.Cancelled && result.Data != null)
+            {
+                sablon = (Sablon)result.Data;
+            }
+            else if (result.Cancelled || result.Data is null)
+            {
+                toastService.ShowWarning("Nem sikerült a feladat áthelyezése.");
+                return;
+            }
         }
-        else if (result.Cancelled || result.Data is null)
-        {
-            toastService.ShowWarning("Nem sikerült a feladat áthelyezése.");
-            return;
-        }
+        lastdropped = item;
         // add it to the new index in list 2
         lessons.Insert(args.NewIndex, item);
         // remove the item from the old index in list 1
         filteredTasks.Remove(filteredTasks[args.OldIndex]);
         StateHasChanged();
+        Save();
     }
 
     private void List2Remove(FluentSortableListEventArgs args)

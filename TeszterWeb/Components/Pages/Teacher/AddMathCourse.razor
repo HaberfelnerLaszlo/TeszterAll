@@ -16,19 +16,45 @@
         }
     </InputSelect>
 </EditForm>
-@*<label for="IsClass">Osztálynak készül?</label>
-<input id="IsClass" type="checkbox" @onchange=CboxChange />*@
 <hr />
-@if (!IsClass && (Members.Count > 0 || TestMembers.Count > 0))
+@if (Members.Count > 0 || TestMembers.Count > 0)
 {
     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem xs="12" sm="4">
             <h5>Csoport tagjai</h5>
             <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" Context="member">
-                <ItemTemplate>@member.DisplayName</ItemTemplate>
+                <ItemTemplate>
+                    @if (member.HasLesson)
+                    {
+                        <div style="color:darkblue; font-weight:bold; background-color:green">&#10003; @member.DisplayName</div>
+                        <FluentButton Id="myPopover" OnClick="()=>ViewLesson(member.Id)">  <FluentIcon Icon="Icons.Color.Size28.SearchSparkle" /></FluentButton>
+                        <FluentPopover Style="width: 300px;" AnchorId="myPopover" @bind-Open="visible" AutoFocus="false">
+                            <Header>A feladatok listája: </Header>
+                            <Body>
+                                <FluentListbox Items="ViewLessons" TOption="Lesson" OptionText="@(l=>l.TaskList.Description)" />
+                            </Body>
+                            <Footer>@ViewLessons.Count darab feladat</Footer>
+                        </FluentPopover>
+                        @*<FluentOverlay Visible="visible"
+                                           Transparent="false">
+                            </FluentOverlay>*@
+                    }
+                    else
+                    {
+                        <span style="color:red; font-weight:bold;">&#10007; </span>
+                        @member.DisplayName
+                    }
+                </ItemTemplate>
             </FluentSortableList>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem xs="12" sm="3">
+            <FluentStack Orientation=" Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" VerticalGap="20">
+                <FluentButton OnClick="All" Disabled="BtnDidabled">Mindenki</FluentButton>
+                <FluentButton OnClick="AllOhneTask" Disabled="BtnDidabled">Akinek nincs</FluentButton>
+                <FluentButton OnClick="Reverse" Disabled="!BtnDidabled">Vissza</FluentButton>
+            </FluentStack>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="4">
             <h5>Feladatsort kap</h5>
             <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@TestMembers" Context="testmember">
                 <ItemTemplate>@testmember.DisplayName</ItemTemplate>
@@ -36,17 +62,14 @@
         </FluentGridItem>
     </FluentGrid>
 }
-@*@if (IsClass)
-{
-    <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
-}*@
 @if (IsCompletMember)
 {
     <TaskToLesson TaskList="TaskLists" SaveLesson="Saved" Name="@StudentName" StudentId="@StudentId" Lessons="@Lessons">
     </TaskToLesson>
 }
-else if (!IsClass && TestMembers.Any())
+else if (TestMembers.Any())
 {
+    <FluentCheckbox @bind-Value="AllTestMember">Minden tanulónak ugyan az a feladatsor</FluentCheckbox>
     <button class="btn btn-success text-center" @onclick="AddLessons">Feladatlisták meghatározása</button>
 }
 
@@ -56,9 +79,10 @@ else if (!IsClass && TestMembers.Any())
     private List<Student> TestMembers = new List<Student>();
     private List<TaskList> TaskLists = new();
     private List<Lesson> Lessons = new();
+    private List<Lesson> ViewLessons = new();
     private List<HasLesson> hasLessons = new();
-    private string SelectGroupId = string.Empty, StudentName;
-    private bool BtnDidabled = false, IsCompletMember = false, IsClass = false;
+    private string SelectGroupId = string.Empty, StudentName = "Ismeretlen Tanuló";
+    private bool BtnDidabled = false, IsCompletMember = false, AllTestMember = false, visible = false;
     private Guid StudentId, ClassId;
     //TODO ReplaceNumber maximalizálása!
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -74,6 +98,17 @@ else if (!IsClass && TestMembers.Any())
                     {
                         data.UserId = user.Id.ToString(); // ??= throw new ArgumentNullException(nameof(user));
                     }
+                    else
+                    {
+                        ToastService.ShowError("Nem sikerült lekérni a felhasználói adatokat.");
+                        _logger.LogError("Nem sikerült lekérni a felhasználói adatokat.");
+                    }
+                    if (string.IsNullOrEmpty(data.UserId))
+                    {
+                        ToastService.ShowError("A UserId üres maradt.");
+                        _logger.LogError("A UserId üres maradt.");
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -83,7 +118,7 @@ else if (!IsClass && TestMembers.Any())
 
             }
 
-            Groups = await graphService.GetClasses(data.UserId);
+            Groups = await graphService.GetClasses(data.UserId!) ?? new();
             TaskLists = await mService.GetTaskList();
             if (TaskLists is null)
             {
@@ -96,47 +131,126 @@ else if (!IsClass && TestMembers.Any())
     {
         Members.Clear();
         SelectGroupId = id;
-        if (id != null)
+        try
         {
-            var members = await graphService.GetStudents(id);
-            foreach (var item in members)
+            if (id != null)
             {
-                Members.Add(new Student() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id) });
-                hasLessons.Add(new() { StudentId = Guid.Parse(item.Id), HasCourse = false });
+                var members = await graphService.GetStudents(id);
+                if (members is null || members.Count == 0)
+                {
+                    ToastService.ShowWarning("Nincsenek tanulók a csoportban.");
+                    return;
+                }
+                foreach (var item in members)
+                {
+                    Members.Add(new Student() { DisplayName = item.DisplayName ?? "Ismeretlen Tanuló", Id = Guid.Parse(item.Id!) });
+                    hasLessons.Add(new() { StudentId = Guid.Parse(item.Id!), HasCourse = false });
+                }
+                hasLessons = await mService.HasLessons(hasLessons);
+                foreach (var item in hasLessons.DistinctBy(l => l.StudentId).Where(l => l.HasCourse).ToList())
+                {
+                    var member = Members.FirstOrDefault(m => m.Id == item.StudentId);
+                    if (member != null) member.HasLesson = true;
+                }
             }
-            hasLessons = await mService.HasLessons(hasLessons);
-            foreach (var item in hasLessons.Where(l => l.HasCourse).ToList())
-            {
-                Members.First(m => m.Id == item.StudentId).Style = "HasLesson";
-            }
+            else return;
+            StateHasChanged();
         }
-        else return;
-        if (IsClass)
+        catch (Exception ex)
         {
-            StudentId = Guid.Parse(SelectGroupId);
-            ClassId = Guid.Parse(id);
-            Lessons.Clear();
-            Lessons = await mService.GetLessons(StudentId);
+            ToastService.ShowError($"Hiba a csoport azonosító lekérésekor. {ex.Message}");
+            _logger.LogError(ex, "Hiba a csoport azonosító lekérésekor: {ex.Message}", ex.Message);
+            return;
         }
-        StateHasChanged();
+    }
+    private async Task ViewLesson(Guid id)
+    {
+        ViewLessons = await mService.GetLessons(id);
+        if (ViewLessons.Count > 0)
+        {
+            ViewLessons.ForEach(l => l.TaskList = TaskLists.FirstOrDefault(t => t.Id == l.TaskId));
+            visible = true;
+        }
+
     }
     private void All()
     {
         TestMembers.AddRange(Members);
         Members.Clear();
         BtnDidabled = true;
+        StateHasChanged();
+    }
+    private void AllOhneTask()
+    {
+        foreach (var item in Members.Where(m => !m.HasLesson))
+        {
+            TestMembers.Add(item);
+        }
+        foreach (var item in TestMembers)
+        {
+            if (Members.Any(m => m.Id == item.Id)) Members.Remove(item);
+        }
+        BtnDidabled = true;
+        StateHasChanged();
     }
     private void Reverse()
     {
         Members.AddRange(TestMembers);
         TestMembers.Clear();
         BtnDidabled = false;
+        StateHasChanged();
     }
     async void Saved(List<Lesson> lessons)
     {
         var j = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());//csak az újat küldi
         if (j is not null)
         {
+            if (AllTestMember)
+            {
+                TestMembers.RemoveAt(0);//Az első már el lett mentve
+                                        //Minden tanulónak ugyan az a feladatsor
+                foreach (var member in TestMembers)
+                {
+                    StudentId = member.Id;
+                    StudentName = member.DisplayName;
+                    var response = await uService.UserExits(StudentId);
+                    if (response != null && response == false)
+                    {
+                        await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
+                    }
+                    var memberLessons = lessons.Where(l => l.Id == 0).ToList();
+                    memberLessons.ForEach(l => l.StudentId = member.Id);
+                    if (member.HasLesson)
+                    {
+                        var HasLessons = await mService.GetLessons(member.Id);
+                        foreach (var hl in HasLessons)
+                        {
+                            var toRemove = lessons.FirstOrDefault(l => l.TaskId == hl.TaskId);
+                            if (toRemove != null)
+                            {
+                                memberLessons.Remove(toRemove);
+                            }
+                        }
+                    }
+                    var res = await mService.SetLessons(memberLessons);
+                    if (res != null && res.Capacity > 0)
+                    {
+                        ToastService.ShowInfo($"{StudentName} feladatai beállítva");
+                        member.HasLesson = true;
+                        Members.Add(member);
+                    }
+                    else
+                    {
+                        ToastService.ShowWarning($"{StudentName} feladatai nem lettek beállítva.");
+                        _logger.LogWarning("{StudentName} feladatai nem lettek beállítva", StudentName);
+                    }
+                }
+                TestMembers.Clear();
+                IsCompletMember = false;
+                Lessons.Clear();
+                StateHasChanged();
+                return;
+            }
             if (TestMembers.Count > 0)
             {
                 if (TestMembers.Count == 1) //Az utolsó tanuló akinek be kellett állítani
@@ -147,17 +261,17 @@ else if (!IsClass && TestMembers.Any())
                     StateHasChanged();
                     return;
                 }
-                StudentId = TestMembers[0].Id;
-                StudentName = TestMembers[0].DisplayName;
+                StudentId = TestMembers[1].Id;
+                StudentName = TestMembers[1].DisplayName;
                 var response = await uService.UserExits(StudentId);
                 if (response != null && response == false)
                 {
                     await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
                 }
-                if (TestMembers[0].Style == "HasLesson")
+                if (TestMembers[1].HasLesson)
                 {
                     Lessons.Clear();
-                    Lessons = await mService.GetLessons(TestMembers[0].Id);
+                    Lessons = await mService.GetLessons(TestMembers[1].Id);
                 }
                 else
                 {
@@ -173,26 +287,20 @@ else if (!IsClass && TestMembers.Any())
                 IsCompletMember = false;
                 Lessons.Clear();
             }
-        }//TODO Ha nem ment akkor figyelmeztetni.
+        }//Ha nem ment akkor figyelmeztetni.
+        else
+        {
+            ToastService.ShowError("A feladatok mentése nem sikerült.");
+            _logger.LogError("A feladatok mentése nem sikerült.");
+        }
     }
-    private async Task SaveClass(List<Lesson> lessons)
-    {
-        var resp = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());
-        resp = await mService.UpdateClassLessons(lessons.Where(l => l.Id != 0).ToList());
-    }
+    //private async Task SaveClass(List<Lesson> lessons)
+    //{
+    //    var resp = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());
+    //    resp = await mService.UpdateClassLessons(lessons.Where(l => l.Id != 0).ToList());
+    //}
     private async Task AddLessons()
     {
-        if (IsClass)
-        {
-            StudentId = Guid.Parse(SelectGroupId);
-            StudentName = Groups.FirstOrDefault(g => g.Id == SelectGroupId).DisplayName;
-            TaskLists = TaskLists.Where(t => t.Topic == "Mértékegység").ToList();
-            Lessons.Clear();
-            Lessons = await mService.GetLessons(StudentId);
-            IsCompletMember = true;
-            StateHasChanged();
-            return;
-        }
         StudentId = TestMembers[0].Id;
         StudentName = TestMembers[0].DisplayName;
         IsCompletMember = true;
@@ -201,7 +309,7 @@ else if (!IsClass && TestMembers.Any())
         {
             await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
         }
-        if (TestMembers[0].Style == "HasLesson")
+        if (TestMembers[0].HasLesson)
         {
             Lessons.Clear();
             Lessons = await mService.GetLessons(TestMembers[0].Id);
@@ -213,16 +321,12 @@ else if (!IsClass && TestMembers.Any())
         }
         StateHasChanged();
     }
-    void CboxChange(ChangeEventArgs arg)
-    {
-        ClassId = Guid.Parse(SelectGroupId);
-        IsClass = (bool)arg.Value;
-    }
     private record Student()
     {
         public Guid Id { get; set; }
         public string DisplayName { get; set; }
-        public string Style { get; set; } = "NoLesson";
+        public bool HasLesson { get; set; } = false;
+        //public string Style { get; set; } = "NoLesson";
     }
     private void ListOneRemove(FluentSortableListEventArgs args)
     {
