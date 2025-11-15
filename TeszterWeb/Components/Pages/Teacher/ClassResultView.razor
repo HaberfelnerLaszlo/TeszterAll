@@ -7,13 +7,13 @@
 @inject IToastService toastService
 @inject ILogger<ClassResultView> _logger
 <h4>Csoport eredményeinek áttekintése</h4>
-<FluentSelect Items="Groups" OptionText="i=>i.DisplayName" OptionValue="i=>i.Id" ValueChanged="SelectGroup"></FluentSelect>
+<FluentSelect Items="Groups" OptionText="i=>i.DisplayName" OptionValue="i=>i.Id" ValueChanged="SelectGroup" Placeholder="Válasz csoportot..."></FluentSelect>
 <FluentButton Appearance="Appearance.Outline" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
 
 @if (Members.Count > 0 || ResultMembers.Count > 0)
 {
     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
-        <FluentGridItem xs="12" sm="5" Style="max-height:400px; overflow-y:auto;">
+        <FluentGridItem xs="12" sm="4" Style="max-height:400px; overflow-y:auto;">
             <h5>Csoport tagjai</h5>
             <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" ItemFilter="@(i=>i.Style.Equals("NoLesson"))" Context="member">
                 <ItemTemplate>
@@ -27,7 +27,7 @@
                 <FluentButton Appearance="Appearance.Accent" OnClick="Reverse" Disabled="!BtnDidabled">Senki sem</FluentButton>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="5">
+        <FluentGridItem xs="12" sm="4">
             <h5>Eredményét kérem</h5>
             <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@ResultMembers" Context="resultmember">
                 <ItemTemplate>
@@ -81,21 +81,39 @@
     {
         Members.Clear();
         SelectGroupId = id;
-        if (id != null)
+        try
         {
-            var members = await graphService.GetStudents(id);
-            foreach (var item in members)
+            if (id != null)
             {
-                Members.Add(new Student() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id) });
-                hasLessons.Add(new() { StudentId = Guid.Parse(item.Id), HasCourse = false });
+                var members = await graphService.GetStudents(id);
+                if (members is null || members.Count == 0)
+                {
+                    toastService.ShowInfo("Nincsenek tagok a csoportban!");
+                    return;
+                }
+                foreach (var item in members)
+                {
+                    Members.Add(new Student() { DisplayName = item.DisplayName, Id = Guid.Parse(item.Id) });
+                    hasLessons.Add(new() { StudentId = Guid.Parse(item.Id), HasCourse = false });
+                }
+                hasLessons = await mService.HasLessons(hasLessons);
+                foreach (var item in hasLessons.DistinctBy(l => l.StudentId).Where(l => l.HasCourse).ToList())
+                {
+                    var member = Members.FirstOrDefault(m => m.Id == item.StudentId);
+                    if (member != null)
+                        member.Style = "HasLesson";
+                }
+                ResultMembers.Clear();
+                BtnDidabled = false;
+                StateHasChanged();
             }
-            hasLessons = await mService.HasLessons(hasLessons);
-            foreach (var item in hasLessons.Where(l => l.HasCourse).ToList())
-            {
-                Members.First(m => m.Id == item.StudentId).Style = "HasLesson";
-            }
+            else return;
         }
-        else return;
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Hiba történt a csoport tagjainak lekérésekor: {ex.Message}");
+            _logger.LogError(ex, "Hiba történt a csoport tagjainak lekérésekor: {ex.Message}", ex.Message);
+        }
     }
     private void All()
     {
@@ -122,6 +140,10 @@
         if (response != null)
         {
             resultClassViews = response;
+        }
+        else
+        {
+            toastService.ShowInfo("A kiválasztott tanulónak nincsenek még eredményei");
         }
     }
     private void ViewStudent(Guid studentId)

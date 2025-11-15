@@ -1,0 +1,23 @@
+﻿@page "/TaskResult/{id}/{name}"
+@inject MathService mService
+@inject PageHistoryState PageHistoryState
+<h4>@Name eredménye</h4>
+<TaskResult taskViews="resultTaskViews"/>
+@if (PageHistoryState.CanGoBack())
+{
+	<a href="@PageHistoryState.GetGoBackPage()">Vissza</a>
+}
+@code {
+	[Parameter] public string Id { get; set; }
+	[Parameter] public string  Name { get; set; }
+	private List<ResultTaskView> resultTaskViews = new();
+	protected override async Task OnParametersSetAsync()
+	{
+		resultTaskViews.Clear();
+		var response = await mService.ResultTaskViews(int.Parse(Id));
+		if (response != null)
+		{
+			resultTaskViews = response;
+		}
+	}
+}
