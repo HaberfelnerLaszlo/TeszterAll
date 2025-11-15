@@ -66,7 +66,7 @@ else if (!string.IsNullOrEmpty(selectClass))
     protected override async Task OnInitializedAsync()
     {
         Groups = await gService.GetGroupsHasLessonsAsync();
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        //var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         //if ((Groups is null || Groups.Count == 0) && authState is not null)
         //{
         //    var user = authState.User;
@@ -134,7 +134,8 @@ else if (!string.IsNullOrEmpty(selectClass))
     }
     private async Task CheckClass(List<ClassRecive> _recives)
     {
-        _recives.ForEach(r => r.Result = r.Result.Replace(',', '.'));
+        ClassId = Guid.Parse(selectClass);
+        _recives.ForEach(r => { r.Result = r.Result.Replace(',', '.');r.ClassId = ClassId; });
         recives = await mService.ClassResult(_recives);
         IsChecked = true;
         StateHasChanged();
@@ -194,7 +195,7 @@ else if (!string.IsNullOrEmpty(selectClass))
         }
         TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
         var cestDateTime =TimeZoneInfo.ConvertTime(DateTime.Now, timeZone);
-        
+
         TimeSpan CurrentTime = new TimeSpan(cestDateTime.Hour, cestDateTime.Minute, 0);
 
         if (Periods[0].StartTime - CurrentTime > TimeSpan.Zero)
