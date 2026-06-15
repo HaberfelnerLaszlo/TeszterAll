@@ -68,7 +68,7 @@ namespace TeszterLibrary.Services
 		/// </summary>
 		/// <param name="question"></param>
 		/// <returns></returns>
-		public async Task<Question> UpdateQuestionAsync(Question question)
+		public async Task<Question?> UpdateQuestionAsync(Question question)
 		{
 			try
 			{

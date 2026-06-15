@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
-
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services.Feladat
@@ -115,6 +113,32 @@ namespace TeszterLibrary.Services.Feladat
                 ErrorMessage += message;
             }
             return default;
+        }
+        public async Task<bool> PostFileAsync(Stream fileStream)
+        {
+            try
+            {
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7131/upload");
+                var content = new MultipartFormDataContent();
+                content.Add(new StreamContent(fileStream),fileStream.ToString());
+                request.Content = content;
+                var response = await client.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                throw;
+            }
         }
 
         public async Task<bool> Put<T>(string uri, T t)

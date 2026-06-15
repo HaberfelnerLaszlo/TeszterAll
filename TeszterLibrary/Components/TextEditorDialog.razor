@@ -1,0 +1,186 @@
+﻿@using System.Text.RegularExpressions
+@using Blazored.TextEditor
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.JSInterop
+
+@inject IWebHostEnvironment Environment
+@inject GraphService graphService
+@inject FolderData folderData
+@inject IToastService toastService
+@inject IWebHostEnvironment WebHostEnvironment
+@implements IDialogContentComponent<string>
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentLabel Typo="Typography.PaneHeader">
+            @Dialog.Instance.Parameters.Title
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Mentés</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Mégsem</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+
+<FluentDialogBody>
+    @if (!hide)
+    {
+        <BlazoredTextEditor @ref="textEditor" DebugLevel="warn" EditorCssStyle="width:100%; height:auto;">
+        <ToolbarContent>
+            <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-image"></button>
+            </span>
+        </ToolbarContent>
+        <EditorContent>
+           @((MarkupString)Content)
+        </EditorContent>
+        </BlazoredTextEditor>
+    }
+</FluentDialogBody>
+
+    @code {
+    [Parameter]
+    public string Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+    private BlazoredTextEditor textEditor = new();
+    private string htmlContent = string.Empty, driveId = string.Empty, folderId = string.Empty;
+    bool hide = false, isModified = false;
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            // Mentés előtt dolgozd fel a képeket
+            htmlContent = await textEditor.GetHTML();
+            htmlContent = await ProcessAndSaveImagesAsync(htmlContent);
+            // Itt mentheted az htmlContent változó tartalmát az adatbázisba vagy más tárolóba
+            Content = htmlContent;
+            //await InvokeAsync(StateHasChanged);
+            await Dialog.CloseAsync(Content);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Hiba történt: {ex.Message}");
+        }
+
+    }
+    private async Task<string> ProcessAndSaveImagesAsync(string htmlContent)
+    {
+        if (string.IsNullOrEmpty(htmlContent)) return htmlContent;
+
+        // Mappa előkészítése a wwwroot/uploads alatt
+        string uploadsFolder = Path.Combine(WebHostEnvironment.WebRootPath, "uploads");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        // Reguláris kifejezés az összes <img> tag src="data:image..." attribútumának megtalálására
+        string regexPattern = @"<img[^>]+src=[""']data:image/(?<type>[^;]+);base64,(?<data>[^""']+)[""'][^>]*>";
+        var matches = Regex.Matches(htmlContent, regexPattern);
+
+        foreach (Match match in matches)
+        {
+            string imageType = match.Groups["type"].Value; // pl. png, jpeg, gif
+            string base64Data = match.Groups["data"].Value;
+
+            try
+            {
+                // Base64 sztring átalakítása bájt-tömbbé (byte array)
+                byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+                // Egyedi fájlnév generálása a felülírások elkerülésére
+                string fileName = $"{Guid.NewGuid()}.{imageType}";
+                string physicalPath = Path.Combine(uploadsFolder, fileName);
+
+                // Kép kiírása a szerver merevlemezére / tárhelyére
+                await File.WriteAllBytesAsync(physicalPath, imageBytes);
+
+                // A relatív URL, amit a böngésző el tud érni
+                string relativeUrl = $"/uploads/{fileName}";
+
+                // Kicseréljük a teljes eredeti <img> taget egy tisztára, ami már csak a külső linkre mutat
+                string newImgTag = $"<img src=\"{relativeUrl}\" alt=\"uploaded image\" />";
+                htmlContent = htmlContent.Replace(match.Value, newImgTag);
+            }
+            catch
+            {
+                // Hibás base64 adatok esetén átugorjuk az adott képet
+                continue;
+            }
+        }
+        return htmlContent;
+    }
+    // private async Task<string> ProcessImages(string html)
+    // {
+    //     var doc = new HtmlAgilityPack.HtmlDocument();
+    //     doc.LoadHtml(html);
+    //     var images = doc.DocumentNode.SelectNodes("//img");
+
+    //     if (images != null)
+    //     {
+    //         foreach (var img in images)
+    //         {
+    //             var base64Data = img.GetAttributeValue("src", string.Empty);// Ellenőrizd, hogy a src attribútum tartalmaz-e base64 adatot. null volt!!!
+    //             if (base64Data.StartsWith("data:image"))
+    //             {
+    //                 isModified = true;
+    //                 var filePath = await SaveImage(base64Data);
+    //                 img.SetAttributeValue("src", filePath);
+    //             }
+    //         }
+    //     }
+
+    //     return doc.DocumentNode.OuterHtml;
+    // }
+
+    private async Task<string> SaveImage(string base64Data)
+    {
+        string filePath = string.Empty;
+        try
+        {
+            var base64 = base64Data.Substring(base64Data.IndexOf(",") + 1);
+            var bytes = Convert.FromBase64String(base64);
+            var fileName = Guid.NewGuid().ToString() + ".png";
+            if (!String.IsNullOrEmpty(folderId))
+            {
+                filePath = await graphService.UploadFileToFolder(bytes, fileName, folderId, driveId);
+                toastService.ShowSuccess("Kép sikeresen feltöltve a Onedrive-ba!");
+            }
+            else
+            {
+                toastService.ShowError("Hiba a képfeltöltés során!");
+                filePath = Path.Combine(Environment.WebRootPath, "uploads", fileName);
+                await File.WriteAllBytesAsync(filePath, bytes);
+                toastService.ShowSuccess("Kép sikeresen feltöltve a szerverre!");
+            }
+            var image = new Image
+            {
+                FilePath = filePath,
+                FileName = fileName,
+                UploadDate = DateTime.Now
+            };
+            return filePath;
+        }
+        catch (Exception)
+        {
+            toastService.ShowError("Hiba a kép mentése során!");
+            return string.Empty;
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
+using TeszterLibrary.Events;
 using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services
@@ -17,10 +18,10 @@ namespace TeszterLibrary.Services
         public string ErrorMessage { get; set; } = String.Empty;
         private static readonly HttpClient client = new();
         private static readonly string[] scopes = ["api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user"];
-
-        protected static string URI = "https://teszter-api.haberfelner.eu/";
+        public EventHandler<MessageEvent> OnMessageReceived { get; set; }
+        //protected static string URI = "https://teszter-api.haberfelner.hu/";
         //protected static string URI = "http://localhost:7025/";
-        //protected static string URI = "https://localhost:44308/"; //ISS
+        protected static string URI = "https://localhost:44308/"; //ISS
         //protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
         //protected static string URI = "http://192.168.1.69:7025"; //laptop
         private string? _token;
@@ -57,6 +58,11 @@ namespace TeszterLibrary.Services
                             if (deserilizeResponse.IsSuccess)
                             {
                                 return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
+                            }
+                            else
+                            {
+                                OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage,100));
+                                return default;
                             }
                         }
                     }
@@ -124,7 +130,12 @@ namespace TeszterLibrary.Services
                     {
                         if (deserilizeResponse.IsSuccess)
                         {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content?.ToString() ?? string.Empty);
+                        }
+                        else
+                        {
+                            OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage, 100));
+                            return default;
                         }
                     }
                 }
@@ -175,6 +186,11 @@ namespace TeszterLibrary.Services
                         if (deserilizeResponse.IsSuccess)
                         {
                             return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                        }
+                        else
+                        {
+                            OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage, 100));
+                            return default;
                         }
                     }
                 }

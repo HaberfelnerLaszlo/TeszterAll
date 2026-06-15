@@ -77,17 +77,8 @@
                                             <FluentNumberField Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
                                         </FluentGridItem>
                                     </FluentGrid>
-                                    @*<div class="row">
-                        <div class="col">
-                            <label for="score">Pontszám</label>
-                        </div>
-                        <div class="col">
-                            <label for="time"></label>
-                        </div>
-                    </div>*@
                                 </div>
                                 <div>
-                                    @*<label for="grade"></label>*@
                                     <div class="input-group">
                                         <FluentNumberField Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
                                         <span> -  </span>

@@ -1,5 +1,8 @@
 ﻿using Azure.Core;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Drives.Item.Items.Item.CreateLink;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
 
@@ -13,12 +16,16 @@ namespace TeszterLibrary.Services
 	public class GraphService
 	{
         private GraphServiceClient? client;
-		public string ErrorMessage { get; set; } = string.Empty;
-        public GraphService(GraphServiceClient client) {
-			this.client = client;
+        private readonly ILogger<GraphService> logger;
 
-		}
-		public async Task<List<EducationUser>?> GetStudents(string Id)
+        public string ErrorMessage { get; set; } = string.Empty;
+        public GraphService(GraphServiceClient client, ILogger<GraphService> logger)
+        {
+            this.client = client;
+            this.logger = logger;
+        }
+
+        public async Task<List<EducationUser>?> GetStudents(string Id)
 		{
 			//var graphServiceClient = Gsc();
 			List<EducationUser> Students = new();
@@ -27,7 +34,11 @@ namespace TeszterLibrary.Services
 				if (Id != null && client is not null)
 				{
 					var members = await client.Education.Classes[Id].Members.GetAsync();
-					Students = members.Value.Where(m => m.UserType == "Member" && m.PrimaryRole != EducationUserRole.Teacher).ToList();
+					if (members == null)
+					{
+						throw new NullReferenceException("No members found");
+                    }
+                    Students = members.Value?.Where(m => m.UserType == "Member" && m.PrimaryRole != EducationUserRole.Teacher).ToList() ?? new List<EducationUser>();
 				}
 
 				return Students;
@@ -46,7 +57,11 @@ namespace TeszterLibrary.Services
 				if (UserId != null&& client is not null)
 				{
 					var response = await client.Education.Users[UserId].Classes.GetAsync();
-					Groups = response.Value.Where(c => !c.DisplayName.Contains("Exp")).ToList();
+					if (response == null)
+					{
+						throw new NullReferenceException("No classes found");
+                    }
+                    Groups = response.Value?.Where(c => !c.DisplayName?.Contains("Exp")?? false).ToList() ?? new List<EducationClass>();
 				}
 				return Groups;
 			}
@@ -66,7 +81,10 @@ namespace TeszterLibrary.Services
                 if (ClassId != null && client is not null)
                 {
                     var response = await client.Education.Classes[ClassId].Assignments.GetAsync();
-                    Assignments = response.Value.ToList();
+					if (response == null) { 
+						throw new NullReferenceException("No assignments found");
+                    }
+                    Assignments = response.Value?.ToList() ?? new List<EducationAssignment>();
                 }
                 return Assignments;
             }
@@ -101,7 +119,7 @@ namespace TeszterLibrary.Services
                     AdditionalData = new Dictionary<string, object>
         {
             {
-                "thumbnailPreviewUrl" , null
+                "thumbnailPreviewUrl" ,String.Empty
             },
         },
                 },
@@ -118,20 +136,138 @@ namespace TeszterLibrary.Services
 			}
 			var user = await client.Education.Me.GetAsync();
 			if (user == null) return default;
-			return new Student() { Id = Guid.Parse(user.Id), DisplayName = user.DisplayName, Role = user.PrimaryRole.ToString(), AccessToken = token };
+			return new Student() { Id = Guid.Parse(user.Id?? ""), DisplayName = user.DisplayName?? "", Role = user.PrimaryRole?.ToString()?? EducationUserRole.Student.ToString(), AccessToken = token };
 		}
-		public List<DriveItem> GetFolders()
+		public async Task<List<DriveItem>?> GetFolders()
 		{
-			var ChildrenCollection = client.Me.Drive.GetAsync().Result.Root.Children.ToList();
-			return ChildrenCollection.Where(item => item.Folder != null).ToList();
+            if (client is null)
+            {
+				ErrorMessage = "Graph client is null";
+				logger.LogError(ErrorMessage);
+                return default;
+            }
+			var ChildrenCollection = await client.Me.Drive.GetAsync();
+			return ChildrenCollection?.Root?.Children?.Where(item => item.Folder != null).ToList() ?? new List<DriveItem>();
 		}
-
-		public async Task<string> CreateAppFolders()
+		public async Task<string> GetMyDrive()
 		{
-			//var graphServiceClient = Gsc();
+            if (client is null)
+            {
+				ErrorMessage = "Graph client is null";
+				logger.LogError(ErrorMessage);
+                return string.Empty;
+            }
+			var mydrive = await client.Me.Drive.GetAsync();
+			if (mydrive == null) {
+				ErrorMessage = "Error getting user's drive";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
+			if (string.IsNullOrEmpty(mydrive.Id))
+			{
+				ErrorMessage = "Drive ID is null or empty";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+            }
+            return mydrive.Id;
+        }
+        public async Task<string> CreateAppFolder(string mydriveId)
+		{
+            string token = string.Empty;
+            if (client is null)
+            {
+				ErrorMessage = "Graph client is null";	
+                logger.LogError(ErrorMessage);
+                return string.Empty;
+            }
+			var appFolder = await client.Drives[mydriveId].Special["approot"].GetAsync();
+			if (appFolder == null)
+			{
+				ErrorMessage = "Error getting app folder";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
+			if (string.IsNullOrEmpty(appFolder.Id))
+			{
+				ErrorMessage = "Drive ID is null or empty";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
+			return appFolder.Id;
+		}
+		public async Task<bool> CheckIfFolderExists(string folderName, string mydriveId, string appFolderId)
+		{
+			string token = string.Empty;
+			if (client is null)
+			{
+				ErrorMessage = "Graph client is null";
+				logger.LogError(ErrorMessage);
+				return false;
+			}
+			var children = await client.Drives[mydriveId].Items[appFolderId].Children.GetAsync();
+			if (children == null || children.Value == null)
+			{
+				ErrorMessage = "Error getting folder children";
+				logger.LogError(ErrorMessage);
+				return false;
+			}
+			foreach (var item in children.Value)
+			{
+				if (item.Name == folderName && item.Folder != null)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+		public async Task<string> GetFolderIdByName(string folderName, string mydriveId, string appFolderId)
+		{
+			string token = string.Empty;
+			if (client is null)
+			{
+				ErrorMessage = "Graph client is null";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
+			var children = await client.Drives[mydriveId].Items[appFolderId].Children.GetAsync();
+			if (children == null)
+			{
+				ErrorMessage = "Error getting folder children";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
+			if (children.Value == null || children.Value.Count == 0)
+			{
+				ErrorMessage = "No children found in the folder";
+				logger.LogWarning(ErrorMessage);
+				var folderId = await CreateImageFolders(mydriveId, appFolderId);
+				if (!string.IsNullOrEmpty(folderId)) return folderId;
+                return string.Empty;
+            }
+            var folder = children.Value.FirstOrDefault(v => v.Name == folderName && v.Folder != null);
+			if (folder != null)
+			{
+				return folder.Id??string.Empty;
+            }
+			else
+			{
+				var folderId = await CreateImageFolders(mydriveId, appFolderId);
+				if (!string.IsNullOrEmpty(folderId)) return folderId;
+            }
+				return string.Empty;
+        }
+        public async Task<string> CreateImageFolders(string mydriveId, string appFolderId)
+		{
+			string token = string.Empty;
+			if (client is null)
+			{
+				ErrorMessage = "Graph client is null";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+			}
 			DriveItem driveItem = new()
 			{
-				Name = "Teszter",
+				Name = "Images",
 				Folder = new Folder
 				{
 				},
@@ -140,56 +276,45 @@ namespace TeszterLibrary.Services
 					{"@microsoft.graph.conflictBehavior", "fail"}
 				}
 			};
-			var mydrive = await client.Me.Drive.GetAsync();
-			var ChildrenCollection = mydrive.Root.Children;
-			if (ChildrenCollection.Contains(driveItem))
-			{
-				return ChildrenCollection.First(f => f.Name == driveItem.Name).Id;
-			}
-			//DriveItem appFolder;
-			try
-			{
-				client.Drives[mydrive.Id].Root.GetAsync().Result.Children.Add(driveItem);
-				//var type = "view";
-
-				//var scope = "organization";
-
-				//await graphServiceClient.Me.Drive.GetAsync().Result.Items[0]
-				//	.CreateLink(type, scope, null, null, null, null)
-				//	.Request()
-				//	.PostAsync();
-				//            driveItem.Name = "Images";
-				//var imagesFolder = await graphServiceClient.Me.Drive.GetAsync().Result.Items[appFolder.Id].Children
-				//	.Request()
-				//	.AddAsync(driveItem);
-				//driveItem.Name = "Uploads";
-				//var uploadFolder = await graphServiceClient.Me.Drive.GetAsync().Result.Items[appFolder.Id].Children
-				//	.Request()
-				//	.AddAsync(driveItem);
-				//return appFolder.Id;
+			var createdFolder = await client.Drives[mydriveId].Items[appFolderId].Children.PostAsync(driveItem);
+			if (createdFolder == null) {
+				ErrorMessage = "Error creating folder";
+				logger.LogError(ErrorMessage);
 				return string.Empty;
 			}
-			catch //(ServiceException exception)
+			if (string.IsNullOrEmpty(createdFolder.Id))
 			{
-				//if (exception.StatusCode == HttpStatusCode.Conflict && exception.Error.Code == "nameAlreadyExists")
-				//{
-				//	var newFolder = graphServiceClient
-				//		.Me
-				//		.Drive.GetAsync().Result.Items.Find(d=>d.Equals(driveItem)); // the API lets us run searches https://docs.microsoft.com/en-us/graph/api/driveitem-search?view=graph-rest-1.0&tabs=csharp
-
-				//	// since the search is likely to return more results we should filter it further
-				//	driveItem = newFolder;// Just to ensure we're finding a folder, not a file with this name
-				//	Console.WriteLine(driveItem?.Id); // your ID here
-				//	return driveItem.Id;
-				//}
-				//else
-				//{
-				//	Console.WriteLine("Other ServiceException");
-				throw;// handle this
-					  //}
-			}
+				ErrorMessage = "Created folder ID is null or empty";
+				logger.LogError(ErrorMessage);
+				return string.Empty;
+            }
+            return createdFolder.Id;
 		}
-
-	}
+        public async Task<string> UploadFileToFolder(byte[] fileBytes, string fileName, string folderId, string mydriveId)
+		{
+			if (client is null)
+			{
+				return string.Empty;
+			}
+			using (var stream = new MemoryStream(fileBytes))
+			{
+				var uploadedFile = await client.Drives[mydriveId].Items[folderId].ItemWithPath(fileName).Content.PutAsync(stream);
+				if (uploadedFile == null) return string.Empty;
+                var requestBody = new CreateLinkPostRequestBody
+                {
+                    Type = "view",
+                    Scope = "organization",
+                    RetainInheritedPermissions = false,
+                };
+                var permission = await client.Drives[mydriveId].Items[uploadedFile.Id].CreateLink.PostAsync(requestBody);
+				if (permission == null) return string.Empty;
+                return permission.Link?.WebUrl ?? string.Empty;
+			}
+        }
+        public void Dispose()
+		{
+			client = null;
+        }
+    }
 
 }

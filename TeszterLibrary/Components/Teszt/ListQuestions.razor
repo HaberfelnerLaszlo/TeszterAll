@@ -23,9 +23,19 @@ else{
 	<UploadQuestion UserId="@UserId"/>
     </div>
 }
-<div class="container" hidden="@newOrEdit">
-	<QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />
-</div>
+@* <div class="container" hidden="@newOrEdit"> *@
+	@if (newOrEdit == false)
+	{
+		if (TempQuestion.QType == QuestionType.Komp)
+		{
+			<TeszterLibrary.Components.Feladat.NewAssignment_2 newQuestion="TempQuestion" Save="Save" Cancel="() => newOrEdit = true"  IsEditMode="true"/>
+		}
+		else
+		{
+			<QuestionNewEdit newQuestion="TempQuestion" subjects="Subjects" New=isNew Save="Save" SubjectsSave="SaveSubject" Cancel="()=>newOrEdit=true" />				
+		}
+	}
+@* </div> *@
 @if (TestQuestion.Count>0)
 {
 	<div class="fixed-bottom newtest-message">

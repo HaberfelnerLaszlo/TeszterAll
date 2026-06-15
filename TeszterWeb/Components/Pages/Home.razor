@@ -25,6 +25,7 @@
         <NavLink class="nav-doboz" href="addcourse">Matek gyakorlás tanulónak</NavLink>
         <NavLink class="nav-doboz" href="classResult">Matek gyakorlás eredményei</NavLink>
         <NavLink class="nav-doboz" href="feladat/tanulokpont">Tanulók pontjai</NavLink>
+        <NavLink class="nav-doboz" href="teacher/add-assignment">Feladat próba</NavLink>
     </FluentGrid>
 </AuthorizeView>
 <AuthorizeView Roles="Student">
@@ -42,7 +43,7 @@
             { <FluentLabel Typo="Typography.H3">Gratulálok! A legjobbak között vagy! </FluentLabel>
             }
         </FluentCard>
-        @if (datas is not null || datas.Count > 0)
+        @if (datas is not null || datas?.Count > 0)
         {
             <ApexChart TItem="PontData" Title="Az utolsó 20 pont" Height="300" Width="600" XAxisType="XAxisType.Datetime">
                 <ApexPointSeries TItem="PontData"
@@ -149,9 +150,9 @@
     private void MakeData()
     {
         datas.Clear();
-        int aktualpont = tanuloData.PontSzam;
-        tanuloData.Pontok.Reverse();
-        tanuloData.Pontok.ForEach(p => { datas.Add(new PontData() { Datum = p.Datum, Pontszam = aktualpont }); aktualpont -= p.PontSzam; }); ;
+        int aktualpont = tanuloData?.PontSzam ?? 0;
+        tanuloData?.Pontok.Reverse();
+        tanuloData?.Pontok.ForEach(p => { datas.Add(new PontData() { Datum = p.Datum, Pontszam = aktualpont }); aktualpont -= p.PontSzam; });
     }
     public class PontData()
     {

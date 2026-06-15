@@ -17,14 +17,20 @@ namespace TeszterLibrary.Model
 		/// </summary>
 		[Required, MaxLength(250)]
 		public string Text { get; set; }=string.Empty;
-		//public byte[] Image { get; set; }
-		/// <summary>
-		/// Helyes válasz? Vagy párosításnál a második false az első true legyen.
-		/// </summary>
-		public bool Right { get; set; }
+        /// <summary>
+        /// A helyes válasz szövege (kiegészítésnél)
+        /// </summary>
+        public string RightAnswer { get; set; } = String.Empty;
+        /// <summary>
+        /// Helyes válasz? Vagy párosításnál a második false az első true legyen.
+        /// </summary>
+        public bool Right { get; set; }
 		/// <summary>
 		/// Sorbarendezésnél a sorrend vagy párosításnál a pár száma vagy kiegészítésnél hányadik
 		/// </summary>
 		public int Sequence { get; set; }
-	}
+        [Range(0, 100, ErrorMessage = "Csak 0 és 100 közötti érték adható!")]
+        public int Score { get; set; } = 1;
+        public List<AnswerHelper>? AnswerHelpers { get; set; }
+    }
 }

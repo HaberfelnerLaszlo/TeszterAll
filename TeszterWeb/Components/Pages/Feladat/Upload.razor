@@ -1,0 +1,32 @@
+﻿@page "/feladat/upload"
+@inject TeszterLibrary.Services.Feladat.FeladatApiService FeladatService
+@inject IToastService toastService
+<h3>Feltöltés</h3>
+<FluentInputFile @ref="@myFileByBuffer"
+                 AnchorId="MyUploadBuffer"
+                 DragDropZoneVisible="false"
+                 Mode="InputFileMode.Stream"
+                 Multiple="false"
+                 MaximumFileSize="@(1000 * 1024 * 1024)"
+                 OnFileUploaded="@OnCompleted" />
+
+
+<FluentButton Appearance="Appearance.Accent" Id="MyUploadBuffer">
+    File feltöltése
+</FluentButton>
+
+@code {
+    FluentInputFile? myFileByBuffer = default!;
+    async void OnCompleted(FluentInputFileEventArgs file)
+    {
+        var resp = await FeladatService.PostFileAsync(file.Stream);
+        if (resp)
+        {
+            toastService.ShowSuccess($"File {file.Name} sikeresen feltöltve.");
+        }
+        else
+        {
+            toastService.ShowError($"File {file.Name} feltöltése sikertelen.");
+        }
+    }
+}

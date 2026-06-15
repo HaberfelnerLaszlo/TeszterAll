@@ -51,8 +51,12 @@
                      data-toggle="tooltip" data-placement="top" title="Sorbarendező kérdés" />
                 break;
             case QuestionType.Pair:
-                <img src=_content/TeszterLibrary/Pair.svg data-toggle="tooltip"
+                <img src=_content/TeszterLibrary/Pair.svg height=16 width=16 data-toggle ="tooltip"
                      data-placement="top" title="Párosító kérdés" />
+                break;
+            case QuestionType.Komp:
+                <img src=_content/TeszterLibrary/komp.svg height=16 width=16 data-toggle="tooltip"
+                     data-placement="top" title="Komplex kérdés" />
                 break;
             default:
                 break;
@@ -79,7 +83,7 @@
     string nameFilter = string.Empty, titleFilter = string.Empty, subjectFilter = string.Empty;
     private List<Subject> subjects = new List<Subject>();
     IEnumerable<int> Grades = new int[] { 1, 12 };
-    private bool updated = true;
+    //private bool updated = true;
     Question UpdateQuestion = new Question();
     public List<Answer> Answers = new List<Answer>();
     private List<QuestionListView> allQuestions = new();
