@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject IToastService toastService
+@inject TeszterApiService apiService
 @inject GlobalData data
 <FluentLayout>
     <FluentHeader>
@@ -18,16 +20,16 @@
     <FluentFooter>
         <div id="version">
             <span>
-                Verzió: 0.8.5
+                Verzió: 0.8.6
             </span>
             <FluentTooltip Anchor="version">
-                2025.11.15
+                2026.01.25
             </FluentTooltip>
         </div>
     </FluentFooter>
 </FluentLayout>
 <FluentDialogProvider />
-<FluentToastProvider MaxToastCount="10" />
+<FluentToastProvider MaxToastCount="10" Position="ToastPosition.BottomRight"/>
 <FluentTooltipProvider />
 <div id="blazor-error-ui">
     An unhandled error has occurred.
@@ -40,7 +42,23 @@
     {
         if (firstRender || string.IsNullOrEmpty(Title)) {
             Title = data.Title ?? string.Empty;
+            if (apiService != null)
+            {
+                apiService.OnMessageReceived += OnMessageReceived;
+            }
         }
         base.OnAfterRender(firstRender);
     }
+    private void OnMessageReceived(object? sender, MessageEvent e)
+    {
+            // Show the message in a toast notification
+            toastService?.ShowError(e.Message);
+    }
+    // private void Dispose()
+    // {
+    //     if (apiService != null)
+    //     {
+    //         apiService.OnMessageReceived -= OnMessageReceived;
+    //     }
+    // }
 }

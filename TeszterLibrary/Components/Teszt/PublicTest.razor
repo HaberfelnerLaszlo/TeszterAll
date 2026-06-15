@@ -83,7 +83,7 @@
 @code {
     [Parameter] public Test Teszt { get; set; } = new();
     [Parameter] public string UserId { get; set; } = string.Empty;
-    [Parameter] public List<Section>? sections { get; set; } = new();
+    [Parameter] public List<TeszterLibrary.Model.Section>? sections { get; set; } = new();
     [Parameter] public EventCallback Published { get; set; }
 
     public List<EducationClass>? Groups { get; set; } = new();
@@ -91,8 +91,8 @@
     private List<EducationUser> TestMembers = new List<EducationUser>();
     private string SelectGroupId = string.Empty;
     private EducationUser lastdropped { get; set; } = new();
-    private bool BtnDidabled = false, AssigmentCreated = false;
-    private GraphServiceClient? graph;
+    private bool  AssigmentCreated = false;//BtnDidabled = false,
+    //private GraphServiceClient? graph;
     string message = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -110,7 +110,7 @@
         {
             if (sections is null||sections.Count==0)
             {
-                toastService.ShowEvent("Szankciók nincsenek átvéve lekérdezés történik.");
+                toastService.ShowEvent("Szekciók nincsenek átvéve, lekérdezés történik.");
                 sections = await seService.GetSections(Teszt.Id);
             }
             if (sections is not null && sections.Count > 0)
@@ -120,7 +120,7 @@
             }
             else
             {
-                toastService.ShowWarning($"Hibalépet fel a szankciók lekérdezésénél!");
+                toastService.ShowWarning($"Hibalépet fel a szekciók lekérdezésénél!");
             }
         }
     }
@@ -131,6 +131,12 @@
         if (id != null)
         {
             var members = await gService.GetStudents(id);
+            if(members is null)
+            {
+                toastService.ShowWarning("Nincsenek tagok a csoportban!");
+                _logger.LogWarning("Nincsenek tagok a csoportban! Csoport azonosító: {GroupId}", id);
+                return;
+            }
             foreach (var item in members)
             {
                 if (item.PrimaryRole is null)
@@ -175,15 +181,15 @@
         }
         foreach (var item in TestMembers)
         {
-            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime, Test = null });
-            var HasUser = await uService.UserExits(Guid.Parse(item.Id));
+            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id ?? string.Empty), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime });
+            var HasUser = await uService.UserExits(Guid.Parse(item.Id ?? string.Empty));
             if (!HasUser)
             {
-                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName??string.Empty, Id = Guid.Parse(item.Id), Role = item?.PrimaryRole.Value.ToString()?? "Student" });
+                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName ?? string.Empty, Id = Guid.Parse(item.Id ?? string.Empty), Role = item.PrimaryRole!.Value.ToString() ?? "Student" });
             }
         }
-        Teszt.TestQuestions = null;
-        Teszt.TestUsers = null;
+        // Teszt.TestQuestions = null;
+        // Teszt.TestUsers = null;
         Teszt.IsPublished = true;
         if (sections is not null)
         {

@@ -1,0 +1,361 @@
+﻿@using System.Linq
+@using System.Threading.Tasks
+@inject QuestionServices qServices
+@inject IToastService toastService
+@inject IDialogService DialogService
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+<FluentGrid >
+@*általános rész*@
+    <FluentGridItem>
+        <DefaultDataAssignment NewQuestion="@newQuestion" />
+        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
+        <span> Aktív tab: @activeTabId </span>
+    </FluentGridItem>
+    @*feladat rész*@
+    <FluentGridItem xs="12" sm="6">
+        <FluentButton OnClick="() => OpenTextEditor(newQuestion.Text)"> @(_ = String.IsNullOrEmpty(newQuestion.Text) ? "Szöveg felvétele" : "Szöveg szerkesztése") </FluentButton>
+        @if (String.IsNullOrWhiteSpace(newQuestion.Text))
+        {
+            <div style="padding: 10px; margin: 10px;"> Addjon meg kérdést/feladatot! </div>
+        }
+        else
+        {
+            <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
+                @((MarkupString)newQuestion.Text)
+            </div>
+        }
+    </FluentGridItem>
+    @*válasz rész*@
+    @if(IsSavedQuestion)
+    {
+    <FluentGridItem xs="12" sm="6">
+        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
+            @if (newAnswers.Count > 0)
+            {
+                <FluentTabs @bind-ActiveTabId="@activeTabId" ShowClose="true" OnTabClose="@(tab => ClosedTab(tab))">
+                @foreach (var answer in newAnswers) 
+                {
+                    var seq = answer.Sequence;
+                    <FluentTab @key="@seq" Label="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="@answer">
+                        <FluentButton OnClick="() => OnOpen(answer)"> @(_=String.IsNullOrEmpty(answer.Text) ? "Kérdés felvétele" : "Kérdés szerkesztése") </FluentButton>
+                        <New_Komp_Answer @key="@seq" NewAnswer="answer"/> 
+                        @if (answer.Id > 0)
+                        {
+                            <FluentButton OnClick="() => OpenNewHelper(answer.Id)">Új segítség hozzáadása</FluentButton>
+                        }
+                        else
+                        {
+
+                            <FluentLabel>Mentse el a választ, hogy segítséget adhasson hozzá!</FluentLabel>
+                        }
+                        @if(answerHelpers.Count > 0 && answerHelpers.Where(h => h.AnswerId==answer.Id).Any())
+                        {
+                            <FluentLabel>@answer.Id Válasz segítők: </FluentLabel>
+                            @foreach(var item in answerHelpers.Where(h => h.AnswerId==answer.Id))
+                            {
+                                <FluentCard MinimalStyle="true" Style="width:80%">
+                                        <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween" Orientation="Orientation.Horizontal">
+                                        <FluentLabel>Id:@item.Id . AId:@item.AnswerId .</FluentLabel>
+                                        <div>@((new MarkupString(item.Text.Substring(0, Math.Min(item.Text.Length, 20)))))</div>
+                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(async () => 
+                                        {
+                                            var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(item.Text, new DialogParameters()
+                                            {
+                                                Alignment = HorizontalAlignment.Center,
+                                                Title = $"{item.Id}. segítség szerkesztése",
+                                                PreventDismissOnOverlayClick = true,
+                                                PreventScroll = true,
+                                            });
+                                            var result = await dialog.Result;
+                                            if (!result.Cancelled && result.Data != null)
+                                            {
+                                                item.Text = (string)result.Data;
+                                                toastService.ShowSuccess("Segítség sikeresen frissítve.");
+                                            }
+                                        })">Szerkesztés</FluentButton>
+                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Neutral" OnClick="@(async () =>
+                                        {
+                                            if (answerHelpers.Contains(item))
+                                            {
+                                                answerHelpers.Remove(item);
+                                                toastService.ShowSuccess("Segítség sikeresen törölve.");
+                                                await InvokeAsync(StateHasChanged);
+                                            }
+                                        })">Törlés</FluentButton>
+                                        </FluentStack>
+                                </FluentCard>
+                            }
+                        }
+                    </FluentTab> 
+                }
+                </FluentTabs>
+            }
+        </FluentGridItem>
+    }
+    else{
+    <FluentGridItem>
+        <FluentLabel>Válaszok szerkesztéséhez menteni kell a kérdést!</FluentLabel>
+    </FluentGridItem>
+    }
+</FluentGrid>
+    @code {
+    [Parameter] public Question newQuestion { get; set; } = new Question();
+    [Parameter] public bool IsEditMode { get; set; } = false;
+    [Parameter] public EventCallback<Question> Save { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+
+    Answer newAnswer = new Answer();
+    AnswerHelper answerHelper = new AnswerHelper();
+    int AnswerCount = 0, AnswerHelperCount = 0;
+    bool IsSavedQuestion = false;
+    string activeTabId = "tab-1";
+    List<Answer> newAnswers = new List<Answer>();
+    List<AnswerHelper> answerHelpers = new List<AnswerHelper>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        //newAnswers.Clear();
+        if (newQuestion.Id == Guid.Empty)
+        {
+            newQuestion.Id = Guid.NewGuid();
+            newQuestion.Title = "Felvételi";
+            newQuestion.Subtitle = "Geometria";
+            newQuestion.Subject = "Matematika";
+            newQuestion.MinGrade = 5;
+            newQuestion.MaxGrade = 12;
+            newQuestion.QType = QuestionType.Komp;
+            //InitializeNewAnswers();
+        }
+        await base.OnInitializedAsync();
+    }
+    void InitializeNewAnswers()
+    {
+        newAnswers.Clear();
+        if (newQuestion.Answers is not null && newQuestion.Answers.Count > 0)
+        {
+            foreach (var ans in newQuestion.Answers)
+            {
+                newAnswers.Add(new Answer
+                {
+                    Id = ans.Id,
+                    QuestionId = ans.QuestionId,
+                    Sequence = ans.Sequence,
+                    Text = ans.Text,
+                    RightAnswer = ans.RightAnswer,
+                    Score = ans.Score
+                });
+            }
+        }
+        else
+        {
+            for (int i = 1; i < 5; i++)
+            {
+                newAnswers.Add(new Answer
+                {
+                    Id = i,
+                    QuestionId = Guid.Empty,
+                    Sequence = i,
+                    Text = "k"+i,
+                    RightAnswer = i.ToString(),
+                    Score = 1
+                });
+            }
+        }
+    }
+    protected override void OnParametersSet()
+    {
+        newAnswers.Clear();
+        answerHelpers.Clear();
+        if(newQuestion.Id != Guid.Empty)
+        {
+            if(newQuestion.Answers is null)
+            {
+                newQuestion.Answers = new List<Answer>();
+            }
+            IsSavedQuestion = IsEditMode;
+            if(newQuestion.Answers.Count > 0)
+            {
+                toastService.ShowInfo("Létező kérdés szerkesztése.");
+                IsSavedQuestion = true;
+                foreach (var item in newQuestion.Answers)
+                {
+                    if (item.AnswerHelpers is not null && item.AnswerHelpers.Count > 0)
+                    {
+                        foreach (var h in item.AnswerHelpers)
+                        {
+                            // Válasz segítők hozzáadása
+                            answerHelpers.Add(h);
+                        }
+                    }
+                    newAnswers.Add(item);
+                }
+            }
+            AnswerCount = newAnswers.Count;
+        }
+        else
+        {
+            toastService.ShowInfo("Új kérdés létrehozása.");
+        }
+    }
+    private async Task SaveQuestion()
+    {//Mentés logika
+        var summaScore = 0;
+        if(string.IsNullOrWhiteSpace(newQuestion.Text))
+        {
+            toastService.ShowWarning("A kérdés szövege nem lehet üres.");
+            return;
+        }
+        if(string.IsNullOrWhiteSpace(newQuestion.Title))
+        {
+            toastService.ShowWarning("A kérdés címe nem lehet üres.");
+            return;
+        }
+        if (newAnswers.Count == 0 && IsSavedQuestion)
+        {
+            toastService.ShowWarning("Legalább egy választ hozzá kell adni a kérdéshez.");
+            await AddAnswer();
+            return;
+        }
+        else if (answerHelpers.Count != 0)
+        {
+            foreach (var ans in newAnswers)
+            {
+                var list = answerHelpers.Where(h => h.AnswerId == ans.Sequence).ToList();
+                if (list is not null && list.Any())
+                {
+                    ans.AnswerHelpers = list.ToList();
+                }
+                summaScore += ans.Score;
+            }
+            //newAnswers.ForEach(ans => ans.AnswerHelpers = answerHelpers.Where(helper => helper.AnswerId == ans.Id).ToList());
+            newQuestion.Answers = newAnswers.ToList();
+            newQuestion.Score = summaScore;
+        }
+        else 
+        {
+            foreach (var ans in newAnswers)
+            {
+                summaScore += ans.Score;
+            }
+            newQuestion.Answers = newAnswers.ToList(); 
+            newQuestion.Score = summaScore;
+        }
+        if (IsSavedQuestion)
+        {
+            var r = await qServices.UpdateQuestionAsync(newQuestion);
+            if(r is null|| r.Id == Guid.Empty)
+            {
+                toastService.ShowError("Hiba történt a kérdés mentése során.");
+                return;
+            }
+            toastService.ShowSuccess("Kérdés sikeresen frissítve.");
+            newQuestion = r;
+            newAnswers = r.Answers.ToList();
+        }
+        else
+        {
+            var r = await qServices.AddQuestionAsync(newQuestion);
+            if(r is null|| r.Id == Guid.Empty)
+            {
+                toastService.ShowError("Hiba történt a kérdés mentése során.");
+                return;
+            }
+            toastService.ShowSuccess("Kérdés sikeresen mentve.");
+            newQuestion = r;
+            newAnswers = r.Answers.ToList();
+            await AddAnswer();
+            IsSavedQuestion = true;
+        }
+        //IsSavedQuestion = true;
+        StateHasChanged();
+        //await Save.InvokeAsync(newQuestion);
+        //newAnswers.Clear();
+        //answerHelpers.Clear();
+    }
+    private async Task AddAnswer()
+    {
+        //AnswerCount++;
+        try
+        {
+
+            var seq = newAnswers.Count + 1; 
+            newAnswer = new Answer() { Id=(-1)*seq, Sequence = seq, QuestionId = newQuestion.Id };
+            newAnswers.Add(newAnswer);
+            //AnswerCount = newAnswers.Count;
+            activeTabId = $"tab-{seq}"; 
+            await InvokeAsync(StateHasChanged);
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Hiba történt: {ex.Message}");
+            AnswerCount = newAnswers.Count;
+        }
+    }
+    async Task ClosedTab(FluentTab tab)
+    {
+        if (newAnswers.Count <= 1) return;
+        var removedAnswer = (Answer)tab.Data!;
+        newAnswers.Remove(removedAnswer);
+        AnswerCount = newAnswers.Count;
+        newAnswers.ForEach((answer) => answer.Sequence = newAnswers.IndexOf(answer) + 1);
+        activeTabId = newAnswers.Count > 0 ? $"tab-{newAnswers.Last().Sequence}" : string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnOpen(Answer ans)
+    {
+        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(ans.Text, new DialogParameters()
+        {
+            Alignment = HorizontalAlignment.Center,
+            Title = $"{ans.Sequence}. kérdés szerkesztése",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            ans.Text = (string)result.Data;
+        }
+        activeTabId = $"tab-{ans.Sequence}";
+    }
+    private async Task OpenNewHelper(int answerId)
+    {
+        AnswerHelperCount++;
+        answerHelper = new AnswerHelper() { Id = AnswerHelperCount, AnswerId = answerId };
+        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(answerHelper.Text, new DialogParameters()
+        {
+            Alignment = HorizontalAlignment.Center,
+            Title = $"Új segítség hozzáadása",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            answerHelper.Text = (string)result.Data;
+            answerHelpers.Add(answerHelper);
+            toastService.ShowSuccess("Segítség sikeresen hozzáadva.");
+        }
+    }
+    private async Task OpenTextEditor(string content)
+    {
+        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(content, new DialogParameters()
+        {
+            Alignment = HorizontalAlignment.Center,
+            Title = $"Kérdés szerkesztése",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            newQuestion.Text = (string)result.Data;
+        }
+        else
+        {
+            toastService.ShowInfo("A szerkesztés megszakítva.");
+        }
+    }
+}

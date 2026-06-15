@@ -14,6 +14,7 @@ using Microsoft.Identity.Web.UI;
 
 using Plk.Blazor.DragDrop;
 
+using TeszterLibrary;
 using TeszterLibrary.Services;
 using TeszterLibrary.Services.Feladat;
 
@@ -43,7 +44,8 @@ builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
-    .AddMicrosoftIdentityConsentHandler();
+    .AddMicrosoftIdentityConsentHandler()
+    .AddHubOptions(options => options.MaximumReceiveMessageSize = 1024 * 1024);
 builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
 builder.Services.AddFluentUIComponents();
@@ -65,6 +67,7 @@ builder.Services.AddScoped<GroupsService>();
 builder.Services.AddScoped<PageHistoryState>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();
+builder.Services.AddScoped<FolderData>();
 
 var app = builder.Build();
 

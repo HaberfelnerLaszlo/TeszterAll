@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33213.308
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeszterLibrary", "TeszterLibrary\TeszterLibrary.csproj", "{637F3317-729C-4063-B8C5-9330A8C5AE06}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{1CE9C225-769F-4A64-98E0-A5BE9BEF8BCD}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Teszter", "Teszter\Teszter.csproj", "{FB95AFB0-CAA0-473E-A733-F78774AACA5A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeszterWeb", "TeszterWeb\TeszterWeb.csproj", "{51683931-86DD-418E-85D4-A48DABB4DE01}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -43,12 +41,6 @@ Global
 		{1CE9C225-769F-4A64-98E0-A5BE9BEF8BCD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1CE9C225-769F-4A64-98E0-A5BE9BEF8BCD}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{1CE9C225-769F-4A64-98E0-A5BE9BEF8BCD}.Release|ARM64.Build.0 = Release|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FB95AFB0-CAA0-473E-A733-F78774AACA5A}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51683931-86DD-418E-85D4-A48DABB4DE01}.Debug|ARM64.ActiveCfg = Release|ARM64

@@ -5,7 +5,40 @@ namespace TeszterLibrary.Model
 {
 	public class Question
 	{
-		[Key]
+		public Question()
+		{
+			Id = Guid.Empty;
+			Answers = new List<Answer>();
+        }
+		public Question(string title, string subtitle, string text, int score, int time, int minGrade, int maxGrade, string subject, QuestionType qType, Guid createdBy, string description)
+		{
+			Id = Guid.Empty;
+			Title = title;
+			Subtitle = subtitle;
+			Text = text;
+			Score = score;
+			Time = time;
+			MinGrade = minGrade;
+			MaxGrade = maxGrade;
+			Subject = subject;
+			QType = qType;
+			CreatedBy = createdBy;
+			Description = description;
+			Answers = new List<Answer>();
+        }
+ 		public Question(int minGrade, int maxGrade, string subject, QuestionType qType, Guid createdBy)
+		{
+			Id = Guid.Empty;
+			MinGrade = minGrade;
+			MaxGrade = maxGrade;
+			Subject = subject;
+			QType = qType;
+			CreatedBy = createdBy;
+			Answers = new List<Answer>();
+        }
+
+        [Required]
+        [Key]
 		public Guid Id { get; set; }
 		[Required, MaxLength(250)]
 		public string Title { get; set; } =string.Empty;
@@ -27,7 +60,15 @@ namespace TeszterLibrary.Model
 		/// </summary>
 		public Guid CreatedBy { get; set; }
 		[NotMapped]
-		public List<Answer> Answers { get; set; }
+        /// <summary>
+        /// A kérdés megjelenéseinek száma
+        /// </summary>
+        public int ViewCount { get; set; } = 0;
+        /// <summary>
+        /// Megjegyzés a kérdéshez.
+        /// </summary>
+        public string Description { get; set; } = String.Empty;
+        public List<Answer> Answers { get; set; }
 	}
-	public enum QuestionType {All,SC,MC,TF,Open,Seq,Pair,Comp }
+	public enum QuestionType {All,SC,MC,TF,Open,Seq,Pair,Comp,Komp }
 }

@@ -1,0 +1,248 @@
+﻿@using System.Linq
+@inject QuestionServices qServices
+@inject IToastService toastService
+<FluentGrid >
+@*általános rész*@
+    <FluentGridItem>
+        <DefaultDataAssignment NewQuestion="@newQuestion" />
+        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
+    </FluentGridItem>
+    @*feladat rész*@
+    <FluentGridItem xs="12" sm="6">
+        <RichTextEditorWithImage @ref="richTEWI" Context="@newQuestion.Text" ContextChanged="@((value) => newQuestion.Text = value)" DirtyChanged="@OnEditorDirtyChanged" />
+    </FluentGridItem>
+    @*válasz rész*@
+    @if(IsSavedQuestion)
+    {
+    <FluentGridItem xs="12" sm="6">
+        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
+            @if (newAnswers.Count > 0)
+            {
+            <FluentTabs ActiveTabId="@activeTabId" OnTabClose="@ClosedTab" ShowClose="true">
+                @foreach (var answer in newAnswers) 
+                {
+                    var seq = answer.Sequence;
+                    <FluentTab @key="seq" Label="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="answer" Visible="@(!toRemoveSequences?.Contains(seq)??true)">
+                            <New_Komp_Answer @key="seq" @ref="answerRefs[seq]" NewAnswer="answer"/>
+                    </FluentTab>
+                }
+                </FluentTabs>
+            }
+        </FluentGridItem>
+    }
+    else{
+    <FluentGridItem>
+        <FluentLabel>Válaszok szerkesztéséhez menteni kell a kérdést!</FluentLabel>
+    </FluentGridItem>
+    }
+    @if (editorIsDirty)
+    {
+        <div class="warning">Változások nem mentve</div>
+@*         <FluentButton @onclick="SaveAll">Mentés</FluentButton>
+
+        <FluentButton @onclick="DiscardChanges">Elvetés</FluentButton>
+ *@    }
+</FluentGrid>
+@code {
+    [Parameter] public Question newQuestion { get; set; } = new Question();
+    [Parameter] public EventCallback<Question> Save { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+    RichTextEditorWithImage richTEWI = new RichTextEditorWithImage();
+    Dictionary<int, New_Komp_Answer?> answerRefs = new Dictionary<int, New_Komp_Answer?>();
+    int[]? toRemoveSequences = null;
+    Answer newAnswer = new Answer();
+    AnswerHelper answerHelper = new AnswerHelper();
+    int AnswerCount = 0;
+    bool IsSavedQuestion = false;
+    string activeTabId = "tab-1";
+    List<Answer> newAnswers = new List<Answer>();
+    protected override async Task OnInitializedAsync()
+    {
+        newAnswers.Clear();
+        newQuestion.Title = "Felvételi";
+        newQuestion.Subtitle = "Geometria";
+        newQuestion.Subject = "Matematika";
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (toRemoveSequences is not null)
+        {
+            await Task.Delay(50); // kis késleltetés, hogy a FluentTabs belső DOM törlése befejeződjön 
+            //newAnswers.RemoveAll(a => a.Sequence == toRemoveSequences.Last()); 
+            //answerRefs.Remove(toRemoveSequences.Last());
+            for (int i = toRemoveSequences.Last() - 1; i < newAnswers.Count; i++) // újraszámozás
+            {
+                newAnswers[i].Sequence = i + 1; 
+            } 
+            // for (int i = 0; i < newAnswers.Count; i++) // újraszámozás 
+            // {
+            //     newAnswers[i].Sequence = i + 1; 
+            // } 
+            var newRefs = new Dictionary<int, New_Komp_Answer?>();
+            // foreach (var ans in newAnswers) // rekonstruáljuk a ref-dictionary-t
+            // {
+            //     if(ans.Sequence >= toRemoveSequences.Last())
+            //     {
+            //         newRefs[ans.Sequence] = answerRefs.ContainsKey(ans.Sequence + 1) ? answerRefs[ans.Sequence + 1] : null;
+            //     }
+            //     else
+            //     {
+            //         newRefs[ans.Sequence] = answerRefs.ContainsKey(ans.Sequence) ? answerRefs[ans.Sequence] : null;
+            //     }
+            // }
+            // answerRefs = newRefs;
+            AnswerCount = newAnswers.Count;
+            if (newAnswers.Count > 0) activeTabId = $"tab-{newAnswers.First().Sequence}";
+           // toRemoveSequences = null; 
+            await InvokeAsync(StateHasChanged);
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    protected override void OnParametersSet()
+    {
+        if(newQuestion.Id != Guid.Empty)
+        {
+            //toastService.ShowInfo("Létező kérdés szerkesztése.");
+            if(newQuestion.Answers is null)
+            {
+                newQuestion.Answers = new List<Answer>();
+            }
+            if(newQuestion.Answers.Count > 0)
+            {
+                IsSavedQuestion = true;
+              //  newAnswers.Clear();
+               // newAnswers = newQuestion.Answers;
+            }
+            AnswerCount = newAnswers.Count;
+        }
+        else
+        {
+            toastService.ShowInfo("Új kérdés létrehozása.");
+            //AnswerCount = 0;
+        }
+    }
+    // void SetAnswerRef(int seq, New_Komp_Answer? comp) => answerRefs[seq] = comp;
+    private async Task SaveQuestion()
+    {//Mentés logika
+        await richTEWI.SaveContent();
+        await Task.Delay(100); //Várakozás, hogy a rich text editor befejezze a mentést
+        foreach(var kvp in answerRefs.OrderBy(k => k.Key))
+        {
+            if (kvp.Value != null) 
+            {
+                //await kvp.Value.SaveAnswer();
+                await Task.Delay(100); //Várakozás, hogy a rich text editor befejezze a mentést
+            }
+        }
+        if(string.IsNullOrWhiteSpace(newQuestion.Text))
+        {
+            toastService.ShowWarning("A kérdés szövege nem lehet üres.");
+            return;
+        }
+        if(string.IsNullOrWhiteSpace(newQuestion.Title))
+        {
+            toastService.ShowWarning("A kérdés címe nem lehet üres.");
+            return;
+        }
+        if(newAnswers.Count == 0 && IsSavedQuestion)
+        {
+            toastService.ShowWarning("Legalább egy választ hozzá kell adni a kérdéshez.");
+            await AddAnswer();
+            return;
+        }
+        else
+        {
+            newQuestion.Answers = newAnswers;
+        }
+        // if (IsSavedQuestion)
+        // {
+        //     var r = await qServices.UpdateQuestionAsync(newQuestion);
+        //     if(r is null)
+        //     {
+        //         toastService.ShowError("Hiba történt a kérdés mentése során.");
+        //         return;
+        //     }
+        //     toastService.ShowSuccess("Kérdés sikeresen frissítve.");
+        //     return;
+        // }
+        // else{
+        //     var r = await qServices.AddQuestionAsync(newQuestion);
+        //     if(r is null)
+        //     {
+        //         toastService.ShowError("Hiba történt a kérdés mentése során.");
+        //         return;
+        //     }
+        //     toastService.ShowSuccess("Kérdés sikeresen mentve.");
+        //     newQuestion = r;
+        //     AddAnswer();
+        //     IsSavedQuestion = true;
+        // }
+        IsSavedQuestion = true;
+        StateHasChanged();
+        await Save.InvokeAsync(newQuestion);
+    }
+    private async Task AddAnswer()
+    {
+        AnswerCount++;
+        try
+        {
+            if (answerRefs.Count > 0){
+                //Ellenőrzés, hogy az előző válasz ki lett-e töltve
+                var lastRef = answerRefs.OrderBy(k => k.Key).Last().Value;
+                if (lastRef != null) {
+                    //await lastRef.SaveAnswer();
+                    if (string.IsNullOrWhiteSpace(lastRef.NewAnswer.Text) || string.IsNullOrWhiteSpace(lastRef.NewAnswer.RightAnswer))
+                    {
+                        toastService.ShowWarning("Az előző választ ki kell tölteni, mielőtt új választ adna hozzá.");
+                        return;
+                    }
+                }
+            }
+
+            var seq = newAnswers.Count + 1; 
+            newAnswer = new Answer() { Sequence = seq, QuestionId = newQuestion.Id };
+            newAnswers.Add(newAnswer);
+            answerRefs[seq] = null;
+            AnswerCount = newAnswers.Count;
+            activeTabId = $"tab-{seq}"; 
+            await InvokeAsync(StateHasChanged);
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Hiba történt: {ex.Message}");
+            AnswerCount = newAnswers.Count;
+        }
+    }
+    async Task ClosedTab(FluentTab tab)
+    {
+        if (newAnswers.Count <= 1) return;
+        var removedAnswer = (Answer)tab.Data!;
+        if (toRemoveSequences is null) toRemoveSequences = new[] { removedAnswer.Sequence };
+        else toRemoveSequences.Append(removedAnswer.Sequence);
+        await InvokeAsync(StateHasChanged);
+    }
+   //  void ClosedTab(FluentTab tab)
+   //  {
+   //      try
+   //      {
+   //          if (newAnswers.Count <= 1) return;   // Avoid to remove the single tab
+        
+   //          // FluentTab.Id is required to manage correctly the Items.Remove tracking.
+   //          var removedAnswer = (Answer)tab.Data!;
+   //          newAnswers.Remove(removedAnswer);
+   //          answerRefs.Remove(removedAnswer.Sequence);
+   //          AnswerCount = newAnswers.Count;
+   //          newAnswers.ForEach((answer) => answer.Sequence = newAnswers.IndexOf(answer) + 1);
+   //          StateHasChanged();
+   //          activeTabId = $"tab-{newAnswers.First().Sequence.ToString()}";
+   //      }
+   //      catch (Exception ex)
+   //      {
+   //           toastService.ShowError($"Hiba történt: {ex.Message}");
+   //      }
+   // }
+    private bool editorIsDirty = false; 
+    void OnEditorDirtyChanged(bool dirty) { editorIsDirty = dirty; StateHasChanged(); }
+}

@@ -45,6 +45,11 @@ namespace TeszterLibrary.ViewModel
         /// Sorbarendezésnél a sorrend vagy párosításnál a pár száma
         /// </summary>
         public int Sequence { get; set; }
+        public int Score { get; set; }
+        /// <summary>
+        /// Válasz segédletek
+        /// </summary>
+        public List<AnswerHelper>? AnswerHelpers { get; set; }
 
     }
 }

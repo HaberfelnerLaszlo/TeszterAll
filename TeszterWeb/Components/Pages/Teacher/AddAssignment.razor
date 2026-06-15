@@ -1,0 +1,57 @@
+﻿@page "/teacher/add-assignment"
+@using Microsoft.Identity.Web
+@inject GlobalData data
+@inject GraphService graphService
+@inject IToastService toastService
+@inject ILogger<AddAssignment> logger
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<NewAssignment_2 NewQuestion="@NewQuestion" Save="SaveQuestion"/>
+@code {
+    public Question NewQuestion { get; set; } = new Question();
+    bool isSavedQuestion = false;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(data.UserId))
+                {
+                    var user = await graphService.GetMe();
+                    if (user is null)
+                    {
+                        toastService.ShowWarning("Nem tölthető be a felhasználó!");
+                        return;
+                    }
+                    data.UserId = user.Id.ToString();
+                }
+                NewQuestion.CreatedBy = Guid.Parse(data.UserId);
+            }
+            catch (MicrosoftIdentityWebChallengeUserException uiEx)
+            {
+                ConsentHandler.HandleException(uiEx);
+            }
+            catch (Exception ex)
+            {
+                toastService.ShowError(ex.Message);
+                logger.LogError("Hiba történt a betöltéskor. Hiba: {ex}", ex.Message);
+            }
+        }
+    }
+    private void SaveQuestion(Question question)
+    {
+        if (isSavedQuestion)
+        {
+            NewQuestion = question;
+            toastService.ShowInfo("A kérdés módosítva lett.");
+        }
+        else
+        {
+            NewQuestion = question;
+            toastService.ShowSuccess("Kérdés sikeresen mentve!");
+            isSavedQuestion = true;
+        }
+    }
+}

@@ -176,8 +176,8 @@
     private Question detailQuestion = new();
     private List<Question> allQuestions = new();
     private List<Subject?>? subjects = new();
-    private List<Section> sections = new();
-    private Section selectSection = new();
+    private List<TeszterLibrary.Model.Section> sections = new();
+    private TeszterLibrary.Model.Section selectSection = new();
     bool saved = false, newSaved = false, hasSection = false;
     public List<EducationClass>? Groups { get; set; } = new();
     private List<EducationUser> Members = new List<EducationUser>();
@@ -259,7 +259,7 @@
     private async Task OpenPanelRightAsync()
     {
         SetupSelection();
-        DialogParameters<List<Section>> parameters = new()
+        DialogParameters<List<TeszterLibrary.Model.Section>> parameters = new()
         {
             Content = sections,
             Title = $"A teszt felosztása.",
@@ -284,7 +284,10 @@
 
         if (result.Data is not null)
         {
-            sections.AddRange((List<Section>)result?.Data);
+            if (result?.Data is List<TeszterLibrary.Model.Section> sectionList && sectionList is not null)
+            {
+                sections.AddRange(sectionList);
+            }
             return;
         }
     }
@@ -323,7 +326,7 @@
         }
         else if (!newTest.Subject.Equals(q.Subject))
         {
-            var subj = subjects?.Find(s => s.Name == "Egyéb");
+            var subj = subjects?.Find(s => s?.Name == "Egyéb");
             if (subj is null)
             {
                 subj = new() { Name = "Egyéb" };
@@ -409,7 +412,7 @@
         }
         else
         {
-            newTest.CreatedBy = Guid.Parse(data.UserId);
+            newTest.CreatedBy = Guid.Parse(data.UserId ?? string.Empty);//TODO : ellenőrizni UserId -> központi adatlekérés
             //newTest = await tService.AddTest(newTest) ?? new();
 
         }
@@ -478,7 +481,7 @@
         {
             section.Id = 0;
             section.TestId = newTest.Id;
-            section.CreatedBy = Guid.Parse(data.UserId);
+            section.CreatedBy = Guid.Parse(data.UserId ?? string.Empty);//TODO : ellenőrizni UserId -> központi adatlekérés
             toastService.ShowSuccess($"{section.Name} szekció sikeresen mentve.");
             //var resp = await seService.AddSectionsAsync(section);
             //if (resp is null)
