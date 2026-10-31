@@ -5,7 +5,20 @@
     margin: 5px;
     padding: 5px;
 }
-
+textarea {
+    padding-right: 0px;
+    margin: 10px;
+    text-align: left;
+    font-size: 20px;
+    background: linear-gradient(#f1e4e4 0%, white), var(--bs-gray-200);
+    box-shadow: 3px 2px rgb(75,36,231);
+    max-width: 100%;
+    min-width: 90%;
+    margin-left: 5%;
+}
+.container {
+    margin: 10px;
+}
 .testsign {
     position: absolute;
     top: 0px;
@@ -20,4 +33,19 @@
     border-color: rgb(8,42,77);
     box-shadow: 1px 1px;
     padding: 10px;
+    line-height: 1;
 }
+#answers {
+    margin-left: 7%;
+    margin-right: 7%;
+    text-align: left;
+}
+button {
+    margin: 0 10px;
+}
+
+.box {
+    margin-right: 5px;
+    margin-left: 5px;
+}
+

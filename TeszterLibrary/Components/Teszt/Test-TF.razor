@@ -4,7 +4,7 @@
     <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
         @foreach (var answer in Answers)
         {
-            <FluentStack HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
 
                 <FluentCheckbox Label="@answer.Text" @bind-Value="answer.Sign" />
                 @if (IsChecked)

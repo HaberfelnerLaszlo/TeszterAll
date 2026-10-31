@@ -54,6 +54,9 @@
                 case QuestionType.Comp:
                     <Test_comp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="false" IsChecked="true" />
                     break;
+                case QuestionType.Komp:
+                    <Test_komp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="false" IsChecked="true" />
+                    break;
                 default:
         <p>Nem tudom mi történt! </p>@actualq.QuestionType.ToString()
                     break;
@@ -133,6 +136,7 @@ else
             foreach (var tqu in testQuestionUsers.Where(t => t.ReplacedNumber == i))
             {
                 var actualQ = questions.First(q => q.TestQuestionId == tqu.TestQuestionId);
+                actualQ.Score = tqu.Score;
                 tqu.Answers!.ForEach(tqa =>
                 {
                     var actualA = actualQ.Answers!.First(a => a.AnswerId == tqa.AnswerId);
@@ -140,6 +144,7 @@ else
                     actualA.Sequence = tqa.Sequence;
                     actualA.Sign = tqa.Sign;
                     actualA.Text = tqa.Text?? string.Empty;
+                   ;
                 });
             }
         }

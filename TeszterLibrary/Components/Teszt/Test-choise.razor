@@ -2,10 +2,10 @@
 {
     @if (Type.Equals("checkbox"))
     {
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Wrap="true">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Wrap="true">
                 @foreach (var answer in Answers)
                 {
-                    <FluentCheckbox @bind-Value="@answer.Sign" ReadOnly="IsChecked"><span> @answer.Text</span></FluentCheckbox>
+                    <FluentCheckbox @bind-Value="@answer.Sign" ReadOnly="IsChecked" Style="justify-content: center;"><span> @answer.Text</span></FluentCheckbox>
                     @if (IsChecked)
                     {
                         if (answer.Result)

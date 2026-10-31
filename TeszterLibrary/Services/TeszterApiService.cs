@@ -1,4 +1,5 @@
-﻿using Microsoft.Identity.Abstractions;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Identity.Abstractions;
 using Microsoft.IdentityModel.JsonWebTokens;
 
 using Newtonsoft.Json;
@@ -13,23 +14,30 @@ using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services
 {
-    public class TeszterApiService(IAuthorizationHeaderProvider authorizationHeaderProvider)
+    public class TeszterApiService
     {
+        private readonly IAuthorizationHeaderProvider _authorizationHeaderProvider;
+        private readonly IConfiguration _configuration;
+
         public string ErrorMessage { get; set; } = String.Empty;
         private static readonly HttpClient client = new();
         private static readonly string[] scopes = ["api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user"];
         public EventHandler<MessageEvent> OnMessageReceived { get; set; }
-        //protected static string URI = "https://teszter-api.haberfelner.hu/";
-        //protected static string URI = "http://localhost:7025/";
-        protected static string URI = "https://localhost:44308/"; //ISS
-        //protected static string URI = "https://z8m54ndx-7026.euw.devtunnels.ms"; //távoli
-        //protected static string URI = "http://192.168.1.69:7025"; //laptop
         private string? _token;
         private readonly DateTime _tokenExpiration;
+        private readonly string URI;
+
+        public TeszterApiService(IAuthorizationHeaderProvider authorizationHeaderProvider, IConfiguration configuration)
+        {
+            _authorizationHeaderProvider = authorizationHeaderProvider ?? throw new ArgumentNullException(nameof(authorizationHeaderProvider));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            URI = _configuration["ApiUrl"] ?? "https://teszter-api.haberfelner.hu/";
+            _tokenExpiration = DateTime.MinValue;
+        }
+
         private async Task CreateAuthorizationHeaderForUserAsync()
         {
-                _token = await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
-         
+            _token = await _authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", _token.Substring(6));
         }
 

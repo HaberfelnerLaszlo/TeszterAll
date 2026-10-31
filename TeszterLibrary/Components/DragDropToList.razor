@@ -25,7 +25,7 @@
             <FluentButton OnClick="Reverse" Disabled="@(!btnDidabled)">Senki sem</FluentButton>
         </FluentStack>
         <FluentStack Orientation="Orientation.Vertical">
-            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" @bind-SelectedOption="selectedTarget">
+            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" @bind-SelectedOption="selectedTarget" @bind-SelectedOption:after="HandleSelectedTargetChange">
                 <OptionTemplate>
                     @if (TargetList.Count == 0)
                     {
@@ -50,6 +50,7 @@
     [Parameter] public string TargetLabel { get; set; } = "Cél";
     [Parameter] public RenderFragment<TItem>? SourceContent { get; set; }
     [Parameter] public RenderFragment<TItem>? TargetContent { get; set; }
+    [Parameter] public EventCallback<List<TItem>> OnDropEnd { get; set; }
     bool btnDidabled = false;
     TItem? selectedSource;
     TItem? selectedTarget;
@@ -66,6 +67,7 @@
             SourceList.Add((TItem)source.Data);
             TargetList.Remove((TItem)source.Data);
         }
+        OnDropEnd.InvokeAsync(TargetList.ToList());
     }
     private void All()
     {
@@ -75,6 +77,7 @@
         }
         SourceList.Clear();
         btnDidabled = true;
+        OnDropEnd.InvokeAsync(TargetList.ToList());
     }
     private void Reverse()
     {
@@ -84,6 +87,8 @@
         }
         TargetList.Clear();
         btnDidabled = false;
+        OnDropEnd.InvokeAsync(TargetList.ToList());
+
     }
     private void ToMove(bool isSource)
     {
@@ -105,5 +110,12 @@
                 selectedTarget = default;
             }
         }
+        OnDropEnd.InvokeAsync(TargetList.ToList());
+
+    }
+
+    private void HandleSelectedTargetChange()
+    {
+        OnDropEnd.InvokeAsync(TargetList.ToList());
     }
 }

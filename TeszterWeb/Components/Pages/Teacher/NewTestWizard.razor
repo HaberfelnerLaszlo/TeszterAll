@@ -17,6 +17,7 @@
 @inject GraphService gService
 @inject IDialogService dialogService
 @inject IToastService toastService
+@inject NavigationManager navi
 
 <FluentWizard StepperPosition="StepperPosition.Top"
               StepSequence="@WizardStepSequence.Linear"
@@ -30,6 +31,8 @@
                           OnChange="@OnStepChange">
             <FluentEditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
                 <DataAnnotationsValidator />
+                <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" VerticalGap="10">
+                    <FluentLabel>Az új teszt adatai:</FluentLabel>
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
                     <FluentTextField Placeholder="Teszt neve..." @bind-Value="newTest.Title" Required="true" />
                     <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." SelectedOptionChanged="subjectChange" Required="true">
@@ -38,12 +41,25 @@
                     <FluentCheckbox @bind-Value="newTest.IsPractice" Label="Gyakorló teszt?" />
                     <FluentCheckbox @bind-Value="newTest.IsCheck" Label="Tanuló ellenőrizheti?" />
                     <FluentCheckbox @bind-Value="newTest.IsTimer" Label="Válasz időre megy?" />
-                    <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" Value=@newTest.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
-                    <FluentNumberField @bind-Value="newTest.ReplaceNumber" Label="Hányszor ismételhető?" Min="1" Max="30"/>
+                    <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" @bind-Value=@newTest.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
                    <FluentSwitch CheckedMessage="Bekapcsolva" UncheckedMessage="Kikapcsolva" Label="Felosztás?" Value="newTest.HasSection" ValueChanged="SectionChange"></FluentSwitch>
                     <div hidden ="@(newTest.HasSection is false)">
                         Ez akkor látszik ha be van kapcsolva
                     </div>
+                </FluentStack>
+                <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                    <FluentLabel>Időkorlát:</FluentLabel>
+                    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalGap="10">
+                        <FluentDatePicker @bind-Value="@start" @bind-Value:after="CheckStart" Placeholder="Kezdés ideje..." Required="true" Label="Kezdés" />
+                        <FluentTimePicker @bind-Value="@start" @bind-Value:after="CheckStart" Label="Időpont" TimeDisplay="@TimeDisplay.HourMinute" />
+                    </FluentStack>
+                    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalGap="10">
+                        <FluentDatePicker @bind-Value="@end" @bind-Value:after="CheckEnd" Placeholder="Befejezés ideje..." Required="true" Label="Befejezés" />
+                        <FluentTimePicker @bind-Value="@end" @bind-Value:after="CheckEnd" Label="Időpont" TimeDisplay="@TimeDisplay.HourMinute" />
+                    </FluentStack>
+                    <FluentNumberField @bind-Value="newTest.ReplaceNumber" Label="Hányszor ismételhető?" Min="1" Max="30" Style="width:80px" />
+
+                </FluentStack>
                 </FluentStack>
                 <FluentValidationSummary style="color:darkred" />
             </FluentEditForm>
@@ -130,7 +146,7 @@
             }
             <hr />
             <FluentSelect Items="Groups"
-                          Style="min-width: 70px;"
+                          Style="min-width: 200px;"
                           Height="300px"
                           Placeholder="Válasz csoportot..."
                           TOption="EducationClass"
@@ -139,7 +155,7 @@
                           Value="@SelectGroupId"
                           ValueExpression="@(()=>SelectGroupId)"
                           ValueChanged="SelectGroup" />
-            <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír">
+            <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír" OnDropEnd="HandleDropEnd">
                 <SourceContent>@list.DisplayName</SourceContent>
                 <TargetContent>@list.DisplayName</TargetContent>
             </DragDropToList>
@@ -186,6 +202,7 @@
     private EducationUser lastdropped { get; set; } = new();
     private bool BtnDidabled = false, AssigmentCreated = false;
     private IDialogReference? _dialog;
+    private DateTime? start=DateTime.Now, end=DateTime.Now.AddDays(1);
     protected override async Task OnInitializedAsync()
     {
         try
@@ -208,6 +225,10 @@
                 toastService.ShowWarning("A kérdések nem töltödtek be!");
                 return;
             }
+            else
+            {
+                allQuestions = questions.ToList();
+            }
             if (questions is not null && Id > 0)
             {
                 saved = true;
@@ -219,27 +240,6 @@
                         data.Questions.Add(q);// ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
                     }
                 }
-            }
-            if (data.Questions.Count > 0 && questions is not null && questions.Count > 0)
-            {
-                foreach (TestQuestion item in data.Questions)
-                {
-                    if (!questions.Remove(item.Question))
-                    {
-                        toastService.ShowWarning($"A {item.QuestionId} kérdés nem törlődött.");
-                        _logger.LogWarning("A {item.Id} kérdés nem törlődött.", item.QuestionId);
-                    }
-                }
-            }
-            subjects = await sService.GetSubjects();
-            if (subjects is null)
-            {
-                toastService.ShowWarning("Nem lehetet betölteni a tantárgyakat.");
-            }
-            if (Id > 0)
-            {
-                newTest = data.Test;
-                TesztQ = data.Questions;
             }
             Groups = await gService.GetClasses(data.UserId);
             if (Groups is null)
@@ -254,6 +254,40 @@
         {
             _logger.LogError("Hiba történt: {e.Message}", e.Message);
             throw;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            subjects = await sService.GetSubjects();
+            if (subjects is null)
+            {
+                toastService.ShowWarning("Nem lehetet betölteni a tantárgyakat.");
+            }
+            if (data.Questions.Count > 0 && questions is not null && questions.Count > 0)
+            {
+                foreach (TestQuestion item in data.Questions)
+                {
+                    var q = questions.FirstOrDefault(x => x.Id == item.QuestionId);
+                    item.Question = q ?? throw new ArgumentNullException($"A {item.QuestionId} nem volt a kérdések között!");
+                    if (!questions.Remove(item.Question))
+                    {
+                        toastService.ShowWarning($"A {item.QuestionId} kérdés nem törlődött.");
+                        _logger.LogWarning("A {item.QuestionId} kérdés nem törlődött.", item.QuestionId);
+                    }
+                }
+            }
+            if (Id > 0)
+            {
+                newTest = data.Test;
+                TesztQ = data.Questions;
+                if (newTest.TestUsers is not null && newTest.TestUsers.Count > 0)
+                {
+                    TestMembers = newTest.TestUsers.Select(tu => new EducationUser { Id = tu.UserId.ToString() }).ToList();
+                }
+            }
+
         }
     }
     private async Task OpenPanelRightAsync()
@@ -392,7 +426,14 @@
 
     async Task OnFinishedAsync()
     {
-        await dialogService.ShowInfoAsync("Wizard completed");
+        newTest = await tService.UpdateTestAsync(newTest);
+        if (newTest is null)
+        {
+            toastService.ShowWarning($"Teszt frissítése sikertelen, hiba: {tService.ErrorMessage}");
+            return;
+        }
+        await dialogService.ShowInfoAsync("Teszt varázsló befejezve.");
+        navi.NavigateTo("/home");
     }
 
     async Task OnValidSubmit()
@@ -408,21 +449,26 @@
         }
         if (saved || newSaved)
         {
-            //newTest = await tService.UpdateTestAsync(newTest);
+            newTest = await tService.UpdateTestAsync(newTest);
         }
         else
         {
             newTest.CreatedBy = Guid.Parse(data.UserId ?? string.Empty);//TODO : ellenőrizni UserId -> központi adatlekérés
-            //newTest = await tService.AddTest(newTest) ?? new();
-
+            newTest = await tService.AddTest(newTest) ?? new();
+            if (newTest.Id > 0)
+            {
+                toastService.ShowSuccess("Teszt sikeresen mentve.");
+                saved = true;
+            }
         }
-        newTest.Id=100; toastService.ShowSuccess("Teszt sikeresen mentve.");
         if (newTest.Id == 0)
         {
             toastService.ShowError("Hiba a teszt mentésekor.");
+            saved = false;
             _overlayIsVisible = false;
             return;
         }
+        toastService.ShowSuccess("Teszt sikeresen mentve.");
         if (newTest.HasSection)
         {
             sections.ForEach(s => s.TestId = newTest.Id);
@@ -500,6 +546,8 @@
         if (newTest.TestQuestions.Count > 0)
         {
             newTest.TestQuestions.Clear();
+            newTest.Summa = 0;
+            newTest.Time = 0;
         }
         foreach (var item in TesztQ)
         {
@@ -515,13 +563,14 @@
         //    return;
         //}
         toastService.ShowSuccess("Teszt sikeresen frissítve.");
-        TesztQ.Clear();
+        //TesztQ.Clear();
         _overlayIsVisible = false;
     }
 
     void OnInvalidSubmit()
     {
         toastService.ShowError("Hibás teszt!");
+        saved = false;
     }
     void OnInvalidSectionSubmit()
     {
@@ -530,5 +579,61 @@
     void OnInvalidTQSubmit()
     {
         toastService.ShowError("Hibás kérdés!");
+    }
+
+    private void CheckStart()
+    {
+        if (start > end)
+        {
+            toastService.ShowWarning("A kezdés ideje nem lehet későbbi mint a befejezés ideje.");
+            start = null;
+            return;
+        }
+        if (start < DateTime.Now)
+        {
+            toastService.ShowWarning("A kezdés ideje nem lehet korábbi mint a jelenlegi idő.");
+            start = null;
+            return;
+        }
+        if (start != null)
+        {
+            newTest.StartTime = start.Value;
+        }
+    }
+
+    private void CheckEnd()
+    {
+        if (end < start)
+        {
+            toastService.ShowWarning("A befejezés ideje nem lehet korábbi mint a kezdés ideje.");
+            end = start.Value.AddDays(1);
+            return;
+        }
+        if (end <= DateTime.Now)
+        {
+            toastService.ShowWarning("A befejezés ideje nem lehet korábbi mint a jelenlegi idő.");
+            end = start!.Value.AddDays(1);
+            return;
+        }
+        if (end != null)
+        {
+            newTest.EndTime = end.Value;
+        }
+    }
+
+    private void HandleDropEnd(List<EducationUser> droppedItems)
+    {
+        if (droppedItems is null) return;
+        if (newTest.TestUsers is null) { newTest.TestUsers = new(); }
+        else newTest.TestUsers.Clear();
+        foreach (var item in droppedItems)
+        {
+            if (item.PrimaryRole is null || item.PrimaryRole != EducationUserRole.Student)
+            {
+                toastService.ShowWarning($"A {item.DisplayName} nem diák, ezért nem lehet tesztíró.");
+                droppedItems.Remove(item);
+            }
+            newTest.TestUsers.Add(new() { UserId = Guid.Parse(item.Id), TestId = newTest.Id });
+        }
     }
 }

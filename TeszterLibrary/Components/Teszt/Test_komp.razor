@@ -1,0 +1,58 @@
+﻿@inject IDialogService DialogService
+<FluentSplitter Orientation="Orientation.Horizontal" Panel1MinSize="20%" Panel2MinSize="50%">
+    <Panel1>
+        <div style="padding: 10px; border: 1px solid #ccc; margin: 10px;">
+            @((MarkupString)Texts)
+        </div>
+    </Panel1>
+    <Panel2>
+            @if (Answers.Count > 0)
+            {
+                <FluentTabs ShowClose="false">
+                    @foreach (var answer in Answers) 
+                    {
+                        var seq = answer.Sequence;
+                        <FluentTab @key="@seq" Label="@($"{seq}. feladat {answer.Score} pont")" Id="@($"tab-{seq}")" Data="@answer">
+                            <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
+                                @((MarkupString)answer.Text)
+                            </div>
+                        <FluentTextField @bind-Value="answer.AnswerText" Placeholder="Írd ide a válaszod!" Label="Válaszod"/>
+                            @if(answer.AnswerHelpers?.Count > 0)
+                            {
+                                <FluentLabel>Válasz segítők: </FluentLabel>
+                                @foreach (var item in answer.AnswerHelpers) 
+                                {
+                                    <FluentButton Title="@item.Sequence.ToString()" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())" OnClick="@(() =>{DialogService.ShowInfo(item.Text,$"{item.Sequence}. segítség","Bezár");})" />
+                                }
+                            }
+                        </FluentTab> 
+                    }
+                </FluentTabs>
+            }
+    </Panel2>
+</FluentSplitter>
+<div class="container text-center">
+    @if (IsCheck)
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
+            Ellenőrzés
+        </FluentButton>
+    }
+    @if (Next.HasDelegate)
+    {
+        <FluentButton OnClick="@(() => Next.InvokeAsync(Answers))">
+            Következő
+        </FluentButton>
+    }
+</div>
+
+@code {
+[Parameter]
+    public string Texts { get; set; } = "";
+    [Parameter]
+    public List<AnswerView> Answers { get; set; } = new();
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
+    [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
+}

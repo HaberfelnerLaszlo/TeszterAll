@@ -12,26 +12,29 @@
     }
     else if (testEnd)
     {
-        <p>Nagyszerű!</p><p> Sikerült megoldanod a tesztet!</p>
+        <h3>Nagyszerű!</h3><h4> Sikerült megoldanod a tesztet!</h4>
         <FluentButton OnClick="ResultView">Eredmény megtekintése</FluentButton>
     }
     else
     {
-        <p>A @data.Test.Title teszt megírása következik.</p> <hr/>
-        @if (data.Test.IsTimer)
-        {
-            <span>A tesztet <b> @data.Test.Time.ToTime() </b> alatt kell megírnod. </span>
-        }
-        @if (data.Test.IsPractice)
-        {
-            <span> A teszt gyakorlásra szolgál.</span>
-        }
-        @if (data.Test.IsCheck)
-        {
-            <span> A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
-        }
+        <h4>A @data.Test.Title teszt megírása következik.</h4> <hr/>
+       <h6>
+            @if (data.Test.IsTimer)
+            {
+                <span>A tesztet <b> @data.Test.Time.ToTime() </b> alatt kell megírnod. </span>
+            }
+            @if (data.Test.IsPractice)
+            {
+                <span> A teszt gyakorlásra szolgál.</span>
+            }
+            @if (data.Test.IsCheck)
+            {
+                <span> A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
+            }
+        </h6>
         <hr />
 <FluentButton Appearance="Appearance.Accent" Color="yellow" OnClick="StartTest">A teszt elkezdése</FluentButton>
+        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => navi.NavigateTo("/home"))">Vissza a főoldalra</FluentButton>
     }
 
 }

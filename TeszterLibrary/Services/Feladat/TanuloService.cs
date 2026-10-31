@@ -83,5 +83,16 @@ namespace TeszterLibrary.Services.Feladat
                 return false;
             }
         }
+        public async Task<string?> GetTanulokNewyearyAsync()
+        {
+            var response = await apiService.Get<string>($"tanulo_newyear");
+            if (response == null)
+            {
+                ErrorMessage = apiService.ErrorMessage;
+                logger.LogWarning("A tanulók lekérdezésekor hiba lépet fel: {ErrorMessage}", ErrorMessage);
+                return null;
+            }
+            return response;
+        }
     }
 }

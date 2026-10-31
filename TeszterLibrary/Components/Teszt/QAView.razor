@@ -19,7 +19,7 @@
         {
             <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
         }
-        else
+        else if (question.Question.QType != QuestionType.Komp)
         {
             <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
         }
@@ -46,6 +46,9 @@
                 break;
             case QuestionType.Comp:
                 <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                break;
+            case QuestionType.Komp:
+                <Test_komp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             default:
                 <p>Nem tudom mi történt! @questionView.QuestionType.ToString()</p>
@@ -74,27 +77,27 @@
             {
                 foreach (var item in question.Question.Answers)
                 {
-                    if (!item.Right)
-                    {
-                        questionView.Answers!.Add(new()
-                        {
-                            AnswerId = item.Id,
-                            Result = false,
-                            Sequence = -1,
-                            Sign = false,
-                            Text = item.Text
-                        });
-                    }
-                    else
+            //         if (!item.Right)
+            //         {
                         questionView.Answers!.Add(new()
                         {
                             AnswerId = item.Id,
                             Result = false,
                             Sequence = item.Sequence,
-                            Sign = true,
+                            Sign = item.Right,
                             Text = item.Text
                         });
                 }
+            //         else
+            //             questionView.Answers!.Add(new()
+            //             {
+            //                 AnswerId = item.Id,
+            //                 Result = false,
+            //                 Sequence = item.Sequence,
+            //                 Sign = true,
+            //                 Text = item.Text
+            //             });
+            //     }
             }
             else
             {

@@ -1,12 +1,15 @@
 ﻿@inject IDialogService DialogService
 <FluentDataGrid Id="questiongrid" Items=@FilteredItems?.AsQueryable() Pagination="pagination" GridTemplateColumns="1fr 0.8fr 2.4fr 0.2fr 0.6fr 0.6fr 1fr" TGridItem=QuestionListView ResizableColumns=true>
-    <PropertyColumn Title="Tantárgy" Property="@(c => c!.Subject)" Sortable="true" Align=Align.Center>
+    <TemplateColumn Title="Tantárgy" Sortable="true" Align=Align.Center>
         <ColumnOptions>
             <div class="search-box">
-                <FluentSearch type="search" Autofocus=true @bind-Value=subjectFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
+                <FluentSearch type="search" Autofocus=true @bind-Value=subjectFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Tantárgy..." />
             </div>
         </ColumnOptions>
-    </PropertyColumn>
+        <ChildContent>
+            @context.Subject
+        </ChildContent>
+    </TemplateColumn>
     <TemplateColumn Title="Témakör" Align="Align.Center" Sortable="true" >
         <ColumnOptions>
             <div class="search-box">
@@ -87,7 +90,7 @@
     Question UpdateQuestion = new Question();
     public List<Answer> Answers = new List<Answer>();
     private List<QuestionListView> allQuestions = new();
-    List<QuestionListView>? FilteredItems => allQuestions.Where(x => x.Text.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase) && x.Title.Contains(titleFilter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+    List<QuestionListView>? FilteredItems => allQuestions.Where(x => x.Text.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase) && x.Title.Contains(titleFilter, StringComparison.CurrentCultureIgnoreCase) && x.Subject.Contains(subjectFilter, StringComparison.CurrentCultureIgnoreCase)).ToList();
 
     //Filter filter = new();
     protected override void OnParametersSet()

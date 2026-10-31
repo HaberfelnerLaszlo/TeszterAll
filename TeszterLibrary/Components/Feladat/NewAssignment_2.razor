@@ -8,7 +8,7 @@
 @*általános rész*@
     <FluentGridItem>
         <DefaultDataAssignment NewQuestion="@newQuestion" />
-        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Color="@Color.Error.ToString()" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
         <span> Aktív tab: @activeTabId </span>
     </FluentGridItem>
     @*feladat rész*@
@@ -24,6 +24,8 @@
                 @((MarkupString)newQuestion.Text)
             </div>
         }
+        <FluentSpacer />
+        <FluentNumberField Label="Időtartam (mp)" TValue="int" @bind-Value="newQuestion.Time" Min="0" Step="5" Style="width:100px"/>
     </FluentGridItem>
     @*válasz rész*@
     @if(IsSavedQuestion)
@@ -32,7 +34,7 @@
         <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
             @if (newAnswers.Count > 0)
             {
-                <FluentTabs @bind-ActiveTabId="@activeTabId" ShowClose="true" OnTabClose="@(tab => ClosedTab(tab))">
+                <FluentTabs @ref="tabRef" ShowClose="true" OnTabClose="@(tab => ClosedTab(tab))" ActiveTabIdChanged="@(id => activeTabId = id)">
                 @foreach (var answer in newAnswers) 
                 {
                     var seq = answer.Sequence;
@@ -53,10 +55,10 @@
                             <FluentLabel>@answer.Id Válasz segítők: </FluentLabel>
                             @foreach(var item in answerHelpers.Where(h => h.AnswerId==answer.Id))
                             {
-                                <FluentCard MinimalStyle="true" Style="width:80%">
+                                <FluentCard MinimalStyle="true" Style="width:80%; margin:5px 0">
                                         <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween" Orientation="Orientation.Horizontal">
-                                        <FluentLabel>Id:@item.Id . AId:@item.AnswerId .</FluentLabel>
-                                        <div>@((new MarkupString(item.Text.Substring(0, Math.Min(item.Text.Length, 20)))))</div>
+                                        <FluentLabel>@item.Sequence. @item.Id </FluentLabel>
+                                        <div>@((new MarkupString(item.Text.Substring(0, Math.Min(item.Text.Length, 40)))))</div>
                                         <FluentButton Appearance="Appearance.Accent" OnClick="@(async () => 
                                         {
                                             var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(item.Text, new DialogParameters()
@@ -78,6 +80,7 @@
                                             if (answerHelpers.Contains(item))
                                             {
                                                 answerHelpers.Remove(item);
+                                                if(item.Id > 0){ await qServices.DeleteAnswerHelper(item.Id); }
                                                 toastService.ShowSuccess("Segítség sikeresen törölve.");
                                                 await InvokeAsync(StateHasChanged);
                                             }
@@ -109,6 +112,7 @@
     int AnswerCount = 0, AnswerHelperCount = 0;
     bool IsSavedQuestion = false;
     string activeTabId = "tab-1";
+    FluentTabs? tabRef;
     List<Answer> newAnswers = new List<Answer>();
     List<AnswerHelper> answerHelpers = new List<AnswerHelper>();
 
@@ -220,7 +224,7 @@
         {
             foreach (var ans in newAnswers)
             {
-                var list = answerHelpers.Where(h => h.AnswerId == ans.Sequence).ToList();
+                var list = answerHelpers.Where(h => h.AnswerId == ans.Id).ToList();
                 if (list is not null && list.Any())
                 {
                     ans.AnswerHelpers = list.ToList();
@@ -282,7 +286,12 @@
             newAnswer = new Answer() { Id=(-1)*seq, Sequence = seq, QuestionId = newQuestion.Id };
             newAnswers.Add(newAnswer);
             //AnswerCount = newAnswers.Count;
+            await Task.Delay(100); // kis késleltetés
             activeTabId = $"tab-{seq}"; 
+            if (tabRef is not null)
+            {
+                await tabRef.GoToTabAsync(activeTabId);
+            }
             await InvokeAsync(StateHasChanged);
 
         }
@@ -297,9 +306,18 @@
         if (newAnswers.Count <= 1) return;
         var removedAnswer = (Answer)tab.Data!;
         newAnswers.Remove(removedAnswer);
+        if (removedAnswer.Id > 0)
+        {            // Ha az answer még nincs mentve, akkor nem kell törölni az adatbázisból
+            await qServices.DeleteAnswer(removedAnswer.Id);
+        }
+        toastService.ShowSuccess($"A(z) {removedAnswer.Sequence}. kérdés sikeresen törölve.");
         AnswerCount = newAnswers.Count;
         newAnswers.ForEach((answer) => answer.Sequence = newAnswers.IndexOf(answer) + 1);
         activeTabId = newAnswers.Count > 0 ? $"tab-{newAnswers.Last().Sequence}" : string.Empty;
+        if (tabRef is not null)
+        {
+            await tabRef.GoToTabAsync(activeTabId);
+        }
         await InvokeAsync(StateHasChanged);
     }
 
@@ -322,8 +340,8 @@
     }
     private async Task OpenNewHelper(int answerId)
     {
-        AnswerHelperCount++;
-        answerHelper = new AnswerHelper() { Id = AnswerHelperCount, AnswerId = answerId };
+        var darab = answerHelpers.Count(h => h.AnswerId == answerId);
+        answerHelper = new AnswerHelper() { Sequence = darab + 1, AnswerId = answerId };
         var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(answerHelper.Text, new DialogParameters()
         {
             Alignment = HorizontalAlignment.Center,

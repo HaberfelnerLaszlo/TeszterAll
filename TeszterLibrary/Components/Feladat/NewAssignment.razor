@@ -18,7 +18,7 @@
         <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
             @if (newAnswers.Count > 0)
             {
-            <FluentTabs ActiveTabId="@activeTabId" OnTabClose="@ClosedTab" ShowClose="true">
+            <FluentTabs @ref="tabRef" ActiveTabId="@activeTabId" OnTabClose="@ClosedTab" ShowClose="true">
                 @foreach (var answer in newAnswers) 
                 {
                     var seq = answer.Sequence;
@@ -55,6 +55,7 @@
     int AnswerCount = 0;
     bool IsSavedQuestion = false;
     string activeTabId = "tab-1";
+    FluentTabs? tabRef;
     List<Answer> newAnswers = new List<Answer>();
     protected override async Task OnInitializedAsync()
     {
@@ -206,7 +207,8 @@
             answerRefs[seq] = null;
             AnswerCount = newAnswers.Count;
             activeTabId = $"tab-{seq}"; 
-            await InvokeAsync(StateHasChanged);
+            await tabRef!.GoToTabAsync(activeTabId);
+            //await InvokeAsync(StateHasChanged);
 
         }
         catch (Exception ex)

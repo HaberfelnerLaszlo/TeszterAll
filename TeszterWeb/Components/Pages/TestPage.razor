@@ -1,0 +1,35 @@
+﻿@page "/testpage"
+<Make_pair @ref="make_Pair" DynamicElementContents="@DynamicElementContents" StaticElementContents="@StaticElementContents" />
+<FluentButton OnClick="@GetElements">Elemek</FluentButton>
+@foreach (var item in AnswerContents)
+{
+    <p>@item.Key -> @item.Value</p>
+}
+@code {
+    private Make_pair make_Pair = new Make_pair();
+    private Dictionary<int, int> AnswerContents = new Dictionary<int, int>();
+    private Dictionary<int, string> StaticElementContents = new Dictionary<int, string>
+    {
+        { 1, "Static Element 1" },
+        { 2, "Static Element 2" },
+        { 3, "Static Element 3" }
+    };
+    private Dictionary<int, string> DynamicElementContents = new Dictionary<int, string>
+    {
+        { 1, "Dynamic Element 1" },
+        { 2, "Dynamic Element 2" },
+        { 3, "Dynamic Element 3" }
+    };
+    private void GetElements()
+    {
+        AnswerContents.Clear();
+        Console.WriteLine("Retrieving elements from Make_pair component...");
+        var elements = make_Pair.ElementContents();
+        foreach (var item in elements)
+        {
+            Console.WriteLine($"Key: {item.Key}, Value: {item.Value}");
+            AnswerContents.Add(item.Key, item.Value);
+        }
+        StateHasChanged();
+    }
+}

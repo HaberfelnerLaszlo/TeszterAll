@@ -25,7 +25,7 @@
         <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
         <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
         <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
-        <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" Value=@Teszt.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
+        <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" @bind-Value="@Teszt.ShuffleQuestion" Style="margin-bottom: 20px" Label="Kérdések keverése" />
         <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50" />
     </div>
     @if (Teszt.HasSection)
@@ -104,8 +104,14 @@
             _logger.LogWarning("Nincs csoportja! A csoport lekérdezés nullra ment felhasználó azonosító: {UserId}",UserId);
             return;
         }
-        Teszt.StartTime = DateTime.Now;
-        Teszt.EndTime = Teszt.StartTime.AddDays(1);
+        if (Teszt.StartTime < DateTime.Now)
+        {
+            Teszt.StartTime = DateTime.Now;
+        }
+        if (Teszt.EndTime < Teszt.StartTime)
+        {
+            Teszt.EndTime = Teszt.StartTime.AddDays(1);
+        }
         if (Teszt.HasSection)
         {
             if (sections is null||sections.Count==0)
@@ -122,6 +128,10 @@
             {
                 toastService.ShowWarning($"Hibalépet fel a szekciók lekérdezésénél!");
             }
+        }
+        if (Teszt.TestUsers is not null && Teszt.TestUsers.Count > 0)
+        {
+            TestMembers = Teszt.TestUsers.Select(tu => new EducationUser { Id = tu.UserId.ToString() }).ToList();
         }
     }
     private async Task SelectGroup(string id)

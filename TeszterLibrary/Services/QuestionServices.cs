@@ -96,6 +96,28 @@ namespace TeszterLibrary.Services
 				throw;
 			}
 		}
-		#endregion
-	}
+		public async Task DeleteAnswer(int answerId)
+        {
+            try
+            {
+                var v = await _service.Delete($"Question/Answer/{answerId}");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+		public async Task DeleteAnswerHelper(int Id)
+        {
+            try
+            {
+                var v = await _service.Delete($"Question/helper/{Id}");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        #endregion
+    }
 }

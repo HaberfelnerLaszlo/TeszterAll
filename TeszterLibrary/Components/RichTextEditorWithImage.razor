@@ -35,7 +35,7 @@
     [Parameter] public EventCallback<bool> DirtyChanged { get; set; }
     private BlazoredTextEditor textEditor=new();
     private string htmlContent=string.Empty, driveId=string.Empty, folderId=string.Empty;
-    bool hide = false, isModified = false;
+    bool isModified = false; //hide = false,
     private string wrapperId = $"rte-{Guid.NewGuid():N}";
     private DotNetObjectReference<RichTextEditorWithImage>? dotNetRef;
     private bool isDirty = false;

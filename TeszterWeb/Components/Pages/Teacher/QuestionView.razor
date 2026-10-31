@@ -6,28 +6,20 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IToastService toastService 
-@*<Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
-	<HeaderContent>
-		<p>Figyelmeztetés!</p>
-	</HeaderContent>
-	<BodyContent>
-		<h4>@errorMessage</h4>
-	</BodyContent>
-</Modal>*@
 <ListQuestions Questions="questions" Refresh="RefreshQuestions" Delete="DeleteQ" New="SaveNew" Updete="Update" SaveSubject="SaveSubject" UserId="@UserId" Subjects="Subjects" CreateTest="CreateTest">
 
 </ListQuestions>
 @code {
-	[Parameter] public string UserId { get; set; }
+    [Parameter] public string UserId { get; set; } = string.Empty;
 	string errorMessage = string.Empty;
 	bool isLoading = true;
 	public List<Question> questions = new();
-	private List<Subject> Subjects = new();
+	private List<Subject?> Subjects = new();
 	protected override async Task OnInitializedAsync()
 	{
 		data.Title = "Kérdések";
 		await RefreshQuestions();
-		Subjects = await sService.GetSubjects();
+		Subjects = await sService.GetSubjects() ?? new List<Subject?>();
 		isLoading = false;
 		StateHasChanged();
 	}
@@ -35,9 +27,9 @@
 	{
 		if (UserId == null)
 		{
-			questions = await qService.GetQuestions();
+			questions = await qService!.GetQuestions()??new List<Question>();
 		}
-		else questions = await qService.GetQuestions(Guid.Parse(UserId));
+        else questions = await qService!.GetQuestions(Guid.Parse(UserId)) ?? new List<Question>();
 
 		if (questions == null)
 		{
