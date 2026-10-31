@@ -8,16 +8,7 @@
             {
                 <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
                     <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="true" Droppable="true">
-                        <div style="margin-bottom: 5px;
-                                    margin-top: 5px;
-                                    border-radius: 10px;
-                                    background: rgba(150,239,223,0.31);
-                                    border-color: rgb(8,42,77);
-                                    box-shadow: 1px 1px;
-                                    padding: 10px;
-                                    max-width: @(maxLenght)px;
-                                    text-align: center;
-                                    font-size: 2vw;">
+                        <div class="answer" style="width: @(maxLenght+20)px; text-align: center; font-size: 2vw;">
                             @item.Text
                         </div>
                     </FluentDropZone>

@@ -17,6 +17,7 @@
 }
 else if (tanulokByCsoport.Count() == 0)
 {
+    <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c => c.Name)" OptionValue="@(c => c.Id)" SelectedOptionChanged="@(SelectedCsoport)" />
     <p>Nincs tanuló az adatbázisban.</p>
 }
 else
@@ -31,6 +32,7 @@ else
                       @bind-SelectedItems="@SelectedItems" />
         <PropertyColumn Property="@(t=>t.Tanulo.Name)" Title="Tanuló neve" />
         <PropertyColumn Property="@(t=>t.Tanulo.Pont)" Title="Elért pontszám" />
+        <PropertyColumn Property="@(t => t.Tanulo.Osztaly)" Title="Csoport" />
         <TemplateColumn Title="Műveletek" Align="@Microsoft.FluentUI.AspNetCore.Components.Align.End">
             <FluentButton aria-label="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => EditDialog(context))" />
             <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(async() =>await DeleteTanulo(context))" />
@@ -44,6 +46,7 @@ else
     }
     <FluentButton OnClick="NewTanulo">Új tanuló hozzáadás</FluentButton>
     <FluentButton OnClick="@(()=>toastService.ShowInfo($" Összesen {tanulokByCsoport.Count()} tanuló van a listában."))">Lista elemeinek száma</FluentButton>
+    <FluentButton OnClick="@(() => GetTanulokNewyear())">Új évre átállás</FluentButton>
 }
 
 @code {
@@ -296,4 +299,9 @@ else
         //StateHasChanged();
     }
     private record class Csoport(string Id, string Name);
+
+    private async Task<object> GetTanulokNewyear()
+    {
+        return await tService.GetTanulokNewyearyAsync();
+    }
 }

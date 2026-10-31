@@ -17,7 +17,7 @@
 
 @* Footer *@
 <FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>Check(null))">Ellenőrzés</FluentButton>
+@*     <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>Check(null))">Ellenőrzés</FluentButton> *@
     <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Bezárás</FluentButton>
 </FluentDialogFooter>
 
@@ -28,7 +28,7 @@
         {
             <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
         }
-        else
+        else if(Content.QType != QuestionType.Komp)
         {
             <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
         }
@@ -55,6 +55,9 @@
                 break;
             case QuestionType.Comp:
                 <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                break;
+            case QuestionType.Komp:
+                <Test_komp Answers="questionView.Answers" questionText="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
                 break;
             default:
                 <p>Nem tudom mi történt!  @Content.QType.ToString()</p>
@@ -84,32 +87,35 @@
         {
             foreach (var item in Content.Answers)
             {
-                if (!item.Right)
-                {
-                    questionView.Answers!.Add(new()
-                    {
-                        AnswerId = item.Id,
-                        Result = false,
-                        Sequence = -1,
-                        Sign = false,
-                        Text = item.Text
-                    });
-                } else
+        //         if (!item.Right)
+        //         {
                     questionView.Answers!.Add(new()
                     {
                         AnswerId = item.Id,
                         Result = false,
                         Sequence = item.Sequence,
-                        Sign = true,
+                        Sign = item.Right,
+                        Score = item.Score,
                         Text = item.Text
                     });
             }
+                 //else
+        //             questionView.Answers!.Add(new()
+        //             {
+        //                 AnswerId = item.Id,
+        //                 Result = false,
+        //                 Sequence = item.Sequence,
+        //                 Sign = true,
+        //                 Score = item.Score,
+        //                 Text = item.Text
+        //             });
+        //     }
         }
         else
         {
             foreach (var item in Content.Answers)
             {
-                questionView.Answers!.Add(new() { AnswerId = item.Id, Result = false, Sequence = item.Sequence, Sign = false, Text = item.Text });
+                questionView.Answers!.Add(new() { AnswerId = item.Id, Result = false, Sequence = item.Sequence, Sign = false, Score = item.Score, Text = item.Text });
             }
         }
         //else
@@ -192,6 +198,17 @@
                     foreach (var item in answers)
                     {
                         if (item.Text.Equals(Content.Answers?.FirstOrDefault(a => a.Id == item.AnswerId)?.Text))
+                        {
+                            item.Result = true;
+                        }
+                    }
+                }
+                break;
+            case QuestionType.Komp:
+                {
+                    foreach (var item in answers)
+                    {
+                        if (item.AnswerText.Equals(Content.Answers?.FirstOrDefault(a => a.Id == item.AnswerId)?.RightAnswer))
                         {
                             item.Result = true;
                         }

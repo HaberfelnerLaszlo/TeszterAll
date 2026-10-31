@@ -9,7 +9,7 @@ namespace TeszterLibrary.Services.Feladat
     {
         public string ErrorMessage { get; set; } = string.Empty;
         private static readonly HttpClient client = new();
-        protected static string URI = "https://fapi.haberfelner.eu/";
+        protected static string URI = "https://fapi.haberfelner.hu/";
         public async Task<Tv?> Get<Tv>(string uri)
         {
             var valasz = string.Empty;

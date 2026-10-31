@@ -46,6 +46,7 @@ namespace TeszterLibrary.ViewModel
         /// </summary>
         public int Sequence { get; set; }
         public int Score { get; set; }
+        public string AnswerText { get; set; } = string.Empty;
         /// <summary>
         /// Válasz segédletek
         /// </summary>

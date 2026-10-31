@@ -77,7 +77,7 @@ else
 	Dictionary<string, string> valuePairs = new();
 	private List<string> titles = new();
 	private Question TempQuestion { get; set; } = new();
-	private List<Question> TestQuestion = new();
+	private List<TeszterLibrary.Model.TestQuestion> TestQuestion = new();
 	private readonly string _scope = "User.Read EduRoster.ReadBasic";
 	Test newTest = new();
 	GraphServiceClient GraphClient;
@@ -143,7 +143,13 @@ else
 	}
 	private void AddTestQ(Question question)
 	{
-		TestQuestion.Add(question);
+		TestQuestion.Add(new TeszterLibrary.Model.TestQuestion
+		{
+			Question = question,
+			QuestionId = question.Id,
+			Score = question.Score,
+			Time = question.Time
+		});
 	}
 	private async Task Save(Question question)
 	{

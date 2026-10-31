@@ -3,7 +3,8 @@
 @inject ILogger<Test_pair> logger
 @if (Answers is not null)
 {
-    <FluentDragContainer TItem="string"
+    <Make_pair DynamicElementContents="@dynamic" StaticElementContents="pairs" />
+    @* <FluentDragContainer TItem="string"
                          OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
         <FluentStack Orientation="Orientation.Horizontal">
             <FluentStack Orientation="Orientation.Vertical">
@@ -52,8 +53,9 @@
                 }
             </FluentStack>
         </FluentStack>
-    </FluentDragContainer> <div class="container">
-    </div>
+    </FluentDragContainer> 
+    <div class="container">
+    </div>*@
     <div class="container text-center">
         @if (IsCheck)
         {
@@ -71,71 +73,35 @@
     [Parameter] public bool IsChecked { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
-    List<AnswerView> selectList = new();
     List<AnswerView> tempList = new();
     Dictionary<int, string> pairs = new();
+    Dictionary<int, string> dynamic = new();
     protected override void OnAfterRender(bool firstRender)
     {
-        //if (firstRender)
-        //{
+        if (firstRender)
+        {
         foreach (var item in Answers)
         {
-            if (IsChecked)
-            {
-                if (!item.Sign)
+                if (item.Sign)
                 {
                     pairs.Add(item.Sequence, item.Text);
                 }
-            }
-            else
-            {
-                if (item.Sequence == -1)
-                {
-                    selectList.Add(item);
-                }
                 else
                 {
-                    pairs.Add(item.Sequence, "Ide kerül a párja...");
+                    dynamic.Add(item.Sequence, item.Text);
                 }
-            }
         }
-        if (selectList.Any())
+        if (dynamic.Any())
         {
-            selectList.Shuffle();
+            dynamic.Shuffle();
         }
-        //}
+        }
     }
     void Send()
     {
-        if (selectList.Count == 0)
+        if (dynamic.Count == 0)
         {
             Next.InvokeAsync(Answers);
         }
-    }
-    void HandleDropEnd(string source, string target)
-    {
-        var masol = selectList.Find(j => j.AnswerId == Convert.ToInt32(source));
-        var cel = Answers.FirstOrDefault(l => l.AnswerId == Convert.ToInt32(target));
-        if (masol is null || cel is null)
-        {
-            toastService.ShowError("Hiba történt a sorbarendezés során!");
-            logger.LogError("Hiba történt a sorbarendezés során!");
-            return;
-        }
-        pairs[cel.Sequence] = masol.Text;
-        masol.Sequence = cel.Sequence;
-        tempList.Add(masol);
-        selectList.Remove(masol);
-    }
-    void BackList(int sequence)
-    {
-        var temp = tempList.FirstOrDefault(i => i.Sequence == sequence);
-        if (temp is null)
-        {
-            return;
-        }
-        selectList.Add(temp);
-        tempList.Remove(temp);
-        pairs[sequence] = "Ide kerül a párja...";
     }
 }

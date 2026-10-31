@@ -214,7 +214,7 @@ else if (TestMembers.Any())
                     StudentId = member.Id;
                     StudentName = member.DisplayName;
                     var response = await uService.UserExits(StudentId);
-                    if (response != null && response == false)
+                    if (response == false)
                     {
                         await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
                     }
@@ -264,7 +264,7 @@ else if (TestMembers.Any())
                 StudentId = TestMembers[1].Id;
                 StudentName = TestMembers[1].DisplayName;
                 var response = await uService.UserExits(StudentId);
-                if (response != null && response == false)
+                if (response == false)
                 {
                     await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
                 }
@@ -305,7 +305,7 @@ else if (TestMembers.Any())
         StudentName = TestMembers[0].DisplayName;
         IsCompletMember = true;
         var response = await uService.UserExits(StudentId);
-        if (response != null && response == false)
+        if (response == false)
         {
             await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
         }

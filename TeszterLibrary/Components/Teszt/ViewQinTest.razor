@@ -13,8 +13,8 @@
         </FluentHeader>
         @if (actualq is not null && actualq.QuestionType != QuestionType.All)
         {
-            <FluentStack Width="100%">
-                <FluentBodyContent>
+            <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Width="100%">
+                <FluentBodyContent Style="text-align: center;">
                     <EditForm Model="@actualq">
                         @if (actualq.QuestionType == QuestionType.Comp)
                         {
@@ -47,6 +47,9 @@
                                 break;
                             case QuestionType.Comp:
                                 <Test_comp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="IsCheck" IsChecked="IsChecked" CallCheck="Check" Next="Next" />
+                                break;
+                            case QuestionType.Komp:
+                                <Test_komp Answers="actualq.Answers" Texts="@actualq.QuestionText" IsCheck="IsCheck" IsChecked="IsChecked" CallCheck="Check" Next="Next" />
                                 break;
                             default:
                                 <p>Nem tudom mi történt! @actualq.QuestionType.ToString()</p>
