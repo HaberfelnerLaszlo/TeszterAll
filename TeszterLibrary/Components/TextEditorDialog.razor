@@ -1,8 +1,6 @@
 ﻿@using System.Text.RegularExpressions
 @using Blazored.TextEditor
 @using Microsoft.AspNetCore.Hosting
-@using Microsoft.JSInterop
-
 @inject IWebHostEnvironment Environment
 @inject GraphService graphService
 @inject FolderData folderData
@@ -54,9 +52,10 @@
     public FluentDialog Dialog { get; set; } = default!;
     private BlazoredTextEditor textEditor = new();
     private string htmlContent = string.Empty, driveId = string.Empty, folderId = string.Empty;
-    bool hide = false, isModified = false;
+    bool hide = false;//, isModified = false;
 
-    private async Task SaveAsync()
+    private async Task SaveAsync
+    ()
     {
         try
         {
