@@ -8,7 +8,7 @@
                     @if (SourceList.Any())
                     {
                         <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context">
-                            @SourceContent(context)
+                            @SourceContent?(context)
                         </FluentDropZone>
                     }
                     else
@@ -34,7 +34,7 @@
                     else
                     {
                         <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context">
-                            @TargetContent(context)
+                            @TargetContent?(context)
                         </FluentDropZone>
                     }
                     </OptionTemplate>
@@ -44,8 +44,8 @@
 </FluentDragContainer>
 <FluentLabel>@target</FluentLabel>
 @code {
-    [Parameter] public IList<TItem> SourceList { get; set; }
-    [Parameter] public IList<TItem> TargetList { get; set; }
+    [Parameter] public required IList<TItem> SourceList { get; set; }
+    [Parameter] public required IList<TItem> TargetList { get; set; }
     [Parameter] public string SourceLabel { get; set; } = "Forrás";
     [Parameter] public string TargetLabel { get; set; } = "Cél";
     [Parameter] public RenderFragment<TItem>? SourceContent { get; set; }
@@ -57,6 +57,10 @@
     string target=string.Empty;
     void HandleDropEnd(FluentDropZone<TItem> source, FluentDropZone<TItem> target)
     {
+        if (source.Data is null)
+        {
+            return;
+        }
         if (source.Id == "lista")
         {
             TargetList.Add((TItem)source.Data);

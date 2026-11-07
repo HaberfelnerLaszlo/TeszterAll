@@ -33,7 +33,7 @@ namespace TeszterLibrary.Services.Feladat
                     {
                         if (deserilizeResponse.IsSuccess)
                         {
-                            return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
+                            return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content?.ToString()??string.Empty);
                         }
                     }
                     }
@@ -89,7 +89,7 @@ namespace TeszterLibrary.Services.Feladat
                     {
                         if (deserilizeResponse.IsSuccess)
                         {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content?.ToString()??string.Empty);
                         }
                     }
                 }
@@ -121,7 +121,7 @@ namespace TeszterLibrary.Services.Feladat
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7131/upload");
                 var content = new MultipartFormDataContent();
-                content.Add(new StreamContent(fileStream),fileStream.ToString());
+                content.Add(new StreamContent(fileStream),fileStream?.ToString()??string.Empty);
                 request.Content = content;
                 var response = await client.SendAsync(request);
                 if (response.IsSuccessStatusCode)
