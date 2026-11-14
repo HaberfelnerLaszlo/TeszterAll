@@ -3,8 +3,19 @@
     <FluentDesignSystemProvider>    
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        @*<AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />*@
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)"/>
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    <RedirectToLogin />
+                }
+                else
+                {
+                    <h3>Nincs jogosultság</h3>
+                    <p role="alert">Ehhez az oldalhoz nincs jogosultságod.</p>
+                }
+            </NotAuthorized>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
 </Router>

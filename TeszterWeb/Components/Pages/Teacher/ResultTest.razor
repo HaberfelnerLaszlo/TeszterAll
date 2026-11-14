@@ -28,7 +28,7 @@ else
             return;
         }
     }
-    async void UpdateScore(QuestionResult questionResult)
+    async Task UpdateScore(QuestionResult questionResult)
     {
         var response = await tquService.UpdateScore(questionResult.Id,questionResult.Score);
         if (response)

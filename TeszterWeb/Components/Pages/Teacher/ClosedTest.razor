@@ -47,7 +47,7 @@ else
         }
         tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
     }
-    private async void TestResult(TestResultToTeacher test)
+    private async Task TestResult(TestResultToTeacher test)
     {
         List<TestQuestion>? questions = await tqService.GetTestQuestions(test.TestId);
         if (questions is null)

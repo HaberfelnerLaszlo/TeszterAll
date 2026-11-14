@@ -161,7 +161,7 @@
 			await QuestionsChanged.InvokeAsync(Questions);
 		}
 	}
-	private async void SubjectlistChanged(string arg)
+	private async Task SubjectlistChanged(string arg)
 	{
 		filter.Subject = arg;
 		titles.Clear();
@@ -175,13 +175,13 @@
 		//page = 1;
 		await NewFilter();
 	}
-	private async void TitleChanged(string t)
+	private async Task TitleChanged(string t)
 	{
 		filter.Title = t;
 		//page = 1;
 		await NewFilter();
 	}
-	async void GradeChanged(int v,bool isMin)
+	async Task GradeChanged(int v,bool isMin)
 	{
 		if (isMin)
 		{
@@ -204,7 +204,7 @@
 		//page = 1;
 		await NewFilter();
 	}
-	async void qTypeChanged(QuestionType qType)
+	async Task qTypeChanged(QuestionType qType)
 	{
 		filter.QType = qType;
 		//page = 1;

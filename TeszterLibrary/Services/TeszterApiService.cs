@@ -1,255 +1,78 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Net.Http.Headers;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Abstractions;
-using Microsoft.IdentityModel.JsonWebTokens;
-
-using Newtonsoft.Json;
-using NPOI.SS.Formula.Functions;
-
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 
 using TeszterLibrary.Events;
-using TeszterLibrary.Model;
 
 namespace TeszterLibrary.Services
 {
-    public class TeszterApiService
+    /// <summary>
+    /// A Teszter API kliense. A felhasználói tokent KÉRÉSENKÉNT kéri le (az MSAL gyorsítótárból,
+    /// lejárat előtt frissítve) és a kérésre teszi, nem a megosztott HttpClient-re, így
+    /// a felhasználók tokenjei nem keveredhetnek.
+    /// </summary>
+    public class TeszterApiService : ApiClientBase
     {
+        public const string HttpClientName = "TeszterApi";
+
+        // Ezek az útvonalak eddig is token nélkül mentek (uri.Contains("Math")).
+        // Ha a szerver 401-et ad rájuk, ürítsd ezt a listát: akkor a Math API is tokent igényel.
+        private static readonly string[] AnonymousPrefixes = ["Math"];
+
         private readonly IAuthorizationHeaderProvider _authorizationHeaderProvider;
-        private readonly IConfiguration _configuration;
+        private readonly string[] _scopes;
 
-        public string ErrorMessage { get; set; } = String.Empty;
-        private static readonly HttpClient client = new();
-        private static readonly string[] scopes = ["api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user"];
-        public EventHandler<MessageEvent> OnMessageReceived { get; set; }
-        private string? _token;
-        private readonly DateTime _tokenExpiration;
-        private readonly string URI;
+        public EventHandler<MessageEvent>? OnMessageReceived { get; set; }
 
-        public TeszterApiService(IAuthorizationHeaderProvider authorizationHeaderProvider, IConfiguration configuration)
+        public TeszterApiService(
+            IHttpClientFactory httpClientFactory,
+            IAuthorizationHeaderProvider authorizationHeaderProvider,
+            IConfiguration configuration,
+            ILogger<TeszterApiService> logger)
+            : base(httpClientFactory.CreateClient(HttpClientName), logger)
         {
-            _authorizationHeaderProvider = authorizationHeaderProvider ?? throw new ArgumentNullException(nameof(authorizationHeaderProvider));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            URI = _configuration["ApiUrl"] ?? "https://teszter-api.haberfelner.hu/";
-            _tokenExpiration = DateTime.MinValue;
-        }
-
-        private async Task CreateAuthorizationHeaderForUserAsync()
-        {
-            _token = await _authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", _token.Substring(6));
+            _authorizationHeaderProvider = authorizationHeaderProvider
+                ?? throw new ArgumentNullException(nameof(authorizationHeaderProvider));
+            _scopes = ResolveScopes(configuration);
         }
 
         public async Task<Tv?> Get<Tv>(string uri)
-        {
-            try
-            {
-                client.BaseAddress ??= new Uri(URI);
-                if (string.IsNullOrEmpty(_token) && !uri.Contains("Math"))
-                {
-                    await CreateAuthorizationHeaderForUserAsync();
-                }
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue("application/json"));
-                using HttpResponseMessage response = await client.GetAsync(uri);
-                string? valasz;
-                if (response.IsSuccessStatusCode)
-                {
-                    valasz = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                    {
-                        var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                        if (deserilizeResponse != null)
-                        {
-                            if (deserilizeResponse.IsSuccess)
-                            {
-                                return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content.ToString());
-                            }
-                            else
-                            {
-                                OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage,100));
-                                return default;
-                            }
-                        }
-                    }
-                    return JsonConvert.DeserializeObject<Tv>(valasz);
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    valasz = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                    {
-                        var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                        if (r?.IsSuccess ?? false)
-                        {
-                            ErrorMessage = r.ErrorMessage;
-                        }
-                        else ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                    }
-                    else ErrorMessage = "Nem elérhető a szerver!";
-                    return default;
-                }
-                else
-                {
-                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                    return default;
-                }
-            }
-            catch (HttpRequestException e)
-            {
-                //client.CancelPendingRequests();
-                //client.Dispose();
-                ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
-                return default;
-            }
-            catch (Exception e)
-            {
-                client.CancelPendingRequests();
-                //client.Dispose();
-                ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
-                return default;
-            }
-        }
+            => (await SendAsync<Tv>(HttpMethod.Get, uri)).Value;
 
         public async Task<T?> Post<T>(string uri, T t)
-        {
-            var valasz = string.Empty;
-            //var token = await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
-
-            if (string.IsNullOrEmpty(_token) && !uri.Contains("Math"))
-            {
-                await CreateAuthorizationHeaderForUserAsync();
-            }
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsJsonAsync<T>(uri, t);
-            if (response.IsSuccessStatusCode)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        if (deserilizeResponse.IsSuccess)
-                        {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content?.ToString() ?? string.Empty);
-                        }
-                        else
-                        {
-                            OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage, 100));
-                            return default;
-                        }
-                    }
-                }
-                return JsonConvert.DeserializeObject<T?>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                }
-                else ErrorMessage += "Nem elérhető a szerver!";
-                return default;
-            }
-            else
-            {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
-            }
-            return default;
-        }
+            => (await SendAsync<T>(HttpMethod.Post, uri, t)).Value;
 
         public async Task<T?> Put<T>(string uri, T t)
-        {
-            //var token = await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
-            if (string.IsNullOrEmpty(_token) && !uri.Contains("Math"))
-            {
-                await CreateAuthorizationHeaderForUserAsync();
-            }
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PutAsJsonAsync<T>(uri, t);
-            string valasz;
-            if (response.IsSuccessStatusCode)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        if (deserilizeResponse.IsSuccess)
-                        {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
-                        }
-                        else
-                        {
-                            OnMessageReceived?.Invoke(this, new MessageEvent(deserilizeResponse.ErrorMessage, 100));
-                            return default;
-                        }
-                    }
-                }
-                return JsonConvert.DeserializeObject<T>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                }
-                else ErrorMessage += "Nem elérhető a szerver!";
-                return default;
-            }
-            else
-            {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
-            }
-            return default;
-        }
+            => (await SendAsync<T>(HttpMethod.Put, uri, t)).Value;
 
         public async Task<bool> Delete(string uri)
+            => (await SendAsync<object>(HttpMethod.Delete, uri)).IsSuccess;
+
+        protected override async Task<AuthenticationHeaderValue?> GetAuthorizationAsync(string uri)
         {
-            bool valasz = false;
-            //var token = await authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(scopes);
-            if (string.IsNullOrEmpty(_token) && !uri.Contains("Math"))
+            if (AnonymousPrefixes.Any(p => uri.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
             {
-                await CreateAuthorizationHeaderForUserAsync();
+                return null;
             }
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.DeleteAsync(uri);
-            if (response.IsSuccessStatusCode)
+            var header = await _authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(_scopes);
+            return AuthenticationHeaderValue.Parse(header);   // "Bearer <token>"
+        }
+
+        protected override void OnServerFailure(string message)
+            => OnMessageReceived?.Invoke(this, new MessageEvent(message, 100));
+
+        // Scope = TeszterApi:BaseUrl + "/" + TeszterApi:Scopes[i]  (pl. api://.../access_as_user)
+        private static string[] ResolveScopes(IConfiguration configuration)
+        {
+            var baseUrl = configuration["TeszterApi:BaseUrl"]?.TrimEnd('/');
+            var scopes = configuration.GetSection("TeszterApi:Scopes").Get<string[]>();
+            if (string.IsNullOrEmpty(baseUrl) || scopes is not { Length: > 0 })
             {
-                valasz = true;
+                throw new InvalidOperationException("Hiányzik a TeszterApi:BaseUrl vagy a TeszterApi:Scopes beállítás.");
             }
-            else ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-            return valasz;
+            return scopes.Select(s => s.Contains("://") ? s : $"{baseUrl}/{s}").ToArray();
         }
     }
-    public class TokenResponse
-    {
-        public string? Token { get; set; }
-        public int ExpiresIn { get; set; }
-    }
-
 }

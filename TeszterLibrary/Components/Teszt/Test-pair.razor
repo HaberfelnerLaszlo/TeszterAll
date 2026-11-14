@@ -97,11 +97,11 @@
         }
         }
     }
-    void Send()
+    async Task Send()
     {
         if (dynamic.Count == 0)
         {
-            Next.InvokeAsync(Answers);
+            await Next.InvokeAsync(Answers);
         }
     }
 }

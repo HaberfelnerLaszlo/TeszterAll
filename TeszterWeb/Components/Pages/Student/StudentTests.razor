@@ -67,7 +67,7 @@ else
         data.Test = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title, Time = test.Time };
         navi.NavigateTo($"runtest/{test.TestUserId}");
     }
-    async void TestResults(string testUserId)
+    async Task TestResults(string testUserId)
     {
         data.TestResults= await tuService.GetTestQuestions(int.Parse(testUserId)) ?? new();
         navi.NavigateTo($"student/testResult/{testUserId}");//Eredmények megtekintésére lehet tovább menni.

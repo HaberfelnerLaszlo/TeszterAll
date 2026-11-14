@@ -397,10 +397,10 @@
         }
     }
     private void CloseModal() => errorMessage = string.Empty;
-    private void SaveSubject()
+    private async Task SaveSubject()
     {
         showModal = false;
-        SubjectsSave.InvokeAsync(subjectName);
+        await SubjectsSave.InvokeAsync(subjectName);
     }
     void CloseSubjectModal() => showModal = false;
 }

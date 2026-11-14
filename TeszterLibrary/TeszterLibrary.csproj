@@ -31,4 +31,9 @@
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Security.Cryptography.Xml" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- A TeszterTests projekt látja az internal tagokat (pl. ImageStorage.TryDecodeDataUri). -->
+    <InternalsVisibleTo Include="TeszterTests" />
+  </ItemGroup>
 </Project>

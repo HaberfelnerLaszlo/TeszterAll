@@ -2,7 +2,7 @@
 @using Microsoft.Identity.Web
 @inject EduUserServices userServices
 @inject IToastService toastService
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Authorize(Roles = "Teacher")]
 <PageTitle>Felhasználók</PageTitle>
 <h3>UserManagment</h3>
 @if (users is not null && users.Count > 0)

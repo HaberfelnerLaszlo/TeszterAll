@@ -88,7 +88,7 @@ else
         tanulok.ForEach(t => tanulokByCsoport.Add(new TanuloWithSelect() { Tanulo = t, Selected = false }));
         await base.OnInitializedAsync();
     }
-    private async void EditDialog(TanuloWithSelect selectedTanulo)
+    private async Task EditDialog(TanuloWithSelect selectedTanulo)
     {
         if (selectedTanulo == null || selectedTanulo.Tanulo == null)
         {
@@ -171,7 +171,7 @@ else
             }
         }
     }
-    private async void DeleteTanulok(IEnumerable<TanuloWithSelect> selectedTanulok)
+    private async Task DeleteTanulok(IEnumerable<TanuloWithSelect> selectedTanulok)
     {
         if (tanulok is null || tanulok.Count() == 0)
         {
@@ -217,7 +217,7 @@ else
         }
         return;
     }
-    private async void NewTanulo()
+    private async Task NewTanulo()
     {
         if (csoportok == null || csoportok.Count() == 0)
         {

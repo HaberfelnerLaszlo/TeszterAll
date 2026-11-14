@@ -55,7 +55,7 @@
     TItem? selectedSource;
     TItem? selectedTarget;
     string target=string.Empty;
-    void HandleDropEnd(FluentDropZone<TItem> source, FluentDropZone<TItem> target)
+    async Task HandleDropEnd(FluentDropZone<TItem> source, FluentDropZone<TItem> target)
     {
         if (source.Data is null)
         {
@@ -71,9 +71,9 @@
             SourceList.Add((TItem)source.Data);
             TargetList.Remove((TItem)source.Data);
         }
-        OnDropEnd.InvokeAsync(TargetList.ToList());
+        await OnDropEnd.InvokeAsync(TargetList.ToList());
     }
-    private void All()
+    private async Task All()
     {
         foreach (var item in SourceList)
         {
@@ -81,9 +81,9 @@
         }
         SourceList.Clear();
         btnDidabled = true;
-        OnDropEnd.InvokeAsync(TargetList.ToList());
+        await OnDropEnd.InvokeAsync(TargetList.ToList());
     }
-    private void Reverse()
+    private async Task Reverse()
     {
         foreach (var item in TargetList)
         {
@@ -91,10 +91,10 @@
         }
         TargetList.Clear();
         btnDidabled = false;
-        OnDropEnd.InvokeAsync(TargetList.ToList());
+        await OnDropEnd.InvokeAsync(TargetList.ToList());
 
     }
-    private void ToMove(bool isSource)
+    private async Task ToMove(bool isSource)
     {
         if (isSource)
         {
@@ -114,12 +114,12 @@
                 selectedTarget = default;
             }
         }
-        OnDropEnd.InvokeAsync(TargetList.ToList());
+        await OnDropEnd.InvokeAsync(TargetList.ToList());
 
     }
 
-    private void HandleSelectedTargetChange()
+    private async Task HandleSelectedTargetChange()
     {
-        OnDropEnd.InvokeAsync(TargetList.ToList());
+        await OnDropEnd.InvokeAsync(TargetList.ToList());
     }
 }

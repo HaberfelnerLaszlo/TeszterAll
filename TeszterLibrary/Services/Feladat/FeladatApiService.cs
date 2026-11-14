@@ -1,231 +1,55 @@
-﻿using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using TeszterLibrary.Model;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace TeszterLibrary.Services.Feladat
 {
-    public class FeladatApiService
+    /// <summary>
+    /// A Feladat API kliense. Jelenleg NEM küld hitelesítést (mint eddig sem): ha az API
+    /// tanulói adatot ad vissza, érdemes tokenhez kötni (felülírható a GetAuthorizationAsync).
+    /// </summary>
+    public class FeladatApiService : ApiClientBase
     {
-        public string ErrorMessage { get; set; } = string.Empty;
-        private static readonly HttpClient client = new();
-        protected static string URI = "https://fapi.haberfelner.hu/";
-        public async Task<Tv?> Get<Tv>(string uri)
+        public const string HttpClientName = "FeladatApi";
+
+        private readonly string _uploadPath;
+
+        public FeladatApiService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<FeladatApiService> logger)
+            : base(httpClientFactory.CreateClient(HttpClientName), logger)
         {
-            var valasz = string.Empty;
+            // Abszolút URL is megadható (pl. külön feltöltő szolgáltatás), alapértelmezés: <BaseUrl>/upload
+            _uploadPath = configuration["FeladatApi:UploadUrl"] ?? "upload";
+        }
+
+        public async Task<Tv?> Get<Tv>(string uri)
+            => (await SendAsync<Tv>(HttpMethod.Get, uri)).Value;
+
+        public async Task<T?> Post<T>(string uri, T t)
+            => (await SendAsync<T>(HttpMethod.Post, uri, t)).Value;
+
+        public async Task<bool> Put<T>(string uri, T t)
+            => (await SendAsync<object>(HttpMethod.Put, uri, t)).IsSuccess;
+
+        public async Task<bool> Delete(string uri)
+            => (await SendAsync<object>(HttpMethod.Delete, uri)).IsSuccess;
+
+        public async Task<bool> PostFileAsync(Stream fileStream, string fileName = "upload.bin", CancellationToken ct = default)
+        {
+            ErrorMessage = string.Empty;
             try
             {
-                if (client.BaseAddress is null)
-                {
-                    client.BaseAddress = new Uri(URI);
-                }
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage response = await client.GetAsync(uri);
-                if (response.IsSuccessStatusCode)
-                {
-                    valasz = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                    {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        if (deserilizeResponse.IsSuccess)
-                        {
-                            return JsonConvert.DeserializeObject<Tv>(deserilizeResponse.Content?.ToString()??string.Empty);
-                        }
-                    }
-                    }
-                    return JsonConvert.DeserializeObject<Tv>(valasz);
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    valasz = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                    {
-                        var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                        if (r?.IsSuccess??false)
-                        {
-                            ErrorMessage = r.ErrorMessage;
-                        }
-                        else ErrorMessage = r?.ErrorMessage??"Null eredmény lett a hiba üzenet";
-                    }else ErrorMessage = "Nem elérhető a szerver!";
-                    return default;
-                }
-                else
-                {
-                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                    return default;
-                }
+                using var content = new MultipartFormDataContent();
+                content.Add(new StreamContent(fileStream), "file", fileName);
+                using var response = await Http.PostAsync(_uploadPath, content, ct);
+                if (response.IsSuccessStatusCode) return true;
+                ErrorMessage = $"{(int)response.StatusCode} {response.ReasonPhrase}";
             }
-            catch (HttpRequestException e)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
-                ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
-                return default;
+                throw;
             }
             catch (Exception e)
             {
-                client.CancelPendingRequests();
-                ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
-                return default;
-            }
-        }
-        public async Task<T?> Post<T>(string uri, T t)
-        {
-            var valasz = string.Empty;
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = await client.PostAsJsonAsync(uri, t);
-            if (response.IsSuccessStatusCode)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        if (deserilizeResponse.IsSuccess)
-                        {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content?.ToString()??string.Empty);
-                        }
-                    }
-                }
-                return JsonConvert.DeserializeObject<T?>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                }
-                else ErrorMessage += "Nem elérhető a szerver!";
-                return default;
-            }
-            else
-            {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
-            }
-            return default;
-        }
-        public async Task<bool> PostFileAsync(Stream fileStream)
-        {
-            try
-            {
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7131/upload");
-                var content = new MultipartFormDataContent();
-                content.Add(new StreamContent(fileStream),fileStream?.ToString()??string.Empty);
-                request.Content = content;
-                var response = await client.SendAsync(request);
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                else
-                {
-                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                throw;
-            }
-        }
-
-        public async Task<bool> Put<T>(string uri, T t)
-        {
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = await client.PutAsJsonAsync(uri, t);
-            string valasz;
-            if (response.IsSuccessStatusCode)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        return deserilizeResponse.IsSuccess;
-                        //if (deserilizeResponse.IsSuccess)
-                        //{
-                            //return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
-                        //}
-                    }
-                }
-                return false;//JsonConvert.DeserializeObject<T>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                }
-                else ErrorMessage += "Nem elérhető a szerver!";
-                return false;
-            }
-            else
-            {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
-            }
-            return false;
-        }
-        public async Task<bool> Delete(string uri)
-        {
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = await client.DeleteAsync(uri);
-            string valasz;
-            if (response.IsSuccessStatusCode)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
-                    {
-                        return deserilizeResponse.IsSuccess;
-                        //if (deserilizeResponse.IsSuccess)
-                        //{
-                        //return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
-                        //}
-                    }
-                }
-                return false;//JsonConvert.DeserializeObject<T>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
-                {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
-                }
-                else ErrorMessage += "Nem elérhető a szerver!";
-                return false;
-            }
-            else
-            {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
+                ErrorMessage = "A feltöltés nem sikerült: " + e.Message;
             }
             return false;
         }

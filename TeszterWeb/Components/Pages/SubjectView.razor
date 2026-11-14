@@ -30,7 +30,7 @@
             tService.ShowInfo(errorMessage);
         }
     }
-    async void Add()
+    async Task Add()
     {
         var subject = await sService.AddSubjectsAsync(new() { Name = newSubject });
         if (subject is null)
@@ -45,7 +45,7 @@
         newSubject = string.Empty;
         StateHasChanged();
     }
-    async void Edit(Subject subject)
+    async Task Edit(Subject subject)
     {
         var data = new Subject();
         data = subject;
@@ -72,7 +72,7 @@
         }
 
     }
-    async void Delete(Subject subject)
+    async Task Delete(Subject subject)
     {
         try
         {
