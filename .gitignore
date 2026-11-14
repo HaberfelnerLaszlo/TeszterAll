@@ -361,4 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Feltöltött képek (nem verziókezelendők)
+TeszterWeb/App_Data/
+TeszterWeb/wwwroot/uploads/
 /teszter-api-refaktor.zip
+*.zip
