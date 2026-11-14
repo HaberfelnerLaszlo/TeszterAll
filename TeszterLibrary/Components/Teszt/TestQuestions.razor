@@ -119,9 +119,9 @@
         }
 
     }
-    private void SetQuestionForUpdate(Question question)
+    private async Task SetQuestionForUpdate(Question question)
     {
-        Update.InvokeAsync(question);
+        await Update.InvokeAsync(question);
         //UpdateQuestion = question;
         //updated = false;
         ////Answers = aservice.GetQuestionAnswer(question.Id);

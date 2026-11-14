@@ -15,7 +15,7 @@ namespace TeszterLibrary
         public string MyDriveId { get; set; } = string.Empty;
         public string ImageFolderId { get; set; } = string.Empty;
         public string AppFolderId { get; set; } = string.Empty;
-        public async void AddFolderIds()
+        public async Task AddFolderIds()
         {
             if (string.IsNullOrEmpty(MyDriveId))
                 MyDriveId = await graphService.GetMyDrive();

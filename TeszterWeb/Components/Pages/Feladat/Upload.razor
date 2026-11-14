@@ -17,9 +17,14 @@
 
 @code {
     FluentInputFile? myFileByBuffer = default!;
-    async void OnCompleted(FluentInputFileEventArgs file)
+    async Task OnCompleted(FluentInputFileEventArgs file)
     {
-        var resp = await FeladatService.PostFileAsync(file.Stream);
+        if (file.Stream is null)
+        {
+            toastService.ShowError($"File {file.Name} nem olvasható.");
+            return;
+        }
+        var resp = await FeladatService.PostFileAsync(file.Stream, file.Name);
         if (resp)
         {
             toastService.ShowSuccess($"File {file.Name} sikeresen feltöltve.");

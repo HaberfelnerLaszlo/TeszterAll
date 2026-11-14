@@ -136,7 +136,7 @@
 			}
 		}
 	}
-	private void Save()
+	private async Task Save()
 	{
 		for (int i = 0; i < taskIds.Length; i++)
 		{
@@ -157,7 +157,7 @@
 				Lessons.Add(new() { TaskId = i + 62, TaskCount = taskIds[i], ClassId=ClassId });
 			}
 		}
-		SaveTask.InvokeAsync(Lessons);
+		await SaveTask.InvokeAsync(Lessons);
 	}
 	void InputChange(int index)
 	{

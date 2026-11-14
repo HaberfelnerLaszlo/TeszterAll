@@ -1,0 +1,170 @@
+﻿@* Az órai nézet: osztály kiválasztása, a tanóra-időbeosztás szerinti megjelenítés és az osztály feladatai.
+   Két mód: IsTeacher=false a névtelen (kivetítős) nézet visszaszámlálóval, IsTeacher=true a tanári "Következő" gombbal. *@
+@inject MathService mService
+@inject GroupsService gService
+@inject IToastService toastService
+@inject TimeProvider timeProvider
+@inject ILogger<ClassLessonHost> logger
+
+<h3>Válasz osztályt!</h3>
+<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="Group" Items="Groups" OptionText="g=>g.Name" OptionValue="g=>g.Id.ToString()" Placeholder="Válasz egy csoportot...">
+</FluentSelect>
+@if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
+{
+    @if (!IsLessonTime)
+    {
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+            <h4 style="text-align:center;">Jelenleg nincs tanóra!<br />A következő tanóra kezdéséig hátralévő idő:</h4>
+            <CountDown _remainingTime="remainingTime" IsEnd="()=>IsLessonTime=true"></CountDown>
+        </FluentStack>
+    }
+    else if (IsTeacher)
+    {
+        <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked="IsChecked" Next="NextClass"></ClassLesson>
+    }
+    else if (IsViewCheck)
+    {
+        <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked="IsChecked"></ClassLesson>
+    }
+    else
+    {
+        <ClassLesson TaskView="taskView" Recives="recives" IsChecked="IsChecked"></ClassLesson>
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+            <CountDown _remainingTime="remainingTime" IsEnd="CounterChange"></CountDown>
+        </FluentStack>
+    }
+}
+else if (!string.IsNullOrEmpty(selectClass))
+{
+    <h5>Adatok betöltése...</h5>
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentProgressRing />
+    </FluentStack>
+}
+@code {
+    /// <summary>Tanári mód: "Következő" gombbal léptethető az osztály feladata.</summary>
+    [Parameter]
+    public bool IsTeacher { get; set; }
+
+    string selectClass = string.Empty;
+    private TaskView taskView = new();
+    private bool IsChecked = false;
+    private List<ClassRecive> recives = new();
+    private List<Group> Groups = new();
+    bool IsLessonTime = false, IsViewCheck = false;
+    TimeSpan remainingTime = TimeSpan.Zero;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Groups = await gService.GetGroupsHasLessonsAsync();
+        if (Groups is null)
+        {
+            Groups = new List<Group>();
+            toastService.ShowInfo("Nincs feltöltve a csoport adatbázis!");
+            return;
+        }
+        var groupIds = await mService.GetGroups();
+        if (groupIds is not null && groupIds.Count > 0 && Groups.Count > 0)
+        {
+            // Megjegyzés: a Groups már csak a HasLessons csoportokat tartalmazza, ezért ez a ciklus jelenleg nem módosít semmit
+            // (a korábbi Index.razor-ból változatlanul átvéve).
+            foreach (var item in groupIds)
+            {
+                var group = Groups.FirstOrDefault(g => g.Id == item);
+                if (group is not null && !group.HasLessons)
+                {
+                    gService.SetHasLessons(item);
+                }
+            }
+        }
+        else
+        {
+            toastService.ShowInfo("Nincsen feladat osztályoknak kiadva!");
+        }
+    }
+
+    private async Task CheckClass(List<ClassRecive> _recives)
+    {
+        if (!Guid.TryParse(selectClass, out var classId))
+        {
+            toastService.ShowError("Érvénytelen osztály azonosító.");
+            return;
+        }
+        _recives.ForEach(r => { r.Result = (r.Result ?? string.Empty).Replace(',', '.'); r.ClassId = classId; });
+        var checkedRecives = await mService.ClassResult(_recives);
+        if (checkedRecives is null)
+        {
+            toastService.ShowError("Az eredmény ellenőrzése nem sikerült.");
+            return;
+        }
+        recives = checkedRecives;
+        IsChecked = true;
+    }
+
+    private async Task SelectedClass(string arg)
+    {
+        selectClass = arg;
+        if (string.IsNullOrEmpty(arg))
+        {
+            toastService.ShowMention("Kérlek válasz osztályt!");
+        }
+        else
+        {
+            await NextClass();
+        }
+    }
+
+    private async Task NextClass()
+    {
+        if (!Guid.TryParse(selectClass, out var classId))
+        {
+            toastService.ShowError("Érvénytelen osztály azonosító.");
+            return;
+        }
+        try
+        {
+            taskView = await mService.ClassLesson(classId) ?? new TaskView();
+            taskView.Operations ??= new List<OperationView>();      // az alapérték null: enélkül örökké a betöltő jelenne meg
+            recives.Clear();
+            IsChecked = false;
+            if (taskView.Operations is { Count: > 0 })
+            {
+                foreach (var item in taskView.Operations)
+                {
+                    recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = classId, StudentId = Guid.Empty });
+                }
+            }
+            else
+            {
+                toastService.ShowInfo("Nem található művelet");
+            }
+            ApplyLesson(LessonClock.Evaluate(LessonClock.SchoolNow(timeProvider)));
+        }
+        catch (Exception e)
+        {
+            // Nem dobjuk tovább: a kivetítőn futó oldal egy átmeneti hálózati hiba miatt ne szakadjon meg.
+            logger.LogError(e, "Az osztály feladatának betöltése nem sikerült (osztály: {ClassId})", classId);
+            toastService.ShowError(e.Message);
+        }
+    }
+
+    private void ApplyLesson(LessonWindow window)
+    {
+        IsLessonTime = window.IsLessonTime;
+        remainingTime = window.Remaining;
+        switch (window.Reason)
+        {
+            case LessonReason.Weekend:
+                toastService.ShowInfo("Hétvége van, jó gyakorlást!");
+                break;
+            case LessonReason.NoPeriodsConfigured:
+                toastService.ShowError("Nincsenek beállítva tanórák!");
+                break;
+        }
+    }
+
+    private void CounterChange(bool value)
+    {
+        IsViewCheck = value;
+    }
+}

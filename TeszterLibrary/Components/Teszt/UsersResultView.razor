@@ -84,7 +84,7 @@
         }
     }
     private record ViewResult(string QText, QuestionType Type,int QScore, List<QuestionResult> ViewAnswers, List<int>? NoDecided);
-    async void Change(QuestionResult data,ViewResult viewResult)
+    async Task Change(QuestionResult data,ViewResult viewResult)
     {
         // Create a new instance of DialogData
         // to allow the user to cancel the update
@@ -107,9 +107,9 @@
             await Update.InvokeAsync(updated);
         }
     }
-    void Ok(QuestionResult data, ViewResult viewResult)
+    async Task Ok(QuestionResult data, ViewResult viewResult)
     {
         viewResult.NoDecided?.Remove(data.Id);
-        Update.InvokeAsync(data);
+        await Update.InvokeAsync(data);
     }
 }

@@ -58,7 +58,7 @@ else
             nameFilter = string.Empty;
         }
     }
-    private async void Edit(Subject subject)
+    private async Task Edit(Subject subject)
     {
         // Create a new instance of DialogData
         // to allow the user to cancel the update
@@ -83,11 +83,11 @@ else
         }
 
     }
-    private async void Delete(Subject subject)
+    private async Task Delete(Subject subject)
     {
         await sService.DeleteSubjectAsync(subject);
     }
-    private async void NewSubject()
+    private async Task NewSubject()
     {
         if (string.IsNullOrEmpty(subjectName))
         {

@@ -200,7 +200,7 @@ else if (TestMembers.Any())
         BtnDidabled = false;
         StateHasChanged();
     }
-    async void Saved(List<Lesson> lessons)
+    async Task Saved(List<Lesson> lessons)
     {
         var j = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());//csak az újat küldi
         if (j is not null)

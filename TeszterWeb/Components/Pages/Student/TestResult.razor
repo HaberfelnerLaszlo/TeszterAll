@@ -87,40 +87,46 @@ else
     string errorMessage = string.Empty;
     Appearance apperance= Appearance.Neutral;
 
-    protected override async void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        questions = data.TestResults.ToList();
-        if (questions is null || questions.Count==0)
+        try
         {
-            noError = false;
-            errorMessage = "Nincsenek teszt kérdés eredményeid!";
-            toastService.ShowWarning(errorMessage);
-            logger.LogWarning(errorMessage);
-
-            return;
-        }
-        else
-        {
-            testQuestionUsers = await tquService.GetTestQuestionUsers(i);
-            if (testQuestionUsers is null)
+            questions = data.TestResults.ToList();
+            if (questions.Count == 0)
             {
-                errorMessage = "Nem lehetet lekérni az eredményidet!";
+                noError = false;
+                errorMessage = "Nincsenek teszt kérdés eredményeid!";
                 toastService.ShowWarning(errorMessage);
                 logger.LogWarning(errorMessage);
                 return;
             }
-            else
+
+            testQuestionUsers = await tquService.GetTestQuestionUsers(i);
+            if (testQuestionUsers is null)
             {
-                max = testQuestionUsers.LastOrDefault()?.ReplacedNumber??1;
-                tabs = new int[max];
-                for (int i = 0; i < max; i++)
-                {
-                    tabs[i]=i + 1;
-                }
-                ActualQuestion(max);
-                actual = max;
+                noError = false;
+                errorMessage = "Nem lehetett lekérni az eredményidet!";
+                toastService.ShowWarning(errorMessage);
+                logger.LogWarning(errorMessage);
+                return;
             }
-            StateHasChanged();
+
+            max = testQuestionUsers.LastOrDefault()?.ReplacedNumber ?? 1;
+            tabs = new int[max];
+            for (int n = 0; n < max; n++)
+            {
+                tabs[n] = n + 1;
+            }
+            ActualQuestion(max);
+            actual = max;
+        }
+        catch (Exception ex)
+        {
+            // Életciklus-metódusban a kezeletlen kivétel a teljes kapcsolatot (circuit) lerombolná.
+            noError = false;
+            errorMessage = "Az eredmény megjelenítése nem sikerült.";
+            logger.LogError(ex, "Hiba a teszt eredményének betöltésekor (TestUserId: {TestUserId})", i);
+            toastService.ShowError(errorMessage);
         }
     }
     void ActualChanged(int i)

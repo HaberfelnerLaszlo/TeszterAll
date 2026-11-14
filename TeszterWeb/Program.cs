@@ -14,9 +14,12 @@ using Microsoft.Identity.Web.UI;
 
 using Plk.Blazor.DragDrop;
 
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using TeszterLibrary;
+using TeszterLibrary.Extensions;
 using TeszterLibrary.Services;
 using TeszterLibrary.Services.Feladat;
+using TeszterLibrary.Services.Images;
 
 using TeszterWeb.Components;
 using TeszterWeb.Data;
@@ -34,24 +37,25 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
             .AddInMemoryTokenCaches()
 .AddDownstreamApi("DownstreamApi", builder.Configuration.GetSection("TeszterApi"))
                 .AddInMemoryTokenCaches();
-//builder.Services.AddAuthorization(options =>
-//{
-//    // By default, all incoming requests will be authorized according to the default policy
-//    options.FallbackPolicy = options.DefaultPolicy;
-//});
+// FIGYELEM: NE kapcsold be a FallbackPolicy-t (options.FallbackPolicy = options.DefaultPolicy)!
+// Akkor a Blazor-infrastruktúra (_framework/blazor.web.js, _blazor hub) is belépést kérne, és a
+// nyilvános Index oldal nem lenne interaktív. A védelem helyette oldalszinten van:
+// Components/Pages/_Imports.razor ([Authorize]) + mappánként szerepkör (Teacher/, Student/, Feladat/),
+// a nyilvános oldalak pedig [AllowAnonymous]-t kapnak (Index, Error).
 builder.Services.AddDbContext<TeszterLocalDB>(opt => opt.UseInMemoryDatabase("Teszter"));
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddMicrosoftIdentityConsentHandler()
-    .AddHubOptions(options => options.MaximumReceiveMessageSize = 1024 * 1024);
+    .AddHubOptions(options => options.MaximumReceiveMessageSize = 4 * 1024 * 1024);   // a szerkesztő a base64 képekkel együtt küldi a HTML-t; a képkorlát: Uploads:MaxImageBytes (2 MB)
 builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddApexCharts();
-builder.Services.AddScoped<TeszterApiService>();
-builder.Services.AddScoped<FeladatApiService>();
+builder.Services.TryAddSingleton(TimeProvider.System);   // az órai nézet idejét tesztben lecserélhetjük
+builder.Services.AddImageStorage(builder.Configuration);   // képfeltöltés: ellenőrzés + tárolás (App_Data/uploads)
+builder.Services.AddTeszterApiClients();   // TeszterApiService + FeladatApiService + nevesített HttpClient-ek
 builder.Services.AddScoped<TanuloService>();
 builder.Services.AddScoped<EduUserServices>();
 builder.Services.AddScoped<TestServices>();
@@ -101,6 +105,7 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 app.UseStaticFiles();
+app.MapImageUploads();   // GET /uploads/{fájl} – csak bejelentkezett felhasználónak
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

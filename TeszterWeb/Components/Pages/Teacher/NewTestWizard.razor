@@ -325,7 +325,7 @@
             return;
         }
     }
-    private async void ModalOpen(Question q)
+    private async Task ModalOpen(Question q)
     {
         var data = q;
         var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
@@ -504,7 +504,7 @@
         //    return;
         //}
     }
-    async void SectionChange(bool value)
+    async Task SectionChange(bool value)
     {
         newTest.HasSection = value;
         if (value)

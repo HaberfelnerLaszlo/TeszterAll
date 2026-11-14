@@ -1,5 +1,6 @@
 ﻿@using TeszterLibrary.Extensions
 @using System.Diagnostics
+@implements IDisposable
 @inject TestUserServices tuService
 @inject ILogger<ViewQinTest> _logger
 @if (noError)
@@ -95,10 +96,19 @@ else
     QuestionView? actualq = new();
     bool noError = true, IsChecked = false;//testStart = false
     string errorMessage = string.Empty;
-    System.Timers.Timer timer = new();
     int time = 0;
+
+    private System.Timers.Timer? _timer;                 // másodpercenként frissíti a kijelzőt és ellenőrzi az időkorlátot
+    private readonly Stopwatch _stopwatch = new();       // a valós eltelt idő (a timer ketyegése csúszhat)
+    private int _loadedId = int.MinValue;
+    private bool _busy;                                  // egyszerre egy beküldés/ellenőrzés: a felhasználó és az időkorlát ne ütközhessen
+    private bool _disposed;
+
     protected override async Task OnParametersSetAsync()
     {
+        // A szülő újrarenderelése is meghívja; a tesztet csak új azonosítónál töltjük be, különben elölről indulna.
+        if (Id == _loadedId) return;
+
         questions = await tuService.GetTestQuestions(Id);
         if (questions is null)
         {
@@ -117,106 +127,138 @@ else
             errorMessage = "Nem határozható meg a kérdés.";
             return;
         }
-        StateHasChanged();
-    }
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            TimerStart();
-        }
-        base.OnAfterRender(firstRender);
-    }
-    protected void TimerStart()
-    {
-        if (actualq is null || actualq.Answers is null)
-        {
-            return;
-        }
-        timer.Interval = 1000;
-        time = 0;
-        timer.Elapsed += async (s, e) =>
-        {
-            time++;
-            if (IsTimer && time == actualq.Time)
-            {
-                await Next(actualq.Answers);
-                return;
-                //timer.Stop();
-            }
-            await InvokeAsync(StateHasChanged);
-        };
-        timer.Start();
+        _loadedId = Id;
+        StartQuestionTimer();     // az adat megérkezése után indul (régen az első rendereléskor, amikor még nem volt kérdés)
     }
 
-    async void Check(List<AnswerView> answers)
+    private void StartQuestionTimer()
     {
+        time = 0;
+        _stopwatch.Restart();
+        _timer ??= CreateTimer();
+        _timer.Start();
+    }
+
+    private System.Timers.Timer CreateTimer()
+    {
+        var timer = new System.Timers.Timer(1000) { AutoReset = true };
+        // Az Elapsed a szálkészleten fut: az állapothoz csak a renderer szinkron-kontextusán (InvokeAsync) nyúlunk.
+        timer.Elapsed += (_, _) => { if (!_disposed) _ = InvokeAsync(OnTickAsync); };
+        return timer;
+    }
+
+    // Egész másodperc, 0,1 s toleranciával: a System.Timers.Timer néha picit korábban ketyeg, és a csonkolás
+    // ilyenkor 1 s-ot "veszítene", vagyis a lejárat a következő ketyegésre (+1 s) csúszna.
+    private int ElapsedSeconds() => (int)(_stopwatch.Elapsed.TotalSeconds + 0.1);
+
+    private async Task OnTickAsync()
+    {
+        if (_disposed || _busy || actualq is null) return;
+        try
+        {
+            time = ElapsedSeconds();
+            if (IsTimer && actualq.Time > 0 && time >= actualq.Time)
+            {
+                await Next(actualq.Answers ?? new List<AnswerView>());   // lejárt az idő: a jelenlegi válaszokkal továbblépünk
+            }
+            StateHasChanged();
+        }
+        catch (ObjectDisposedException)
+        {
+            // a komponens közben megszűnt
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Hiba a teszt időzítőjének léptetésekor.");
+        }
+    }
+
+    async Task Check(List<AnswerView> answers)
+    {
+        if (_busy) return;
         if (actualq is null)
         {
             _logger.LogWarning("A actual kérdés null.");
             return;
         }
-        QuestionView question = new() { Answers = answers, QuestionType = actualq.QuestionType, QuestionText = actualq.QuestionText, Score = actualq.Score, TestQuestionId = actualq.TestQuestionId, Time = actualq.Time };
-        var resp = await tuService.GetQuestionCheck(question, Id);
-        if (resp == null)
+        _busy = true;
+        try
         {
-            noError = false;
-            errorMessage = "A kérdés ellenőrzésekor hiba lépett fel.";
-            _logger.LogWarning(errorMessage);
-            StateHasChanged();
-            return;
+            QuestionView question = new() { Answers = answers, QuestionType = actualq.QuestionType, QuestionText = actualq.QuestionText, Score = actualq.Score, TestQuestionId = actualq.TestQuestionId, Time = actualq.Time };
+            var resp = await tuService.GetQuestionCheck(question, Id);
+            if (resp == null)
+            {
+                noError = false;
+                errorMessage = "A kérdés ellenőrzésekor hiba lépett fel.";
+                _logger.LogWarning(errorMessage);
+                return;
+            }
+            actualq = resp;
+            IsChecked = true;
         }
-        actualq = resp;
-        IsChecked = true;
-        StateHasChanged();
+        finally
+        {
+            _busy = false;
+        }
     }
+
     async Task Next(List<AnswerView> answers)
     {
+        if (_busy) return;
         if (actualq is null)
         {
             _logger.LogWarning("A actual kérdés null.");
             return;
         }
-        IsChecked = false;
-        timer.Stop();
-        QuestionView question = new() { Answers = answers, QuestionType = actualq.QuestionType, QuestionText = actualq.QuestionText, Score = actualq.Score, TestQuestionId = actualq.TestQuestionId, Time = time };
-        var response = await tuService.GetQuestionResult(question, Id);
-        if (response is null)
+        _busy = true;
+        try
         {
-            noError = false;
-            errorMessage = "Nem határozható meg a kérdés eredménye.";
-            _logger.LogWarning(errorMessage);
-            return;
+            IsChecked = false;
+            _timer?.Stop();
+            var elapsed = ElapsedSeconds();
+            if (IsTimer && actualq.Time > 0) elapsed = Math.Min(elapsed, actualq.Time);   // időkorláton túl nem számolunk
+            QuestionView question = new() { Answers = answers, QuestionType = actualq.QuestionType, QuestionText = actualq.QuestionText, Score = actualq.Score, TestQuestionId = actualq.TestQuestionId, Time = elapsed };
+            var response = await tuService.GetQuestionResult(question, Id);
+            if (response is null)
+            {
+                noError = false;
+                errorMessage = "Nem határozható meg a kérdés eredménye.";
+                _logger.LogWarning(errorMessage);
+                return;
+            }
+            readyQuestions.Add(response);
+            if (questions is null)
+            {
+                noError = false;
+                errorMessage = "A kérdések halmaza null.";
+                _logger.LogWarning(errorMessage);
+                return;
+            }
+            if (questions.Count > 0)
+            {
+                questions.RemoveAt(0);          // a mostani (mindig az első) kérdés kész
+            }
+            if (questions.Count == 0)
+            {
+                await TestEnd.InvokeAsync(readyQuestions);
+                return;
+            }
+            actualq = questions[0];
+            StartQuestionTimer();
         }
-        readyQuestions.Add(response);
-        if (questions is null)
+        finally
         {
-            noError = false;
-            errorMessage = "A kérdések halmaza null.";
-            _logger.LogWarning(errorMessage);
-            return;
+            _busy = false;
         }
-        if (!questions.Remove(question))
-            questions.RemoveAt(0);
-        if (questions.Count > 0)
-        {
-            actualq = questions.FirstOrDefault();
-        }
-        else
-        {
-            timer.Dispose();
+    }
 
-            await TestEnd.InvokeAsync(readyQuestions);
-            return;
-        }
-        if (actualq is null)
+    public void Dispose()
+    {
+        _disposed = true;
+        if (_timer is not null)
         {
-            noError = false;
-            errorMessage = "Nem határozható meg a kérdés.";
-            _logger.LogWarning(errorMessage);
-            return;
+            _timer.Stop();
+            _timer.Dispose();
         }
-        time = 0;
-        timer.Start();
     }
 }

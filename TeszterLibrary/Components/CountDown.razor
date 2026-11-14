@@ -1,4 +1,5 @@
 ﻿@implements IDisposable
+@inject ILogger<CountDown> Logger
 <style>
     .time-section {
         background-image: linear-gradient(160deg, rgb(5, 39, 103) 0%, #3a0647 70%);
@@ -22,7 +23,7 @@
 
 @if (!_renderedOnClient)
 {
-    <h5 class="text-center my-3">Launching at: @_remainingTime.ToString("hh\\:mm\\:ss") IST <small>(India Standard Time)</small></h5>
+    <h5 class="text-center my-3">@_remaining.ToString("hh\\:mm\\:ss")</h5>
 }
 else
 {
@@ -30,66 +31,114 @@ else
     {
         // We can have countdown timer display
         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="5" Width="50%">
-            @if (_remainingTime.TotalDays >= 1)
+            @if (_remaining.TotalDays >= 1)
             {
                 <div class="time-section">
-                    <span class="">@_remainingTime.Days.PadLeft()</span>
+                    <span class="">@_remaining.Days.PadLeft()</span>
                     <span class="">nap</span>
                 </div>
             }
-            @if (_remainingTime.TotalHours >= 1)
+            @if (_remaining.TotalHours >= 1)
             {
                 <div class="time-section">
-                    <span class="">@_remainingTime.Hours.PadLeft()</span>
+                    <span class="">@_remaining.Hours.PadLeft()</span>
                     <span class="">óra</span>
                 </div>
             }
             <div class="time-section">
-                <span class="">@_remainingTime.Minutes.PadLeft()</span>
+                <span class="">@_remaining.Minutes.PadLeft()</span>
                 <span class="">perc</span>
             </div>
             <div class="time-section">
-                <span class="">@_remainingTime.Seconds.PadLeft()</span>
+                <span class="">@_remaining.Seconds.PadLeft()</span>
                 <span class="">másodperc</span>
             </div>
         </FluentStack>
     }
     else
     {
-        <h2 class="text-center text-white my-3">Website is launched. Please refresh the page</h2>
+        <h2 class="text-center text-white my-3">Lejárt az idő.</h2>
     }
 }
 @code {
+    /// <summary>A hátralévő idő a kezdéskor (a név a meglévő hívó helyek miatt maradt).</summary>
     [Parameter]
     public TimeSpan _remainingTime { get; set; } = TimeSpan.Zero;
     [Parameter]
     public EventCallback<bool> IsEnd { get; set;}
+
     private bool _renderedOnClient;
-    private Timer? _timer;
     private bool _launched;
+    private bool _disposed;
+    private Timer? _timer;
+    private DateTime _deadline;
+    private TimeSpan _initial = TimeSpan.MinValue;
+    private TimeSpan _remaining = TimeSpan.Zero;
+
+    protected override void OnParametersSet()
+    {
+        // A határidőt a kezdő értékből számoljuk. A szülő újrarenderelése ugyanazt az értéket adja át,
+        // ezért nem nullázza az órát; csak tényleges értékváltozás indítja újra.
+        if (_initial != _remainingTime)
+        {
+            _initial = _remainingTime;
+            _deadline = DateTime.UtcNow + _remainingTime;
+            _remaining = _remainingTime;
+            _launched = false;
+            if (_renderedOnClient) StartTimer();      // lejárat után is újraindul (az első indítást az OnAfterRender végzi)
+        }
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
             _renderedOnClient = true;
-            _timer = new Timer(UpdateCountdown, state: null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+            StartTimer();
         }
         base.OnAfterRender(firstRender);
     }
 
-    private async void UpdateCountdown(object? state)
+    private void StartTimer()
     {
-        TimeSpan span = new TimeSpan(0, 0, 1);
-        _remainingTime -= span;
-        if (_remainingTime <= TimeSpan.Zero)
-        {
-            await InvokeAsync(() => IsEnd.InvokeAsync(true));
-            _launched = true;
-            _timer!.Dispose();
-        }
-        await InvokeAsync(StateHasChanged);
+        // A Timer a szálkészleten hívja vissza: minden állapotváltozás az InvokeAsync-en át, a renderer szinkron-kontextusán történik.
+        _timer?.Dispose();
+        _timer = new Timer(_ => { if (!_disposed) _ = InvokeAsync(TickAsync); }, state: null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
 
-    public void Dispose() => _timer?.Dispose();
+    private async Task TickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            _remaining = _deadline - DateTime.UtcNow;      // valós idő alapján: nem csúszik, nem torzul a ketyegéstől
+            // 0,1 s tolerancia: ha a Timer pár ms-mal korábban ketyeg, a lejárat nem csúszhat a következő másodpercre.
+            if (_remaining <= TimeSpan.FromMilliseconds(100))
+            {
+                _remaining = TimeSpan.Zero;
+                _timer?.Dispose();
+                _timer = null;
+                if (!_launched)
+                {
+                    _launched = true;
+                    await IsEnd.InvokeAsync(true);
+                }
+            }
+            StateHasChanged();
+        }
+        catch (ObjectDisposedException)
+        {
+            // a komponens közben megszűnt (pl. elnavigált a felhasználó)
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Hiba a visszaszámláló léptetésekor.");
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _timer?.Dispose();
+    }
 }
