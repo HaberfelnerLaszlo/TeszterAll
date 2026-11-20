@@ -5,9 +5,6 @@ using System.Text.Json;
 
 using Microsoft.Extensions.Logging;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
 namespace TeszterLibrary.Services
 {
     /// <summary>
@@ -18,9 +15,6 @@ namespace TeszterLibrary.Services
     /// </summary>
     public abstract class ApiClientBase
     {
-        // PostAsJsonAsync alapbeállításaival egyező (web: camelCase, kis-nagybetű független).
-        private static readonly JsonSerializerOptions RequestJsonOptions = new(JsonSerializerDefaults.Web);
-
         private readonly ILogger _logger;
 
         protected ApiClientBase(HttpClient http, ILogger logger)
@@ -52,12 +46,13 @@ namespace TeszterLibrary.Services
                 request.Headers.Authorization = await GetAuthorizationAsync(uri);
                 if (body is not null)
                 {
-                    request.Content = JsonContent.Create(body, body.GetType(), options: RequestJsonOptions);
+                    request.Content = JsonContent.Create(body, body.GetType(), options: ApiJson.Request);
                 }
 
                 using var response = await Http.SendAsync(request, ct);
                 var text = await response.Content.ReadAsStringAsync(ct);
-                var root = TryParseJson(text);
+                using var document = TryParseJson(text);
+                JsonElement? root = document?.RootElement;
                 var envelope = AsEnvelope(root);
 
                 if (!response.IsSuccessStatusCode)
@@ -78,8 +73,8 @@ namespace TeszterLibrary.Services
                     throw new FormatException("A szerver válasza nem értelmezhető JSON-ként.");
                 }
 
-                var token = envelope is null ? root : envelope.Content;
-                var value = token is null || token.Type == JTokenType.Null ? default : token.ToObject<T>();
+                var element = envelope is null ? root : envelope.Content;
+                var value = element is not { ValueKind: not JsonValueKind.Null } present ? default : present.Deserialize<T>(ApiJson.Response);
                 return new ApiResult<T>(true, value);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -110,16 +105,15 @@ namespace TeszterLibrary.Services
             return $"{(int)response.StatusCode} {response.ReasonPhrase}: {snippet}".TrimEnd(' ', ':');
         }
 
-        // DateParseHandling.None: a szöveges mezők (pl. kérdés- vagy válaszszöveg) ne alakuljanak át dátummá.
-        private static JToken? TryParseJson(string text)
+        // A System.Text.Json a dátumnak látszó szöveget nem alakítja át (régen ehhez DateParseHandling.None kellett).
+        private static JsonDocument? TryParseJson(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return null;
             try
             {
-                using var reader = new JsonTextReader(new StringReader(text)) { DateParseHandling = DateParseHandling.None };
-                return JToken.Load(reader);
+                return JsonDocument.Parse(text, ApiJson.Document);
             }
-            catch (JsonReaderException)
+            catch (JsonException)
             {
                 return null;
             }
@@ -127,19 +121,30 @@ namespace TeszterLibrary.Services
 
         // Boríték = gyökér objektum, amiben MINDKÉT kulcs szerepel (isSuccess, errorMessage).
         // Ez szigorúbb a korábbi `Contains("errorMessage")` szövegkeresésnél, ami bármilyen tartalomra ráillhetett.
-        private static Envelope? AsEnvelope(JToken? root)
+        private static Envelope? AsEnvelope(JsonElement? root)
         {
-            if (root is not JObject obj) return null;
-            if (!obj.TryGetValue("isSuccess", StringComparison.OrdinalIgnoreCase, out var ok) ||
-                !obj.TryGetValue("errorMessage", StringComparison.OrdinalIgnoreCase, out var err))
+            if (root is not { ValueKind: JsonValueKind.Object } obj) return null;
+            if (Property(obj, "isSuccess") is not { } ok || Property(obj, "errorMessage") is not { } err)
             {
                 return null;
             }
-            obj.TryGetValue("content", StringComparison.OrdinalIgnoreCase, out var content);
-            return new Envelope((bool?)ok == true, (string?)err ?? string.Empty, content);
+            return new Envelope(
+                ok.ValueKind == JsonValueKind.True,
+                err.ValueKind == JsonValueKind.String ? err.GetString() ?? string.Empty : string.Empty,
+                Property(obj, "content"));
         }
 
-        private sealed record Envelope(bool IsSuccess, string ErrorMessage, JToken? Content);
+        // Kis-nagybetű független kulcskeresés (a JsonElement.TryGetProperty pontos egyezést vár).
+        private static JsonElement? Property(JsonElement obj, string name)
+        {
+            foreach (var property in obj.EnumerateObject())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)) return property.Value;
+            }
+            return null;
+        }
+
+        private sealed record Envelope(bool IsSuccess, string ErrorMessage, JsonElement? Content);
     }
 
     /// <summary>Egy API-hívás eredménye: sikeres volt-e, és mi a (típusos) értéke.</summary>

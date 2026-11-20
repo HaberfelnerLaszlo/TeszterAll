@@ -7,7 +7,6 @@ using Microsoft.Graph.Drives.Item.Items.Item.CreateLink;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
 
-using Newtonsoft.Json.Linq;
 
 using TeszterLibrary.Model;
 

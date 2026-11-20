@@ -29,7 +29,6 @@
     <PackageReference Include="Microsoft.Identity.Web" />
     <PackageReference Include="NPOI" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Security.Cryptography.Xml" />
   </ItemGroup>
 
