@@ -61,13 +61,14 @@
                 _logger.LogError("Nincsenek osztályaid!");
                 return;
             }
-            Groups.ForEach(async g =>
+            // Egymás után (nem ForEach(async ...)-kal, ami async void volt, és párhuzamosan írt az adatbázisba).
+            foreach (var g in Groups)
             {
-                if (!gService.GroupExists(Guid.Parse(g.Id!)))
+                if (Guid.TryParse(g.Id, out var groupId))
                 {
-                    await gService.AddGroupAsync(new Group(Guid.Parse(g.Id!), g.DisplayName ?? string.Empty, g.Description));
+                    await gService.EnsureGroupAsync(new Group(groupId, g.DisplayName ?? string.Empty, g.Description));
                 }
-            });
+            }
             StateHasChanged();
         }
     }
@@ -93,7 +94,7 @@
         if (resp.Count > 0)
         {
             ToastService.ShowInfo("A feladatok mentése sikerült!");
-            gService.SetHasLessons(ClassId);
+            await gService.SetHasLessonsAsync(ClassId);
             Lessons.Clear();
             Lessons = resp.ToList();
         }
@@ -102,13 +103,9 @@
     {
         try
         {
-            if (gService.GroupExists(ClassId)) gService.SetHasLessons(ClassId);
-
-            else
-            {
-                await gService.AddGroupAsync(new Group(ClassId, Groups.FirstOrDefault(g => g.Id == SelectGroupId).DisplayName, ""));
-                gService.SetHasLessons(ClassId);
-            }
+            var name = Groups?.FirstOrDefault(g => g.Id == SelectGroupId)?.DisplayName ?? string.Empty;
+            await gService.EnsureGroupAsync(new Group(ClassId, name, ""));
+            await gService.SetHasLessonsAsync(ClassId);
             ToastService.ShowInfo("A csoport mentve.");
         }
         catch (Exception e)
