@@ -1,4 +1,4 @@
-﻿@page "/start/{number}"
+﻿@page "/start/{number:int}"
 @using Microsoft.AspNetCore.Components
 @using Microsoft.Identity.Web
 @using Microsoft.Graph.Models
@@ -26,7 +26,7 @@
     </NotAuthorized>
 </AuthorizeView>
 @code{
-    [Parameter] public string Number { get; set; } = string.Empty;
+    [Parameter] public int Number { get; set; }   // :int megkötés: nem szám útvonalra 404, nem kivétel
     EducationUser? user;
     Test? test = new();
     int testId = 0;
@@ -37,7 +37,7 @@
         {
             data.Title = "Teszt kezdete";
             //var sz = Number.Remove(Number.Length - 4);
-            var testId = int.Parse(Number);
+            var testId = Number;
             if (testId > 0)
             {
                 test = await tService.GetTest(testId);
@@ -58,11 +58,11 @@
             if (user is not null)
             {
                 data.UserId = user.Id ?? Guid.Empty.ToString();
-                if (!(await uService.UserExits(Guid.Parse(data.UserId))))
+                if (data.UserGuid is Guid userGuid && !(await uService.UserExits(userGuid)))
                 {
                     if (string.IsNullOrEmpty(uService.ErrorMessage))
                     {
-                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole!.Value.ToString() ?? EducationUserRole.Student.ToString() });
+                        await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = userGuid, Role = user.PrimaryRole!.Value.ToString() ?? EducationUserRole.Student.ToString() });
                     }
                 }
                 var id = test.TestUsers.FirstOrDefault(t => t.UserId.ToString() == user.Id)?.Id ?? 0;

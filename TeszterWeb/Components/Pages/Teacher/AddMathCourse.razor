@@ -141,10 +141,12 @@ else if (TestMembers.Any())
                     ToastService.ShowWarning("Nincsenek tanulók a csoportban.");
                     return;
                 }
+                // Érvénytelen azonosítójú (pl. hiányos Graph-adat) tagot kihagyunk kivétel helyett.
                 foreach (var item in members)
                 {
-                    Members.Add(new Student() { DisplayName = item.DisplayName ?? "Ismeretlen Tanuló", Id = Guid.Parse(item.Id!) });
-                    hasLessons.Add(new() { StudentId = Guid.Parse(item.Id!), HasCourse = false });
+                    if (item.Id.ToGuidOrNull() is not Guid studentId) continue;
+                    Members.Add(new Student() { DisplayName = item.DisplayName ?? "Ismeretlen Tanuló", Id = studentId });
+                    hasLessons.Add(new() { StudentId = studentId, HasCourse = false });
                 }
                 hasLessons = await mService.HasLessons(hasLessons);
                 foreach (var item in hasLessons.DistinctBy(l => l.StudentId).Where(l => l.HasCourse).ToList())

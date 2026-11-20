@@ -17,6 +17,8 @@ namespace TeszterWeb.Data
                 //Userchangedevent?.Invoke();
             }
         }
+        /// <summary>A bejelentkezett felhasználó azonosítója, vagy null, ha még nincs (pl. frissítés után) vagy érvénytelen.</summary>
+        public Guid? UserGuid => Guid.TryParse(_userId, out var id) ? id : null;
         public string? UserName { get; set; } = string.Empty;
         public string Title { get; set; } = "Kezdőlap";
         public List<TestQuestion> Questions { get; set; } = new();

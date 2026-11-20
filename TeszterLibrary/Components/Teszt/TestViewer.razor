@@ -18,7 +18,8 @@
     protected override async Task OnParametersSetAsync()
     {
         //tests = await tservice.GetTests();
-        tests=await tservice.GetNoPublished(Guid.Parse(UserId));
+        // Üres/érvénytelen UserId (még nincs betöltve): üres lista kivétel helyett.
+        tests = UserId.ToGuidOrNull() is Guid userGuid ? await tservice.GetNoPublished(userGuid) ?? new() : new();
         test = tests.FirstOrDefault();
         //return await base.OnParametersSetAsync().ConfigureAwait(false);
     }

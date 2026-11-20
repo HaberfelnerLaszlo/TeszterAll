@@ -8,17 +8,17 @@ namespace TeszterLibrary.Extensions
 {
 	public static class StringExtensions
 	{
-		public static string ToTime(this string value)
-		{
-			int sec=Convert.ToInt32(value);
-			if (sec < 0) { return string.Empty; }
-			if (sec > 3600)
-			{
-				return $"{sec/3600}:{(sec%3600)/60}:{(sec%3600)%60}";
-			}
-			if (sec < 60) { return value +" mp"; }
-			else { return $"{sec / 60}:{sec%60}"; }
-		}
+		/// <summary>Szövegként kapott másodpercek olvasható alakban (lásd IntExtension.ToTime). Érvénytelen bemenetre üres szöveg.</summary>
+		public static string ToTime(this string? value)
+			=> value.ToIntOrNull() is int seconds ? seconds.ToTime() : string.Empty;
+
+		/// <summary>Guid, vagy null, ha a szöveg üres vagy nem érvényes azonosító (kivétel helyett).</summary>
+		public static Guid? ToGuidOrNull(this string? value)
+			=> Guid.TryParse(value, out var id) ? id : null;
+
+		/// <summary>Egész szám (kultúrafüggetlenül), vagy null, ha a szöveg nem szám (kivétel helyett).</summary>
+		public static int? ToIntOrNull(this string? value)
+			=> int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number) ? number : null;
 		public static IEnumerable<Claim> ParseClaimsFromJwt(this string jwt)
 		{
 			var claims = new List<Claim>();

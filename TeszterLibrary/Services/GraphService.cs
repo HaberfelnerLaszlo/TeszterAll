@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using TeszterLibrary.Extensions;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
@@ -135,8 +136,8 @@ namespace TeszterLibrary.Services
 				return default;
 			}
 			var user = await client.Education.Me.GetAsync();
-			if (user == null) return default;
-			return new Student() { Id = Guid.Parse(user.Id?? ""), DisplayName = user.DisplayName?? "", Role = user.PrimaryRole?.ToString()?? EducationUserRole.Student.ToString(), AccessToken = token };
+			if (user?.Id.ToGuidOrNull() is not Guid id) return default;   // hiányzó/érvénytelen azonosító: nincs felhasználó
+			return new Student() { Id = id, DisplayName = user.DisplayName?? "", Role = user.PrimaryRole?.ToString()?? EducationUserRole.Student.ToString(), AccessToken = token };
 		}
 		public async Task<List<DriveItem>?> GetFolders()
 		{

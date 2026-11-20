@@ -27,7 +27,12 @@
                     }
                     data.UserId = user.Id.ToString();
                 }
-                NewQuestion.CreatedBy = Guid.Parse(data.UserId);
+                if (data.UserGuid is not Guid userGuid)
+                {
+                    toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+                    return;
+                }
+                NewQuestion.CreatedBy = userGuid;
             }
             catch (MicrosoftIdentityWebChallengeUserException uiEx)
             {

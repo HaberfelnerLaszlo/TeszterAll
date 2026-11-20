@@ -358,12 +358,17 @@
                 }
             }
         }
+        if (isOk && UserId.ToGuidOrNull() is not Guid)
+        {
+            ToastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+            isOk = false;
+        }
         if (isOk)
         {
             question = new Question
             {
                 Id = Guid.NewGuid(),
-                CreatedBy = Guid.Parse(UserId),
+                CreatedBy = UserId.ToGuidOrNull()!.Value,
                 Title = title,
                 Subtitle = subtitle,
                 Text = row.GetCell(2).StringCellValue,

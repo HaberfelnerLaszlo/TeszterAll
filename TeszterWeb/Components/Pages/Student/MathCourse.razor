@@ -68,7 +68,12 @@ else
                 }
 
             }
-            UserId = Guid.Parse(data.UserId);
+            if (data.UserGuid is not Guid userGuid)
+            {
+                toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+                return;
+            }
+            UserId = userGuid;
             taskView = await mService.Start(UserId);
             if (taskView is not null)
             {
@@ -112,9 +117,9 @@ else
     }
     private async Task NewUserId(ChangeEventArgs e)
     {
-        if (e.Value.Equals("57da251f-9472-46f2-b8ac-3b6aaeaece1c"))
+        if (e.Value?.ToString() == "57da251f-9472-46f2-b8ac-3b6aaeaece1c")
         {
-            ClassId = Guid.Parse(e.Value.ToString());
+            ClassId = Guid.Parse("57da251f-9472-46f2-b8ac-3b6aaeaece1c");   // a feltétel épp ezt az értéket ellenőrizte
             taskView = await mService.ClassLesson(ClassId);
             recives.Clear();
             IsChecked = false;
@@ -128,7 +133,12 @@ else
         }
         else
         {
-            UserId = Guid.Parse(e.Value.ToString());
+            if (e.Value?.ToString().ToGuidOrNull() is not Guid selected)
+            {
+                toastService.ShowError("Érvénytelen felhasználó azonosító.");
+                return;
+            }
+            UserId = selected;
             taskView = await mService.Start(UserId);
 
             if (taskView is not null)

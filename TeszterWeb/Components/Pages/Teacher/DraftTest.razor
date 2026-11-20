@@ -42,7 +42,12 @@ else
             data.UserId = me.Id.ToString();
         }
         userId = data.UserId;
-        tests = await tService.GetNoPublished(Guid.Parse(data.UserId));
+        if (data.UserGuid is not Guid userGuid)
+        {
+            toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+            return;
+        }
+        tests = await tService.GetNoPublished(userGuid);
         if (tests is null)
         {
             errorMesage = tService.ErrorMessage;

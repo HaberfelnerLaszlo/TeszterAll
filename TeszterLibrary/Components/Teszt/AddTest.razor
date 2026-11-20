@@ -287,7 +287,12 @@
                 toastService.ShowError("Hiba a tesztnél nem tölthető be!");
                 return;
             }
-            newTest.CreatedBy = Guid.Parse(UserId);
+            if (UserId.ToGuidOrNull() is not Guid userGuid)
+            {
+                toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+                return;
+            }
+            newTest.CreatedBy = userGuid;
             if (newTest.Subject == null)
             {
                 toastService.ShowError("Nincs megadva a tantárgy!");
@@ -337,7 +342,7 @@
                         {
                             s.Id = 0;
                             s.TestId = newTest.Id;
-                            s.CreatedBy = Guid.Parse(UserId);
+                            s.CreatedBy = userGuid;
                             var resp = await seService.AddSectionsAsync(s);
                             if (resp is null)
                             {
