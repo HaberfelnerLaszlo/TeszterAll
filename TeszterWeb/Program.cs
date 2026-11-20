@@ -2,13 +2,9 @@ using ApexCharts;
 
 using Blazored.TextEditor;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
-using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 
@@ -27,16 +23,14 @@ using TeszterWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var initialScopes = builder.Configuration["TeszterApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
-
-// Add services to the container.
+// Bejelentkezés (Entra ID) + tokenszerzés. A Graph scope-jait a bejelentkezéskor engedélyeztetjük; a TeszterApi
+// tokenjét a TeszterApiService kéri kérésenként (IAuthorizationHeaderProvider). Lásd AuthSetup.InitialScopes.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
-     .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
-.AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
-            .AddInMemoryTokenCaches()
-.AddDownstreamApi("DownstreamApi", builder.Configuration.GetSection("TeszterApi"))
-                .AddInMemoryTokenCaches();
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
+    .EnableTokenAcquisitionToCallDownstreamApi(AuthSetup.InitialScopes(builder.Configuration))
+    .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
+    .AddInMemoryTokenCaches();   // egy példányon fut; több példánynál elosztott gyorsítótár kell
+builder.Services.AddExceptionHandler<MsalUiRequiredExceptionHandler>();   // az UseExceptionHandler előbb ezt kérdezi, utána az /Error jön
 // FIGYELEM: NE kapcsold be a FallbackPolicy-t (options.FallbackPolicy = options.DefaultPolicy)!
 // Akkor a Blazor-infrastruktúra (_framework/blazor.web.js, _blazor hub) is belépést kérne, és a
 // nyilvános Index oldal nem lenne interaktív. A védelem helyette oldalszinten van:
@@ -78,20 +72,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(new ExceptionHandlerOptions
-    {
-        ExceptionHandler = async ctx => {
-            var feature = ctx.Features.Get<IExceptionHandlerFeature>();
-            if (feature?.Error is MsalUiRequiredException
-                or { InnerException: MsalUiRequiredException }
-                or { InnerException.InnerException: MsalUiRequiredException })
-            {
-                ctx.Response.Cookies.Delete($"{CookieAuthenticationDefaults.CookiePrefix}{CookieAuthenticationDefaults.AuthenticationScheme}");
-                ctx.Response.Redirect(ctx.Request.GetEncodedPathAndQuery());
-            }
-        }
-    });
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);   // MSAL-interakció: MsalUiRequiredExceptionHandler
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
