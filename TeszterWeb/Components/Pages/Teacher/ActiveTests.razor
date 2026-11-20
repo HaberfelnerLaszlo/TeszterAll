@@ -50,7 +50,12 @@ else
             _logger.LogInformation($"Kértem új Id-t {data.UserId}");
         }
 
-        tests = await tService.GetActiveTests(Guid.Parse(data.UserId));
+        if (data.UserGuid is not Guid userGuid)
+        {
+            toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+            return;
+        }
+        tests = await tService.GetActiveTests(userGuid);
         if (tests is null)
         {
             noError = false;

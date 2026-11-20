@@ -25,11 +25,21 @@
 	}
 	private async Task RefreshQuestions()
 	{
-		if (UserId == null)
+		// /Question (paraméter nélkül) = minden kérdés; /Question/{userid} = a felhasználóé.
+		// Régen az üres paraméter is Guid.Parse-ra futott (a null-vizsgálat sosem teljesült), és kivételt dobott.
+		if (string.IsNullOrEmpty(UserId))
 		{
-			questions = await qService!.GetQuestions()??new List<Question>();
+			questions = await qService!.GetQuestions() ?? new List<Question>();
 		}
-        else questions = await qService!.GetQuestions(Guid.Parse(UserId)) ?? new List<Question>();
+		else if (UserId.ToGuidOrNull() is Guid userGuid)
+		{
+			questions = await qService!.GetQuestions(userGuid) ?? new List<Question>();
+		}
+		else
+		{
+			toastService.ShowError("Érvénytelen felhasználó azonosító.");
+			questions = new List<Question>();
+		}
 
 		if (questions == null)
 		{
@@ -66,7 +76,12 @@
 		try
 		{
 			question.Id = Guid.NewGuid();
-			question.CreatedBy = Guid.Parse(UserId);
+			if (UserId.ToGuidOrNull() is not Guid userGuid)
+			{
+				toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+				return;
+			}
+			question.CreatedBy = userGuid;
 			foreach (var item in question.Answers)
 			{
 				item.QuestionId = question.Id;

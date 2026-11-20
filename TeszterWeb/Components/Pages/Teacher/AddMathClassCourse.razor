@@ -74,9 +74,9 @@
     }
     private async Task SelectGroup(string id)
     {
-        if (id != null)
+        if (id.ToGuidOrNull() is Guid classId)
         {
-            ClassId = Guid.Parse(id);
+            ClassId = classId;
             Lessons.Clear();
             Lessons = await mService.GetClassLessons(ClassId);
         }

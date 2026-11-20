@@ -39,13 +39,13 @@ else
     }
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(data.UserId))
+        if (data.UserGuid is not Guid userGuid)
         {
             noError = false;
             errorMessage = "Nincs bejelentkezve a felhasználó!";
             return;
         }
-        tests = await tService.GetClosedTests(Guid.Parse(data.UserId));
+        tests = await tService.GetClosedTests(userGuid);
     }
     private async Task TestResult(TestResultToTeacher test)
     {

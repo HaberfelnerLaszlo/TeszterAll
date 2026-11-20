@@ -191,11 +191,16 @@
         }
         foreach (var item in TestMembers)
         {
-            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = Guid.Parse(item.Id ?? string.Empty), ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime });
-            var HasUser = await uService.UserExits(Guid.Parse(item.Id ?? string.Empty));
+            if (item.Id.ToGuidOrNull() is not Guid memberId)
+            {
+                toastService.ShowWarning($"{item.DisplayName}: érvénytelen azonosító, kimaradt.");
+                continue;
+            }
+            await tuService.AddTestUser(new TestUser() { TestId = Teszt.Id, UserId = memberId, ReplaceNumber = 0, IsActive = active, EndTime = Teszt.EndTime });
+            var HasUser = await uService.UserExits(memberId);
             if (!HasUser)
             {
-                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName ?? string.Empty, Id = Guid.Parse(item.Id ?? string.Empty), Role = item.PrimaryRole!.Value.ToString() ?? "Student" });
+                await uService.AddUser(new EduUser() { DisplayName = item.DisplayName ?? string.Empty, Id = memberId, Role = item.PrimaryRole!.Value.ToString() ?? "Student" });
             }
         }
         // Teszt.TestQuestions = null;

@@ -103,8 +103,10 @@
     }
     void HandleDropEnd(string source, string target)
     {
-        var forras = Items.Find(j => j.AnswerId == Convert.ToInt32(source));
-        var cel = Items.Find(j => j.AnswerId == Convert.ToInt32(target));
+        var sourceId = source.ToIntOrNull();
+        var targetId = target.ToIntOrNull();
+        var forras = sourceId is null ? null : Items.Find(j => j.AnswerId == sourceId);
+        var cel = targetId is null ? null : Items.Find(j => j.AnswerId == targetId);
         if (forras !=null && cel!=null)
         {
             var hely = forras.Sequence;

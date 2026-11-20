@@ -18,7 +18,7 @@ else{
             <QuestionFilter @bind-Questions="Questions"/>
         </FluentAccordionItem>
     </FluentAccordion>
-    <TestQuestions UserId=@Guid.Parse(UserId) questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
+    <TestQuestions UserId=@(UserId.ToGuidOrNull() ?? Guid.Empty) questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
     <button class="btn btn-outline-primary" @onclick="@(()=>NewQuestion())" type="button">Új kérdés</button>
 	<UploadQuestion UserId="@UserId"/>
     </div>

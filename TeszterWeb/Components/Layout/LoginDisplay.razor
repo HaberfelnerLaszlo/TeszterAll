@@ -56,11 +56,11 @@
                         data.UserId = user.Id;
                         data.UserName = user.DisplayName;
                         Nev = user.DisplayName ?? string.Empty;
-                        if (!(await uService.UserExits(Guid.Parse(data.UserId))))
+                        if (data.UserGuid is Guid userGuid && !(await uService.UserExits(userGuid)))
                         {
                             if (string.IsNullOrEmpty(uService.ErrorMessage))
                             {
-                                await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = Guid.Parse(data.UserId), Role = user.PrimaryRole.Value.ToString() ?? EducationUserRole.Student.ToString() });
+                                await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = userGuid, Role = user.PrimaryRole.Value.ToString() ?? EducationUserRole.Student.ToString() });
                             }
                         }
                         StateHasChanged();

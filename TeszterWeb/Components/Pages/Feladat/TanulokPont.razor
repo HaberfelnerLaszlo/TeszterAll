@@ -78,9 +78,9 @@ else
         {
             var classes = await graphService.GetClasses(data.UserId);
             if (classes is null) return;
-            classes.ForEach(c => groupsFromDb.Add(new Group(Guid.Parse(c.Id), c.DisplayName, c.Description)));
+            classes.ForEach(c => { if (c.Id.ToGuidOrNull() is Guid classId) groupsFromDb.Add(new Group(classId, c.DisplayName ?? string.Empty, c.Description)); });
         }
-        temp.ForEach(c => csoportok.Append(new Csoport(c, groupsFromDb?.FirstOrDefault(i => i.Id == Guid.Parse(c))?.Name ?? c)));
+        temp.ForEach(c => csoportok.Append(new Csoport(c, groupsFromDb?.FirstOrDefault(i => i.Id == c.ToGuidOrNull())?.Name ?? c)));
         if ((csoportok == null || csoportok.Count() == 0) && (groupsFromDb != null || groupsFromDb.Count != 0))
         {
             groupsFromDb.ForEach(g => csoportok = csoportok.Append(new Csoport(g.Id.ToString(), g.Name)));
@@ -240,7 +240,7 @@ else
         var dialogInstance = await dialogService.ShowDialogAsync(
         @<div>
             <p>Új tanuló hozzáadás</p>
-            <FluentSelect Items="@newMembers" TOption="Microsoft.Graph.Models.EducationUser" OptionText="@(c=>c.DisplayName)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@((e)=> { newTanulo.Name = newMembers.FirstOrDefault(m => m.Id == e.Id)?.DisplayName ?? ""; newTanulo.Id=Guid.Parse(newMembers.FirstOrDefault(m => m.Id == e.Id)?.Id ?? Guid.Empty.ToString()) ; StateHasChanged(); })" Placeholder="Válasz egy tanulót..." />
+            <FluentSelect Items="@newMembers" TOption="Microsoft.Graph.Models.EducationUser" OptionText="@(c=>c.DisplayName)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@((e)=> { newTanulo.Name = newMembers.FirstOrDefault(m => m.Id == e.Id)?.DisplayName ?? ""; newTanulo.Id = e.Id.ToGuidOrNull() ?? Guid.Empty; StateHasChanged(); })" Placeholder="Válasz egy tanulót..." />
             @*<FluentTextField @bind-Value="newTanulo.Name" Label="Tanuló neve:" Placeholder="Név" />*@
             <FluentNumberField @bind-Value="newTanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
             <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOption="@(csoportok.FirstOrDefault(c=>c.Id==newTanulo.Osztaly))" SelectedOptionChanged="@((e)=>newTanulo.Osztaly=e.Id)" />

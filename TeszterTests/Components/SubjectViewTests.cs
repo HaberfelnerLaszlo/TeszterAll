@@ -59,11 +59,15 @@ namespace TeszterTests.Components
         {
             Respond(HttpStatusCode.OK);
             var cut = Render<SubjectView>();
-            cut.WaitForState(() => Subjects(cut).Count == 2);
+            // A renderelt gombokra várunk (nem csak a mezőre): a lista beállítása és a renderelés között versenyhelyzet volt.
+            var deleteButtons = cut.FindAll("fluent-button").ToList();
+            cut.WaitForAssertion(() =>
+            {
+                deleteButtons = cut.FindAll("fluent-button").Where(b => b.TextContent.Trim() == "Törlés").ToList();
+                Assert.Equal(2, deleteButtons.Count);
+            });
 
             // Valódi kattintás a "Fizika" sor Törlés gombján (ahogy a felhasználó teszi).
-            var deleteButtons = cut.FindAll("fluent-button").Where(b => b.TextContent.Trim() == "Törlés").ToList();
-            Assert.Equal(2, deleteButtons.Count);
             await deleteButtons[1].ClickAsync(new());
 
             Assert.Equal(["Matek"], Subjects(cut).Select(s => s.Name));

@@ -49,7 +49,12 @@ else
             data.UserId = user.Id.ToString();
             _logger.LogInformation($"Newtest: Kértem új Id-t {data.UserId}");
         }
-        tests = await tuService.GetTests(Guid.Parse(data.UserId));
+        if (data.UserGuid is not Guid userGuid)
+        {
+            toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+            return;
+        }
+        tests = await tuService.GetTests(userGuid);
         if (tests == null)
         {
             noError = false;
@@ -69,7 +74,12 @@ else
     }
     async Task TestResults(string testUserId)
     {
-        data.TestResults= await tuService.GetTestQuestions(int.Parse(testUserId)) ?? new();
+        if (testUserId.ToIntOrNull() is not int id)
+        {
+            toastService.ShowError("Érvénytelen teszt azonosító.");
+            return;
+        }
+        data.TestResults = await tuService.GetTestQuestions(id) ?? new();
         navi.NavigateTo($"student/testResult/{testUserId}");//Eredmények megtekintésére lehet tovább menni.
     }
 }

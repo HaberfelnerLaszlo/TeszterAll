@@ -45,7 +45,13 @@ else
             }
 
         }
-        tests = await tuService.GetReadyTests(Guid.Parse(data.UserId!));
+        if (data.UserGuid is not Guid userGuid)
+        {
+            noError = false;
+            errorMessage = "Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!";
+            return;
+        }
+        tests = await tuService.GetReadyTests(userGuid);
         if (tests is null)
         {
             noError = false;

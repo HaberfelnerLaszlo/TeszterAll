@@ -50,7 +50,12 @@ else
                 data.UserId = user.Id.ToString();
                 _logger.LogInformation($"Newtest: Kértem új Id-t {data.UserId}");
             }
-            Questions = await qService.GetQuestions(Guid.Parse(data.UserId));
+            if (data.UserGuid is not Guid userGuid)
+            {
+                toastService.ShowError("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+                return;
+            }
+            Questions = await qService.GetQuestions(userGuid);
             if (Questions is not null && Id > 0)
             {
                 saved = true;

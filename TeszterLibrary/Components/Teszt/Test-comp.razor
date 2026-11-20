@@ -5,9 +5,10 @@
         {
             @foreach (string t in texts)
             {
-                if (t.All(char.IsNumber))
+                // "[3]"-szerű helyőrző: csak létező válaszra hivatkozó szám (régen az üres szöveg és a túl nagy szám is kivételt dobott).
+                if (t.Length > 0 && t.All(char.IsAsciiDigit) && t.ToIntOrNull() is int position && position >= 1 && position <= Answers.Count)
                 {
-                    int Number = Convert.ToInt32(t) - 1;
+                    int Number = position - 1;
                     <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" />
                     @if (IsChecked)
                     {
