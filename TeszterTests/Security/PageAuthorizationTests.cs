@@ -11,9 +11,12 @@ namespace TeszterTests.Security
     /// </summary>
     public class PageAuthorizationTests
     {
-        // Ismert maradvány: Blazor WASM-ból örökölt oldal, szerveres környezetben nincs szerepe.
-        // Töröld az oldalt, és akkor ezt a sort is (a "Known_leftovers_still_exist" teszt szól, ha elavult).
-        private static readonly string[] KnownUnprotected = { "Authentication" };
+        // Ismert, védtelen maradványok. Jelenleg nincs ilyen (az Authentication WASM-maradványt töröltük);
+        // ha mégis kell egy átmeneti kivétel, ide kerüljön (a "Known_leftovers_still_exist" teszt szól, ha elavult).
+        private static readonly string[] KnownUnprotected = [];
+
+        // Törölt demó- és maradványoldalak: ne kerüljenek vissza.
+        private static readonly string[] RemovedPages = ["Authentication", "Counter", "Editor", "TestPage", "Weather", "SubjectCRUD"];
 
         // Az egyetlen szándékosan nyilvános oldal a kezdőoldal és a hibaoldal.
         private static readonly string[] AnonymousPages = { "Error", "Index" };
@@ -64,6 +67,26 @@ namespace TeszterTests.Security
 
             Assert.NotEmpty(studentPages);
             Assert.All(studentPages, p => Assert.True(p.Roles.Contains("Student"), $"{p.Type.FullName} nem kér Student szerepkört"));
+        }
+
+        [Fact]
+        public void Every_route_belongs_to_exactly_one_page()
+        {
+            // Két azonos útvonal (pl. régen SubjectCRUD és SubjectView: "/subject") futásidőben AmbiguousMatchException.
+            var duplicates = Pages
+                .SelectMany(p => p.Routes.Select(r => (Route: r.TrimEnd('/').ToLowerInvariant(), Page: p.Type.FullName)))
+                .GroupBy(x => x.Route)
+                .Where(g => g.Count() > 1)
+                .Select(g => $"{g.Key}: {string.Join(", ", g.Select(x => x.Page))}")
+                .ToList();
+
+            Assert.True(duplicates.Count == 0, "Ütköző útvonalak: " + string.Join("; ", duplicates));
+        }
+
+        [Fact]
+        public void Removed_demo_pages_stay_removed()
+        {
+            Assert.DoesNotContain(Pages, p => RemovedPages.Contains(p.Name));
         }
 
         [Fact]

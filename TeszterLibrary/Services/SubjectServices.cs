@@ -52,16 +52,16 @@ namespace TeszterLibrary.Services
 				return null;
 			}
 		}
-		public async Task DeleteSubjectAsync(Subject subject)
+		/// <summary>Törli a tantárgyat. Hamis, ha az API nem engedte (az ok az ErrorMessage-ben).</summary>
+		public async Task<bool> DeleteSubjectAsync(Subject subject)
 		{
-			try
+			if (await _service.Delete($"Subject/{subject.Id}"))
 			{
-				var v = await _service.Delete($"Subject/{subject.Id}");
+				return true;
 			}
-			catch (Exception)
-			{
-				throw;
-			}
+			ErrorMessage = _service.ErrorMessage;
+			_logger.LogWarning("A(z) {Id}. tantárgy törlése nem sikerült: {Error}", subject.Id, ErrorMessage);
+			return false;
 		}
 		public async Task<bool> Exits(string subjectName)
 		{

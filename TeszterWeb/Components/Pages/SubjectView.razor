@@ -22,13 +22,16 @@
     string errorMessage = string.Empty, newSubject = string.Empty;
     protected override async Task OnInitializedAsync()
     {
-        subjects = await sService.GetSubjects();
-        if (subjects is null)
+        var loaded = await sService.GetSubjects();
+        if (loaded is null)
         {
+            // A lista üres marad: régen null lett, és a táblázat renderelése kivétellel elszállt.
             noError = false;
             errorMessage = "Nincs tantárgy";
             tService.ShowInfo(errorMessage);
+            return;
         }
+        subjects = loaded.OfType<Subject>().ToList();
     }
     async Task Add()
     {
@@ -74,19 +77,15 @@
     }
     async Task Delete(Subject subject)
     {
-        try
+        // Csak akkor tűnik el a listából, ha az API valóban törölte (régen hiba esetén is eltűnt).
+        if (await sService.DeleteSubjectAsync(subject))
         {
-            if (subject is not null)
-            {
-                await sService.DeleteSubjectAsync(subject);
-                subjects.Remove(subject);
-                StateHasChanged();
-            }
+            subjects.Remove(subject);
+            tService.ShowInfo($"{subject.Name} tantárgy törölve.");
         }
-        catch (Exception e)
+        else
         {
-            tService.ShowError(e.Message);
-            return;
+            tService.ShowError($"Nem sikerült törölni a(z) {subject.Name} tantárgyat. {sService.ErrorMessage}");
         }
     }
     }
