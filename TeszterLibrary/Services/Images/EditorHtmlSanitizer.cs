@@ -8,7 +8,7 @@ namespace TeszterLibrary.Services.Images
     /// Engedélyezőlistás HTML-tisztító a rich text szerkesztők (Quill) kimenetéhez.
     /// MENTÉSKOR fut, a szerveren, mert a böngészőből érkező HTML nem megbízható (bárki küldhet bármit).
     /// Csak a felsorolt elemek és attribútumok maradnak; minden más törlődik vagy kicsomagolódik.
-    /// A többi MarkupString-es megjelenítő helyen továbbra is érdemes érett könyvtárat (Ganss.Xss) használni.
+    /// Megjelenítéskor ezen felül minden MarkupString a SafeHtml-en (Ganss.Xss) megy át, a régi tartalom miatt is.
     /// </summary>
     internal sealed class EditorHtmlSanitizer
     {

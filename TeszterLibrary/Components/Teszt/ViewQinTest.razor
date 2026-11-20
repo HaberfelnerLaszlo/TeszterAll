@@ -23,7 +23,7 @@
                         }
                         else
                         {
-                            <FluentLabel Typo="Typography.Subject">@((MarkupString)actualq.QuestionText)</FluentLabel>
+                            <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(actualq.QuestionText)</FluentLabel>
                         }
 
                         @switch (actualq.QuestionType)

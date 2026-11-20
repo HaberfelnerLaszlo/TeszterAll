@@ -34,7 +34,7 @@
             </span>
         </ToolbarContent>
         <EditorContent>
-           @((MarkupString)Content)
+           @SafeHtml.Markup(Content)
         </EditorContent>
         </BlazoredTextEditor>
     }

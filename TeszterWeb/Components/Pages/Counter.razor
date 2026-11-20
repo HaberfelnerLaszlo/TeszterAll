@@ -23,7 +23,7 @@
         </span>
     </ToolbarContent>
     <EditorContent>
-        <span>@((MarkupString)body)</span>
+        <span>@SafeHtml.Markup(body)</span>
         <h4>This Toolbar works with HTML</h4>
         <a href="http://BlazorHelpWebsite.com">
             BlazorHelpWebsite.com

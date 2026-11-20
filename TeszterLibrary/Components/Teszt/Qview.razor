@@ -8,7 +8,7 @@
             <FluentBadge><b>@question.Score pont</b></FluentBadge>
         </FluentStack>
     </FluentStack>
-    <p class="p-1">@((MarkupString)question.Text)</p>
+    <p class="p-1">@SafeHtml.Markup(question.Text)</p>
 </FluentCard>
 
 @code {

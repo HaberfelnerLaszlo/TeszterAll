@@ -2,7 +2,7 @@
 <FluentButton OnClick="Bold">B</FluentButton>
 <FluentButton OnClick="Italic">D</FluentButton>
 <div Id="richText" contenteditable="true">
-@((MarkupString)Context)
+@SafeHtml.Markup(Context)
 </div>
 @code {
     [Parameter] public string Context { get; set; } = string.Empty;
