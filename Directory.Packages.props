@@ -5,12 +5,13 @@
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="AngleSharp" Version="1.10.3" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Blazor-ApexCharts" Version="6.1.0" />
     <PackageVersion Include="blazor-dragdrop" Version="2.6.1" />
     <PackageVersion Include="Blazored.SessionStorage" Version="2.3.0" />
     <PackageVersion Include="Blazored.TextEditor" Version="1.1.2" />
-    <PackageVersion Include="bunit" Version="1.40.0" />
+    <PackageVersion Include="bunit" Version="2.15.2" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
     <PackageVersion Include="MathParser.org-mXparser" Version="5.0.7" />
     <PackageVersion Include="MessagePackAnalyzer" Version="2.1.152" />
@@ -44,9 +45,10 @@
     <PackageVersion Include="SQLiteNetExtensions" Version="2.1.0" />
     <PackageVersion Include="sqlite-net-pcl" Version="1.8.116" />
     <PackageVersion Include="System.Formats.Asn1" Version="10.0.14" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.14" />
     <PackageVersion Include="TinyMCE.Blazor" Version="1.0.4" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
 </Project>

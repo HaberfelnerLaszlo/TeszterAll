@@ -10,7 +10,7 @@ using TeszterLibrary.Components;
 namespace TeszterTests.Components
 {
     /// <summary>A visszaszámláló: valós idejű határidő, pontosan egyszeri IsEnd, tiszta leállás.</summary>
-    public class CountDownTests : TestContext
+    public class CountDownTests : BunitContext
     {
         public CountDownTests()
         {
@@ -19,7 +19,7 @@ namespace TeszterTests.Components
         }
 
         private IRenderedComponent<CountDown> Render(TimeSpan remaining, Action<bool> onEnd)
-            => RenderComponent<CountDown>(p => p.Add(c => c._remainingTime, remaining).Add(c => c.IsEnd, onEnd));
+            => Render<CountDown>(p => p.Add(c => c._remainingTime, remaining).Add(c => c.IsEnd, onEnd));
 
         [Fact]
         public async Task IsEnd_fires_once_at_the_deadline_and_a_parent_rerender_does_not_reset_the_clock()
@@ -30,7 +30,7 @@ namespace TeszterTests.Components
             var cut = Render(TimeSpan.FromSeconds(3), b => { Interlocked.Increment(ref ended); value = b; });
 
             await Task.Delay(1500);
-            cut.SetParametersAndRender(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(3)));   // a szülő újrarenderel: ugyanaz az érték
+            cut.Render(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(3)));   // a szülő újrarenderel: ugyanaz az érték
             cut.WaitForState(() => Volatile.Read(ref ended) > 0, TimeSpan.FromSeconds(8));
             var seconds = stopwatch.Elapsed.TotalSeconds;
             await Task.Delay(2500);                                                                    // ne hívja meg másodszor
@@ -47,7 +47,7 @@ namespace TeszterTests.Components
             Render(TimeSpan.FromSeconds(2), _ => Interlocked.Increment(ref ended));
             await Task.Delay(600);
 
-            DisposeComponents();
+            await DisposeComponentsAsync();
             await Task.Delay(3000);
 
             Assert.Equal(0, ended);
@@ -60,7 +60,7 @@ namespace TeszterTests.Components
             var cut = Render(TimeSpan.FromSeconds(1), _ => Interlocked.Increment(ref ended));
             cut.WaitForState(() => Volatile.Read(ref ended) == 1, TimeSpan.FromSeconds(4));
 
-            cut.SetParametersAndRender(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(2)));
+            cut.Render(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(2)));
 
             cut.WaitForState(() => Volatile.Read(ref ended) == 2, TimeSpan.FromSeconds(5));
         }

@@ -22,7 +22,7 @@ namespace TeszterTests.Components
     /// Az órai nézet (ClassLessonHost): a tanóra-időbeosztás szerinti viselkedés, az osztály feladatának betöltése,
     /// hibatűrés. Az időt TimeProvider-en át szimuláljuk (a csengetési rendet lásd: LessonClockTests).
     /// </summary>
-    public class ClassLessonHostTests : TestContext
+    public class ClassLessonHostTests : BunitContext
     {
         private sealed class FixedTime(DateTimeOffset utc) : TimeProvider
         {
@@ -63,7 +63,7 @@ namespace TeszterTests.Components
         }
 
         private IRenderedComponent<ClassLessonHost> Render(bool teacher)
-            => RenderComponent<ClassLessonHost>(p => p.Add(c => c.IsTeacher, teacher));
+            => Render<ClassLessonHost>(p => p.Add(c => c.IsTeacher, teacher));
 
         // A komponens privát tagjait reflexióval érjük el: a viselkedést teszteljük, nem a megjelenítést.
         private static T Field<T>(IRenderedComponent<ClassLessonHost> cut, string name)
