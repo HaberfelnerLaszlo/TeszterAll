@@ -1,6 +1,6 @@
 ﻿@page "/Student/testResult"
 @page "/Student/testResult/{i:int}"
-@inject GlobalData data
+@inject TestLoader loader
 @inject TestQuestionUserServices tquService
 @inject NavigationManager navi
 @inject IToastService toastService
@@ -91,7 +91,17 @@ else
     {
         try
         {
-            questions = data.TestResults.ToList();
+            // Az eredményt az azonosító alapján töltjük (régen a GlobalData-ból jött, F5 után üres volt).
+            var loaded = await loader.LoadResultsForStudentAsync(i);
+            if (!loaded.Ok)
+            {
+                noError = false;
+                errorMessage = loaded.Error!;
+                toastService.ShowWarning(errorMessage);
+                logger.LogWarning(errorMessage);
+                return;
+            }
+            questions = loaded.Value!;
             if (questions.Count == 0)
             {
                 noError = false;

@@ -64,19 +64,5 @@ else
         }
         StateHasChanged();
     }
-    async Task ViewResult(Test test)
-    {
-        List<TestQuestion> questions = await tqService.GetTestQuestions(test.Id);
-        if (questions is null)
-        {
-            noError = false;
-            errorMessage = tqService.ErrorMessage;
-            toastService.ShowError(errorMessage);
-            _logger.LogError("Teszt kérdések letültésénél: {errorMessage}", errorMessage);
-            return;
-        }
-        data.Test = new() { Id = test.Id, Title = test.Title, EndTime = test.EndTime, TestQuestions = questions };
-        navi.NavigateTo("resultTest");
-
-    }
+    void ViewResult(Test test) => navi.NavigateTo($"resultTest/{test.Id}");   // a ResultTest az azonosító alapján tölt
 }

@@ -1,6 +1,6 @@
 ﻿@layout TeszterWeb.Components.Layout.TestLayout
 @page "/runtest/{id:int}"
-@inject GlobalData data
+@inject TestLoader loader
 @inject NavigationManager navi
 @inject TestUserServices tuService
 
@@ -8,7 +8,7 @@
 {
     if (testStart)
     {
-        <ViewQinTest Id="@Id" IsTimer="@data.Test.IsTimer" Title="@data.Test.Title" IsCheck="data.Test.IsCheck" IsShuffle="data.Test.ShuffleQuestion" TestEnd="EndTest"></ViewQinTest>
+        <ViewQinTest Id="@Id" IsTimer="@test.IsTimer" Title="@test.Title" IsCheck="test.IsCheck" IsShuffle="test.ShuffleQuestion" TestEnd="EndTest"></ViewQinTest>
     }
     else if (testEnd)
     {
@@ -17,17 +17,17 @@
     }
     else
     {
-        <h4>A @data.Test.Title teszt megírása következik.</h4> <hr/>
+        <h4>A @test.Title teszt megírása következik.</h4> <hr/>
        <h6>
-            @if (data.Test.IsTimer)
+            @if (test.IsTimer)
             {
-                <span>A tesztet <b> @data.Test.Time.ToTime() </b> alatt kell megírnod. </span>
+                <span>A tesztet <b> @test.Time.ToTime() </b> alatt kell megírnod. </span>
             }
-            @if (data.Test.IsPractice)
+            @if (test.IsPractice)
             {
                 <span> A teszt gyakorlásra szolgál.</span>
             }
-            @if (data.Test.IsCheck)
+            @if (test.IsCheck)
             {
                 <span> A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
             }
@@ -44,16 +44,18 @@ else
 }
 @code {
     [Parameter] public int Id { get; set; } //TestUserId
-    bool noError = true, testStart = false, testEnd=false;
-    string errorMessage = string.Empty;
-    protected override void OnInitialized()
+    bool noError = false, testStart = false, testEnd = false;
+    string errorMessage = "A teszt betöltése folyamatban...";
+    Test test = new();
+
+    // A beállításokat (időzítő, ellenőrzés, keverés) az azonosító alapján töltjük be, így frissítés után is megvannak.
+    // Régen a GlobalData-ból jöttek: F5 után üres teszt lett, időzítő nélkül.
+    protected override async Task OnParametersSetAsync()
     {
-        if (data.Test is null || Id == 0)
-        {
-            noError = false;
-            errorMessage = "Nem kapta meg a teszt adatokat!";
-        }
-        base.OnInitialized();
+        var loaded = await loader.LoadTestForStudentAsync(Id);
+        noError = loaded.Ok;
+        errorMessage = loaded.Error ?? string.Empty;
+        test = loaded.Value ?? new();
     }
     void StartTest()
     {
@@ -64,7 +66,6 @@ else
     {
         testStart = false;
         testEnd = true;
-        data.TestResults = questions.ToList();
     }
     void ResultView()
     {

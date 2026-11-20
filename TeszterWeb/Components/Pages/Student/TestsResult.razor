@@ -58,9 +58,8 @@ else
             errorMessage = "Nincs még befejezett teszted!";
         }
     }
-    private async Task OpenResult(int tUserId)
+    private void OpenResult(int tUserId)
     {
-        data.TestResults = await tuService.GetTestQuestions(tUserId) ?? new();
         navi.NavigateTo($"student/testresult/{tUserId}");
     }
 

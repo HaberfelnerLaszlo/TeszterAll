@@ -1,11 +1,11 @@
-﻿@page "/resultTest"
-@inject GlobalData data
+﻿@page "/resultTest/{TestId:int}"
+@inject TestLoader loader
 @inject TestQuestionUserServices tquService
 @inject IToastService ToastService
 @if (noError)
 {
     <h3>@teszt.Title teszt eredményei</h3>
-    <UsersResultView UserResults="@userResults" TestQuestions="@data.Test.TestQuestions" Update="UpdateScore"></UsersResultView>
+    <UsersResultView UserResults="@userResults" TestQuestions="@teszt.TestQuestions" Update="UpdateScore"></UsersResultView>
 }
 else
 {
@@ -13,13 +13,22 @@ else
 }
 
 @code {
+    // A teszt azonosítója az URL-ben van; régen a GlobalData-ból jött, így frissítés után üres oldal lett.
+    [Parameter] public int TestId { get; set; }
     private Test teszt = new();
     List<UserResultToTeacher>? userResults = new();
     bool noError = true;
     string errorMessage = string.Empty;
     protected override async Task OnParametersSetAsync()
     {
-        teszt = data.Test;
+        var loaded = await loader.LoadTestForTeacherAsync(TestId, withQuestions: true);
+        if (!loaded.Ok)
+        {
+            errorMessage = loaded.Error!;
+            noError = false;
+            return;
+        }
+        teszt = loaded.Value!;
         userResults = await tquService.UsersResult(teszt.Id);
         if (userResults is null)
         {
@@ -27,6 +36,7 @@ else
             noError = false;
             return;
         }
+        noError = true;
     }
     async Task UpdateScore(QuestionResult questionResult)
     {
