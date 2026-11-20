@@ -53,7 +53,6 @@
                 toastService.ShowWarning("Nincs ilyen teszt vagy lejárt!");
                 return;
             }
-            data.Test = test;
             user = await GraphServiceClient.Education.Me.GetAsync();
             if (user is not null)
             {

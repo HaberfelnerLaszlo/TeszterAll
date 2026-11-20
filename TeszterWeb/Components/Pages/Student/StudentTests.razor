@@ -69,17 +69,15 @@ else
     }
     void TestStart(TestView test)
     {
-        data.Test = new() { IsCheck = test.IsCheck, IsPractice = test.IsPractice, IsTimer = test.IsTimer, ShuffleQuestion = test.ShuffleQuestion, Title = test.Title, Time = test.Time };
         navi.NavigateTo($"runtest/{test.TestUserId}");
     }
-    async Task TestResults(string testUserId)
+    void TestResults(string testUserId)
     {
         if (testUserId.ToIntOrNull() is not int id)
         {
             toastService.ShowError("Érvénytelen teszt azonosító.");
             return;
         }
-        data.TestResults = await tuService.GetTestQuestions(id) ?? new();
-        navi.NavigateTo($"student/testResult/{testUserId}");//Eredmények megtekintésére lehet tovább menni.
+        navi.NavigateTo($"student/testResult/{id}");//Eredmények megtekintésére lehet tovább menni.
     }
 }

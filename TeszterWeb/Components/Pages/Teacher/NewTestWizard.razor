@@ -8,6 +8,7 @@
 @inject ILogger<NewTestWizard> _logger
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
+@inject TestLoader loader
 @inject NavigationManager navi
 @inject QuestionServices qService
 @inject SubjectServices sService
@@ -186,6 +187,7 @@
 {
     [Parameter] public int Id { get; set; } = 0;
     private Test newTest = new();
+    private Test? editedTest;   // a szerkesztett teszt az URL-beli azonosító alapján (régen GlobalData)
     private List<TestQuestion> TesztQ { get; set; } = new();
     private bool _overlayIsVisible = false;
     private List<Question>? questions = new();
@@ -237,10 +239,17 @@
             if (questions is not null && Id > 0)
             {
                 saved = true;
-                if (data.Test.TestQuestions.Count > 0)
+                var loaded = await loader.LoadTestForTeacherAsync(Id, withQuestions: true, withUsers: true);
+                if (!loaded.Ok)
+                {
+                    toastService.ShowError(loaded.Error!);
+                    return;
+                }
+                editedTest = loaded.Value!;
+                if (editedTest.TestQuestions.Count > 0)
                 {
                     data.Questions.Clear();
-                    foreach (var q in data.Test.TestQuestions)
+                    foreach (var q in editedTest.TestQuestions)
                     {
                         data.Questions.Add(q);// ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
                     }
@@ -283,9 +292,9 @@
                     }
                 }
             }
-            if (Id > 0)
+            if (Id > 0 && editedTest is not null)
             {
-                newTest = data.Test;
+                newTest = editedTest;
                 TesztQ = data.Questions;
                 if (newTest.TestUsers is not null && newTest.TestUsers.Count > 0)
                 {

@@ -47,14 +47,5 @@ else
         }
         tests = await tService.GetClosedTests(userGuid);
     }
-    private async Task TestResult(TestResultToTeacher test)
-    {
-        List<TestQuestion>? questions = await tqService.GetTestQuestions(test.TestId);
-        if (questions is null)
-        {
-            return;
-        }
-        data.Test = new() { Id = test.TestId, Title = test.Title, EndTime = test.EndTime, TestQuestions = questions };
-        navi.NavigateTo("resultTest");
-    }
+    private void TestResult(TestResultToTeacher test) => navi.NavigateTo($"resultTest/{test.TestId}");   // a ResultTest az azonosító alapján tölt
 }

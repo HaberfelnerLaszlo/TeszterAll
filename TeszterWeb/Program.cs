@@ -62,6 +62,7 @@ builder.Services.AddScoped<TestQuestionUserServices>();
 builder.Services.AddScoped<MathService>();
 builder.Services.AddScoped<PontServices>();
 builder.Services.AddScoped<GroupsService>();
+builder.Services.AddScoped<TestLoader>();   // a tesztoldalak az URL-beli azonosító alapján töltenek (nem GlobalData-ból)
 builder.Services.AddScoped<PageHistoryState>();
 builder.Services.AddScoped<GraphService>();
 builder.Services.AddScoped<GlobalData>();

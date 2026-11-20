@@ -3,6 +3,7 @@
 @using Microsoft.Graph.Models
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
+@inject TestLoader loader
 @inject NavigationManager navi
 @inject QuestionServices qService
 @inject SubjectServices sService
@@ -59,11 +60,17 @@ else
             if (Questions is not null && Id > 0)
             {
                 saved = true;
-                data.Test.Id = Id;
-                if (data.Test.TestQuestions.Count > 0)
+                var loaded = await loader.LoadTestForTeacherAsync(Id, withQuestions: true);
+                if (!loaded.Ok)
+                {
+                    toastService.ShowError(loaded.Error!);
+                    return;
+                }
+                var edited = loaded.Value!;
+                if (edited.TestQuestions.Count > 0)
                 {
                     data.Questions.Clear();
-                    foreach (var q in data.Test.TestQuestions)
+                    foreach (var q in edited.TestQuestions)
                     {
                         data.Questions.Add(q);// ?? throw (new ArgumentNullException($"A {q.QuestionId} nem volt a kérdések között!")));
                     }
@@ -91,7 +98,11 @@ else
     }
     private void PublishTest(Test newTest)
     {
-        data.Test = newTest;
-        navi.NavigateTo("publish");
+        if (newTest.Id <= 0)
+        {
+            toastService.ShowWarning("Előbb mentsd el a tesztet!");
+            return;
+        }
+        navi.NavigateTo($"publish/{newTest.Id}");   // a TestPublish az azonosító alapján tölt
     }
 }

@@ -1,7 +1,8 @@
-﻿@page "/publish"
+﻿@page "/publish/{TestId:int}"
 @using Microsoft.Graph.Models
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject GlobalData data
+@inject TestLoader loader
 @inject NavigationManager navi
 @inject SectionServices seService
 @inject ILogger<TestPublish> _logger
@@ -16,13 +17,21 @@ else
     <PublicTest Teszt="NewTest" UserId="@userId" Published="@(() => navi.NavigateTo("/"))"></PublicTest>
 }
 @code {
+    // A teszt azonosítója az URL-ben van; régen a GlobalData-ból jött, így frissítés után üres teszt nyílt meg.
+    [Parameter] public int TestId { get; set; }
     public Test NewTest { get; set; } = new();
     string userId = string.Empty;
     List<TeszterLibrary.Model.Section> sections = new();
 
     protected async override Task OnInitializedAsync()
     {
-        NewTest = data.Test;
+        var loaded = await loader.LoadTestForTeacherAsync(TestId, withQuestions: true, withUsers: true);
+        if (!loaded.Ok)
+        {
+            toastService.ShowError(loaded.Error!);
+            return;
+        }
+        NewTest = loaded.Value!;
         if (String.IsNullOrEmpty(data.UserId))
         {
             var user = await GraphServiceClient.Me.GetAsync();
