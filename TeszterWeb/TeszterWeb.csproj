@@ -9,9 +9,6 @@
     <Platforms>AnyCPU;ARM64</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <Content Remove="Components\Pages\SubjectCRUD.razor" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="certificate.crt" />
   </ItemGroup>
   <ItemGroup>
@@ -48,12 +45,6 @@
       <UserProperties appsettings_1json__JsonSchema="" />
     </VisualStudio>
   </ProjectExtensions>
-  <ItemGroup>
-    <UpToDateCheckInput Remove="Components\Pages\SubjectCRUD.razor" />
-  </ItemGroup>
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Components\Pages\SubjectCRUD.razor" />
-  </ItemGroup>
   <ItemGroup>
     <Content Include="certificate.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

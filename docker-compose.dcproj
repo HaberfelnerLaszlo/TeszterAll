@@ -5,8 +5,8 @@
     <DockerTargetOS>Linux</DockerTargetOS>
     <ProjectGuid>1ce9c225-769f-4a64-98e0-a5be9bef8bcd</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
-    <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/{Scheme}://{ServiceHost}:{ServicePort}/l/app/daa02876-72bf-4e50-94c5-5aeb984e8ff1%3finstallAppPackage=true&amp;webjoin=true&amp;appTenantId=e635a9ff-0111-4671-b02d-1a544fc50ecf&amp;login_hint=haberfelner%40peterfysuli.hu</DockerServiceUrl>
-    <DockerServiceName>teszterteams</DockerServiceName>
+    <DockerServiceUrl>{Scheme}://localhost:{ServicePort}</DockerServiceUrl>
+    <DockerServiceName>teszterweb</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
