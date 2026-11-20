@@ -34,7 +34,7 @@ namespace TeszterTests.Components
         private ToastRecorder _toasts = null!;
 
         /// <param name="utc">A szimulált pillanat UTC-ben. 2026-11-09 hétfő, a téli időszámítás miatt az iskolai idő UTC+1.</param>
-        private void Arrange(string utc)
+        private void Arrange(string utc, params Group[] extraGroups)
         {
             JSInterop.Mode = JSRuntimeMode.Loose;
             Services.AddFluentUIComponents();
@@ -48,7 +48,7 @@ namespace TeszterTests.Components
             Services.AddHttpClient(TeszterApiService.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => _http);
             Services.AddScoped(_ => FakeAuthorizationHeaderProvider.Create("tok"));
             Services.AddScoped<MathService>();
-            Services.AddSingleton(GroupsServiceFactory.Create(new Group(_classId, "8.a", "x") { HasLessons = true }, new Group(Guid.NewGuid(), "8.b", null) { HasLessons = true }));
+            Services.AddSingleton(GroupsServiceFactory.Create([new Group(_classId, "8.a", "x") { HasLessons = true }, new Group(Guid.NewGuid(), "8.b", null) { HasLessons = true }, .. extraGroups]));
             Services.AddSingleton(ToastRecorder.Create(out _toasts));
             Services.AddSingleton<TimeProvider>(new FixedTime(DateTimeOffset.Parse(utc)));
 
@@ -83,6 +83,23 @@ namespace TeszterTests.Components
 
             Assert.Equal(2, Field<List<Group>>(cut, "Groups").Count);
             Assert.Contains(_http.Requests, r => r.Uri.EndsWith("/Math/Groups"));
+        }
+
+        [Fact]
+        public void Groups_reported_by_the_api_are_marked_and_offered()
+        {
+            var apiOnly = new Group(Guid.NewGuid(), "8.c", null);              // a helyi nyilvántartásban még nincs jelölve
+            var noLessons = new Group(Guid.NewGuid(), "8.d", null);
+            Arrange("2026-11-09T09:00:00Z", apiOnly, noLessons);
+            _http.Respond = request => request.RequestUri!.AbsolutePath == "/Math/Groups"
+                ? StubHttpHandler.Json(HttpStatusCode.OK, $"[\"{_classId}\",\"{apiOnly.Id}\"]")
+                : new HttpResponseMessage(HttpStatusCode.NotFound);
+
+            var cut = Render(teacher: false);
+            cut.WaitForState(() => Field<List<Group>>(cut, "Groups").Count == 3, TimeSpan.FromSeconds(5));   // az API-hívás után bővül
+
+            var offered = Field<List<Group>>(cut, "Groups").Select(g => g.Name).Order();
+            Assert.Equal(["8.a", "8.b", "8.c"], offered);                    // régen a jelölő ciklus halott kód volt, a 8.c kimaradt
         }
 
         [Theory]

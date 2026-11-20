@@ -56,30 +56,25 @@ else if (!string.IsNullOrEmpty(selectClass))
 
     protected override async Task OnInitializedAsync()
     {
+        // A már megjelölt csoportok azonnal választhatók; utána az API szerint feladattal rendelkező csoportokat is
+        // megjelöljük, és ha ettől bővült a lista, újratöltjük. (Régen a jelölő ciklus a már szűrt listán futott,
+        // így soha nem jelölt meg semmit.)
         Groups = await gService.GetGroupsHasLessonsAsync();
-        if (Groups is null)
-        {
-            Groups = new List<Group>();
-            toastService.ShowInfo("Nincs feltöltve a csoport adatbázis!");
-            return;
-        }
         var groupIds = await mService.GetGroups();
-        if (groupIds is not null && groupIds.Count > 0 && Groups.Count > 0)
+        if (groupIds is not null && groupIds.Count > 0)
         {
-            // Megjegyzés: a Groups már csak a HasLessons csoportokat tartalmazza, ezért ez a ciklus jelenleg nem módosít semmit
-            // (a korábbi Index.razor-ból változatlanul átvéve).
-            foreach (var item in groupIds)
+            if (await gService.MarkHasLessonsAsync(groupIds) > 0)
             {
-                var group = Groups.FirstOrDefault(g => g.Id == item);
-                if (group is not null && !group.HasLessons)
-                {
-                    gService.SetHasLessons(item);
-                }
+                Groups = await gService.GetGroupsHasLessonsAsync();
             }
         }
         else
         {
             toastService.ShowInfo("Nincsen feladat osztályoknak kiadva!");
+        }
+        if (Groups.Count == 0)
+        {
+            toastService.ShowInfo("Nincs feltöltve a csoport adatbázis!");
         }
     }
 

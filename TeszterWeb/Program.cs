@@ -42,7 +42,7 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
 // nyilvános Index oldal nem lenne interaktív. A védelem helyette oldalszinten van:
 // Components/Pages/_Imports.razor ([Authorize]) + mappánként szerepkör (Teacher/, Student/, Feladat/),
 // a nyilvános oldalak pedig [AllowAnonymous]-t kapnak (Index, Error).
-builder.Services.AddDbContext<TeszterLocalDB>(opt => opt.UseInMemoryDatabase("Teszter"));
+builder.Services.AddDbContextFactory<TeszterLocalDB>(opt => opt.UseInMemoryDatabase("Teszter"));   // gyártó: Blazor Serveren műveletenként új DbContext (lásd GroupsService)
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 builder.Services.AddRazorComponents()
