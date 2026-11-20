@@ -14,6 +14,7 @@
     <PackageReference Include="blazor-dragdrop" />
     <PackageReference Include="Blazored.TextEditor" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.Build.Tasks.Git">

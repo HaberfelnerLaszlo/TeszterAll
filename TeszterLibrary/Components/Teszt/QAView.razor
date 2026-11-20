@@ -21,7 +21,7 @@
         }
         else if (question.Question.QType != QuestionType.Komp)
         {
-            <FluentLabel Typo="Typography.Subject">@((MarkupString)questionView.QuestionText)</FluentLabel>
+            <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(questionView.QuestionText)</FluentLabel>
         }
         <hr />
         @switch (question.Question.QType)

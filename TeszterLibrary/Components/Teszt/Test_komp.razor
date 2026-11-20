@@ -2,7 +2,7 @@
 <FluentSplitter Orientation="Orientation.Horizontal" Panel1MinSize="20%" Panel2MinSize="50%">
     <Panel1>
         <div style="padding: 10px; border: 1px solid #ccc; margin: 10px;">
-            @((MarkupString)Texts)
+            @SafeHtml.Markup(Texts)
         </div>
     </Panel1>
     <Panel2>
@@ -14,7 +14,7 @@
                         var seq = answer.Sequence;
                         <FluentTab @key="@seq" Label="@($"{seq}. feladat {answer.Score} pont")" Id="@($"tab-{seq}")" Data="@answer">
                             <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
-                                @((MarkupString)answer.Text)
+                                @SafeHtml.Markup(answer.Text)
                             </div>
                         <FluentTextField @bind-Value="answer.AnswerText" Placeholder="Írd ide a válaszod!" Label="Válaszod"/>
                             @if(answer.AnswerHelpers?.Count > 0)

@@ -27,7 +27,7 @@
             </div>
         </ColumnOptions>
         <ChildContent>
-            @((MarkupString)context.Text)
+            @SafeHtml.Markup(context.Text)
         </ChildContent>
     </TemplateColumn>
     <TemplateColumn Sortable="true" Align="Align.Center">

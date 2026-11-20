@@ -13,6 +13,7 @@
     <PackageVersion Include="Blazored.TextEditor" Version="1.1.2" />
     <PackageVersion Include="bunit" Version="2.15.2" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
+    <PackageVersion Include="HtmlSanitizer" Version="10.0.1120" />
     <PackageVersion Include="MathParser.org-mXparser" Version="5.0.7" />
     <PackageVersion Include="MessagePackAnalyzer" Version="2.1.152" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />

@@ -21,7 +21,7 @@
         else
         {
             <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
-                @((MarkupString)newQuestion.Text)
+                @SafeHtml.Markup(newQuestion.Text)
             </div>
         }
         <FluentSpacer />
@@ -58,7 +58,7 @@
                                 <FluentCard MinimalStyle="true" Style="width:80%; margin:5px 0">
                                         <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween" Orientation="Orientation.Horizontal">
                                         <FluentLabel>@item.Sequence. @item.Id </FluentLabel>
-                                        <div>@((new MarkupString(item.Text.Substring(0, Math.Min(item.Text.Length, 40)))))</div>
+                                        <div>@SafeHtml.Markup(item.Text.Substring(0, Math.Min(item.Text.Length, 40)))</div>
                                         <FluentButton Appearance="Appearance.Accent" OnClick="@(async () => 
                                         {
                                             var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(item.Text, new DialogParameters()

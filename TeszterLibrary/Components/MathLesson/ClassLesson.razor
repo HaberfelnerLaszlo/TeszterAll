@@ -9,13 +9,13 @@
             {
                 <tr>
                     <td style="text-align:end">
-                        @((MarkupString)a.First)
+                        @SafeHtml.Markup(a.First)
                     </td>
                     <td>
                         <input class="valasz" type="text" value="@a.Result" @onchange="@((e)=>Result(a,e))" />
                     </td>
                     <td>
-                        @( (MarkupString)a.Last)
+                        @SafeHtml.Markup(a.Last)
                     </td>
                     @if (Recives.Count > 0 && IsChecked)
                     {
