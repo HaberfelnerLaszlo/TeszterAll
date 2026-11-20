@@ -21,7 +21,7 @@ namespace TeszterTests.Components
     /// Az eredeti (async void-os) változaton ezek mind elbuktak: az időzítő el sem indult, három egyidejű "Következő"
     /// három kérdést vitt el, a rögzített idő 0 volt, és a szülő újrarenderelése elölről indította a tesztet.
     /// </summary>
-    public class ViewQinTestTests : TestContext
+    public class ViewQinTestTests : BunitContext
     {
         private readonly TestRunApiHandler _api = new();
 
@@ -42,7 +42,7 @@ namespace TeszterTests.Components
         }
 
         private IRenderedComponent<ViewQinTest> Render(bool timer, Action<List<QuestionView>>? onEnd = null, int id = 7)
-            => RenderComponent<ViewQinTest>(p => p
+            => Render<ViewQinTest>(p => p
                 .Add(c => c.Id, id)
                 .Add(c => c.IsTimer, timer)
                 .Add(c => c.TestEnd, onEnd ?? (_ => { })));
@@ -106,14 +106,14 @@ namespace TeszterTests.Components
             cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
             await Call(cut, "Next");
 
-            cut.SetParametersAndRender(p => p.Add(c => c.Id, 7));
-            cut.SetParametersAndRender(p => p.Add(c => c.Id, 7));
+            cut.Render(p => p.Add(c => c.Id, 7));
+            cut.Render(p => p.Add(c => c.Id, 7));
             await Task.Delay(300);
 
             Assert.Equal(1, _api.Gets);
             Assert.Equal(2, RemainingQuestions(cut));
 
-            cut.SetParametersAndRender(p => p.Add(c => c.Id, 8));
+            cut.Render(p => p.Add(c => c.Id, 8));
             cut.WaitForState(() => _api.Gets == 2, TimeSpan.FromSeconds(5));
         }
 
@@ -125,7 +125,7 @@ namespace TeszterTests.Components
             cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
             await Task.Delay(500);
 
-            DisposeComponents();                  // mintha elnavigált volna a felhasználó
+            await DisposeComponentsAsync();                  // mintha elnavigált volna a felhasználó
             await Task.Delay(4500);
 
             Assert.Equal(0, _api.Results);
