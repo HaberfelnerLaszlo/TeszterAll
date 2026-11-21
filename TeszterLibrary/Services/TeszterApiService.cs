@@ -17,9 +17,11 @@ namespace TeszterLibrary.Services
     {
         public const string HttpClientName = "TeszterApi";
 
-        // Ezek az útvonalak eddig is token nélkül mentek (uri.Contains("Math")).
-        // Ha a szerver 401-et ad rájuk, ürítsd ezt a listát: akkor a Math API is tokent igényel.
-        private static readonly string[] AnonymousPrefixes = ["Math"];
+        // Token nélkül csak a kivetítős órai nézet (ClassLessonHost) három végpontja megy; az API-n is csak ezek névtelenek
+        // (TeszterData: MathController [AllowAnonymous]). Régen minden "Math..." hívás token nélkül ment, így a diák- és
+        // tanári Math-végpontok (eredmények, órák mentése) csak névtelen API mellett működhettek.
+        private static readonly string[] AnonymousExact = ["Math/Groups", "Math/ClassResult"];
+        private const string AnonymousClassPrefix = "Math/Class/";   // GET Math/Class/{id}; NEM a Math/Class (POST) és a Math/ClassLessons/...
 
         private readonly IAuthorizationHeaderProvider _authorizationHeaderProvider;
         private readonly string[] _scopes;
@@ -52,12 +54,20 @@ namespace TeszterLibrary.Services
 
         protected override async Task<AuthenticationHeaderValue?> GetAuthorizationAsync(string uri)
         {
-            if (AnonymousPrefixes.Any(p => uri.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+            if (IsAnonymous(uri))
             {
                 return null;
             }
             var header = await _authorizationHeaderProvider.CreateAuthorizationHeaderForUserAsync(_scopes);
             return AuthenticationHeaderValue.Parse(header);   // "Bearer <token>"
+        }
+
+        /// <summary>Token nélkül hívható-e az útvonal (a kivetítős órai nézet végpontjai).</summary>
+        public static bool IsAnonymous(string uri)
+        {
+            var path = uri.Split('?', 2)[0].TrimStart('/');
+            return AnonymousExact.Any(a => string.Equals(path, a, StringComparison.OrdinalIgnoreCase))
+                || (path.StartsWith(AnonymousClassPrefix, StringComparison.OrdinalIgnoreCase) && path.Length > AnonymousClassPrefix.Length);
         }
 
         protected override void OnServerFailure(string message)

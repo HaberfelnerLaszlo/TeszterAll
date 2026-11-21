@@ -95,15 +95,38 @@ namespace TeszterTests.Services
             Assert.Contains("JSON", host.Api.ErrorMessage);
         }
 
-        [Fact]
-        public async Task Math_routes_are_sent_without_a_token()
+        [Theory]
+        [InlineData("Math/Groups")]
+        [InlineData("Math/Class/6f1c4f0e-8f5d-4a52-9d0f-2f0d8b1a1c11")]
+        [InlineData("Math/ClassResult")]
+        public async Task Only_the_projector_view_routes_are_sent_without_a_token(string uri)
         {
             using var host = new ApiTestHost();
             host.Handler.RespondWith(HttpStatusCode.OK, "[]");
 
-            await host.Api.Get<List<Item>>("Math/Groups");
+            await host.Api.Get<List<Item>>(uri);
 
             Assert.Null(Assert.Single(host.Handler.Requests).Authorization);
+        }
+
+        // Az API ezeket már csak bejelentkezve engedi (TeszterData: MathController [Authorize]).
+        [Theory]
+        [InlineData("Math")]
+        [InlineData("Math/Class")]                     // POST: osztályórák mentése (tanár)
+        [InlineData("Math/ClassLessons/6f1c4f0e-8f5d-4a52-9d0f-2f0d8b1a1c11")]
+        [InlineData("Math/Start/6f1c4f0e-8f5d-4a52-9d0f-2f0d8b1a1c11")]
+        [InlineData("Math/Result")]
+        [InlineData("Math/ResultStudent/6f1c4f0e-8f5d-4a52-9d0f-2f0d8b1a1c11")]
+        [InlineData("Math/Class/")]
+        [InlineData("Math/GroupsX")]
+        public async Task Other_math_routes_carry_the_users_token(string uri)
+        {
+            using var host = new ApiTestHost();
+            host.Handler.RespondWith(HttpStatusCode.OK, "[]");
+
+            await host.Api.Get<List<Item>>(uri);
+
+            Assert.Equal("Bearer tok", Assert.Single(host.Handler.Requests).Authorization);
         }
 
         [Fact]
