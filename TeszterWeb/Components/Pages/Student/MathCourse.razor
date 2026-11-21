@@ -74,9 +74,10 @@ else
                 return;
             }
             UserId = userGuid;
-            taskView = await mService.Start(UserId);
-            if (taskView is not null)
+            var first = await mService.Start(UserId);
+            if (first is not null && first.Operations.Count > 0)
             {
+                taskView = first;
                 currentOperation = taskView.Operations[0];
                 StateHasChanged();
                 time = 0;
@@ -85,6 +86,7 @@ else
             else
             {
                 message = "Nincs kiadva újabb feladat számodra.";
+                StateHasChanged();
             }
         }
     }
@@ -92,28 +94,37 @@ else
     {
         timer.Stop();
         TaskRecive recive = new() { OperationId = operation.OperationId, IsTipp = false, Result = operation.Result, Step = 0, StudentId = UserId, Time = time, TaskId = taskView.TaskId };
-        taskRecive = await mService.Result(recive);
-        if (taskRecive is not null)
+        var response = await mService.Result(recive);
+        if (response is null)
         {
-            IsChecked = true;
-            StateHasChanged();
-            await Task.Delay(3000);
-            taskView.Operations.Remove(operation);
-            if (taskRecive.Step > 0)
-            {
-                taskView = await mService.Start(UserId);
-                if (taskView is null)
-                {
-                    currentOperation.OperationId = 0;
-                    message = "Nagyon ügyes voltál végeztél!";
-                    return; //TODO: végzett az összes teszttel ezt ki kell írni.
-                }
-            }
-            currentOperation = taskView.Operations[0];
-            time = 0;
+            // Régen csendben semmi sem történt (és null esetén összeomlott volna a jelző).
+            toastService.ShowError("Nem sikerült elküldeni a választ. Próbáld újra!");
             timer.Start();
-            IsChecked = false;
+            return;
         }
+        taskRecive = response;
+        IsChecked = true;
+        StateHasChanged();
+        await Task.Delay(3000);
+        taskView.Operations.Remove(operation);
+        // Lépett (tovább/vissza), vagy elfogytak a feladatok: a szerver adja a következőket
+        // (lépés nélkül ugyanazt a leckét folytatva). Régen üres listánál Operations[0] miatt összeomlott.
+        if (taskRecive.Step > 0 || taskView.Operations.Count == 0)
+        {
+            var next = await mService.Start(UserId);
+            if (next is null || next.Operations.Count == 0)
+            {
+                currentOperation = new() { OperationId = 0 };
+                message = "Nagyon ügyes voltál, végeztél az összes feladattal!";
+                IsChecked = false;
+                return;
+            }
+            taskView = next;
+        }
+        currentOperation = taskView.Operations[0];
+        time = 0;
+        timer.Start();
+        IsChecked = false;
     }
     private async Task NewUserId(ChangeEventArgs e)
     {

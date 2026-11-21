@@ -12,7 +12,7 @@
         if (item.Contains(" = "))
         {
             <span>@SafeHtml.Markup(item) </span>
-            @if (IsFraction)
+            @if (Fraction)
             {
                 <div class="fraction">
                     <input class="valasz" type="number" @bind-value="@szamlalo" autofocus @onkeydown="(e)=>Leutes(e)" />
@@ -45,7 +45,7 @@
     }
 </form>
 </div>
-<button class="btn btn-success send" @onclick="@(()=>Sending())">Küldés</button>
+<button class="btn btn-success send" disabled="@(sending || IsChecked)" @onclick="@(()=>Sending())">Küldés</button>
 
 @code
 {
@@ -57,9 +57,21 @@
 	string[] s = [];
 	string errorMessage = string.Empty;
 	int szamlalo, nevezo;
+	int shownOperationId;
+	bool sending;
+	/// <summary>Törtes válasz kell: a lecke egésze (IsFraction) vagy csak ez a feladat (gyakorló tesztben vegyesen).</summary>
+	bool Fraction => IsFraction || Assignment.IsFraction;
 	protected override void OnParametersSet()
 	{
 		s = Assignment.Sequence.Split('Ł');
+		if (Assignment.OperationId != shownOperationId)
+		{
+			// Új feladat: régen a törtmezők az előző válasszal maradtak kitöltve.
+			shownOperationId = Assignment.OperationId;
+			szamlalo = 0;
+			nevezo = 0;
+			errorMessage = string.Empty;
+		}
 	}
 	private async Task Leutes(KeyboardEventArgs e)
 	{
@@ -70,20 +82,31 @@
 	}
 	private async Task Sending()
 	{
-		if (IsFraction)
+		// Ellenőrzés alatt (IsChecked) vagy küldés közben nem küld újra: régen Enterrel/gombbal duplán is ment.
+		if (sending || IsChecked) return;
+		if (Fraction)
 		{
-			if (nevezo != 0)
+			if (nevezo == 0)
 			{
-				var result = $"{szamlalo}/{nevezo}";
-				Assignment.Result = result;
+				errorMessage = "Nevező nem lehet nulla!";
+				return;
 			}
-			else errorMessage = "Nevező nem lehet nulla!";
+			Assignment.Result = $"{szamlalo}/{nevezo}";
 		}
-		if (Assignment.Result.Length > 0)
+		if (string.IsNullOrWhiteSpace(Assignment.Result))
+		{
+			errorMessage = "Ne hagyd üresen a válasz mezőt!";
+			return;
+		}
+		errorMessage = string.Empty;
+		sending = true;
+		try
 		{
 			await Send.InvokeAsync(Assignment);
 		}
-		else errorMessage = "Ne hagyd üresen a válasz mezőt!";
-
+		finally
+		{
+			sending = false;
+		}
 	}
 }

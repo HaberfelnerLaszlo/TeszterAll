@@ -14,6 +14,10 @@
 		/// A tanuló válasza
 		/// </summary>
 		public string Result { get; set; } = string.Empty;
+		/// <summary>
+		/// Törtes feladat: számláló/nevező mezővel kell válaszolni. Feladatonként, mert a gyakorló tesztben keveredhetnek.
+		/// </summary>
+		public bool IsFraction { get; set; }
 		public List<string>? Tipps { get; set; }
 	}
 }
