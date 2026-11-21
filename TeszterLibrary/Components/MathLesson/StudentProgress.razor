@@ -1,0 +1,56 @@
+@if (Progress is not null)
+{
+    <div class="progressPanel">
+        <div class="levelRow">
+            <span class="level">@Progress.Level. szint</span>
+            <div class="xpBar" title="@Progress.Xp XP">
+                <div class="xpFill" style="width:@LevelPercent%"></div>
+            </div>
+            <span class="xpText">@(Progress.Xp - Progress.LevelStartXp) / @(Progress.NextLevelXp - Progress.LevelStartXp) XP</span>
+            <span class="streak @(Progress.Streak > 0 ? "on" : "")" title="Leghosszabb sorozat: @Progress.BestStreak nap">
+                Sorozat: @Progress.Streak nap
+            </span>
+        </div>
+
+        <div class="badges">
+            @foreach (var badge in Progress.Badges)
+            {
+                <span class="badgeChip @(badge.Earned ? "earned" : "")" title="@badge.Description">@badge.Name</span>
+            }
+        </div>
+
+        @if (Progress.Map.Count > 0)
+        {
+            <ol class="map" aria-label="Pályatérkép">
+                @foreach (var step in Progress.Map)
+                {
+                    <li class="step @StepClass(step)" title="@step.Name">
+                        <span class="dot">@(step.State == 2 ? "✓" : step.Position.ToString())</span>
+                        <span class="stepName">@step.Name</span>
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public StudentProgressView? Progress { get; set; }
+
+    private int LevelPercent
+    {
+        get
+        {
+            if (Progress is null) return 0;
+            int span = Progress.NextLevelXp - Progress.LevelStartXp;
+            return span <= 0 ? 100 : Math.Clamp((Progress.Xp - Progress.LevelStartXp) * 100 / span, 0, 100);
+        }
+    }
+
+    private static string StepClass(MapStepView step) => step.State switch
+    {
+        2 => "done",
+        1 => "current",
+        _ => "todo",
+    } + (step.IsPractice ? " practice" : "");
+}

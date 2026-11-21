@@ -1,0 +1,156 @@
+.progressPanel {
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0 14px 0;
+    background: #fff;
+    max-width: 900px;
+}
+
+.levelRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.level {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.xpBar {
+    flex: 1 1 160px;
+    height: 12px;
+    border-radius: 6px;
+    background: #e9ecef;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.xpFill {
+    height: 100%;
+    background: linear-gradient(90deg, #00b700, #54d771);
+    transition: width .4s ease;
+}
+
+.xpText {
+    font-size: .9rem;
+    color: #555;
+}
+
+.streak {
+    font-size: .9rem;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #e9ecef;
+    color: #555;
+}
+
+.streak.on {
+    background: #ffe8cc;
+    color: #a14a00;
+    font-weight: 600;
+}
+
+.badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.badgeChip {
+    font-size: .8rem;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #f1f3f5;
+    color: #9aa0a6;
+    border: 1px dashed #c8c8c8;
+    cursor: default;
+}
+
+.badgeChip.earned {
+    background: #fff4c2;
+    color: #6b5200;
+    border: 1px solid #e0b400;
+    font-weight: 600;
+}
+
+.map {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+    padding: 0;
+    margin: 12px 0 0 0;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 76px;
+    position: relative;
+}
+
+/* összekötő vonal a pályán */
+.step:not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    right: 50%;
+    width: 100%;
+    height: 3px;
+    background: #d0d7de;
+    z-index: 0;
+}
+
+.step.done:not(:first-child)::before,
+.step.current:not(:first-child)::before {
+    background: #00b700;
+}
+
+.dot {
+    position: relative;
+    z-index: 1;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    background: #e9ecef;
+    color: #777;
+    border: 2px solid #d0d7de;
+}
+
+.step.done .dot {
+    background: #00b700;
+    border-color: #00b700;
+    color: #fff;
+}
+
+.step.current .dot {
+    background: #fff;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, .2);
+}
+
+.step.practice .dot {
+    border-style: dashed;
+}
+
+.stepName {
+    font-size: .7rem;
+    text-align: center;
+    line-height: 1.1;
+    margin-top: 3px;
+    max-width: 72px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}

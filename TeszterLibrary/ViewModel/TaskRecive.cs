@@ -9,7 +9,7 @@
 		/// </summary>
 		public string Result { get; set; } = string.Empty;
 		/// <summary>
-		/// Mennyi idő alatt oldotta meg
+		/// Mennyi idő alatt oldotta meg (mp). A választ a szerver tölti ki a saját mérése alapján; a küldött értéket nem veszi figyelembe.
 		/// </summary>
 		public int Time { get; set; }
 		/// <summary>
@@ -24,5 +24,7 @@
 		/// </summary>
 		public byte Step { get; set; }=0;
 		public int TaskId { get; set; }
+		/// <summary>Ezzel a válasszal szerzett XP (a lecke teljesítési bónuszával együtt); a szerver tölti ki.</summary>
+		public int Score { get; set; }
 	}
 }

@@ -9,6 +9,7 @@
 @inject ILogger<MathCourse> _logger
 
 <h3>Kitűzött matematika feladat</h3>
+<StudentProgress Progress="progress" />
 @if (IsClass)
 {
     <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
@@ -17,6 +18,10 @@
 {
     <p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
     <MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction" />
+    @if (IsChecked && taskRecive.Score > 0)
+    {
+        <span class="xpGain">+@taskRecive.Score XP</span>
+    }
 
 }
 else
@@ -32,6 +37,23 @@ else
     private int time = 0, allTime = 0;
     private string message = "Betöltés...";
     private List<ClassRecive> recives = new();
+    private StudentProgressView? progress;
+
+    /// <summary>A haladás frissítése; az újonnan megszerzett jelvényeket felugró üzenet jelzi.</summary>
+    private async Task RefreshProgress()
+    {
+        var earnedBefore = progress?.Badges.Where(b => b.Earned).Select(b => b.Code).ToHashSet();
+        var fresh = await mService.GetProgress(UserId);
+        if (fresh is null) return;
+        if (earnedBefore is not null)
+        {
+            foreach (var badge in fresh.Badges.Where(b => b.Earned && !earnedBefore.Contains(b.Code)))
+                toastService.ShowSuccess($"Új jelvény: {badge.Name}!");
+            if (fresh.Level > progress!.Level)
+                toastService.ShowSuccess($"Szintet léptél: {fresh.Level}. szint!");
+        }
+        progress = fresh;
+    }
 
     protected override void OnInitialized()
     {
@@ -74,6 +96,7 @@ else
                 return;
             }
             UserId = userGuid;
+            await RefreshProgress();
             var first = await mService.Start(UserId);
             if (first is not null && first.Operations.Count > 0)
             {
@@ -97,14 +120,23 @@ else
         var response = await mService.Result(recive);
         if (response is null)
         {
-            // Régen csendben semmi sem történt (és null esetén összeomlott volna a jelző).
-            toastService.ShowError("Nem sikerült elküldeni a választ. Próbáld újra!");
+            // A szerver csak a neki kiadott, még megválaszolatlan feladatra fogad választ (pl. egy másik lapon már
+            // továbbléptél, vagy frissítés volt): friss feladatsort kérünk, hogy ne ragadjon be ugyanarra.
+            toastService.ShowWarning("Ezt a feladatot már nem lehet beküldeni, új feladatot kapsz.");
+            var fresh = await mService.Start(UserId);
+            if (fresh is not null && fresh.Operations.Count > 0)
+            {
+                taskView = fresh;
+                currentOperation = taskView.Operations[0];
+            }
+            time = 0;
             timer.Start();
             return;
         }
         taskRecive = response;
         IsChecked = true;
         StateHasChanged();
+        if (taskRecive.Step > 0 || taskRecive.Score > 0) await RefreshProgress();
         await Task.Delay(3000);
         taskView.Operations.Remove(operation);
         // Lépett (tovább/vissza), vagy elfogytak a feladatok: a szerver adja a következőket
