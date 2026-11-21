@@ -5,6 +5,8 @@
     margin: 8px 0 14px 0;
     background: #fff;
     max-width: 900px;
+    flex: 1 1 420px;
+    box-sizing: border-box;
 }
 
 .levelRow {

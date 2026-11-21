@@ -25,5 +25,7 @@ namespace TeszterLibrary.Services
 		public async Task<List<ResultTaskView>> ResultTaskViews(int id) => await _service.Get<List<ResultTaskView>>($"Math/ResultTask/{id}");
 		public async Task<List<Guid>?> GetGroups() => await _service.Get<List<Guid>>("Math/Groups");
 		public async Task<StudentProgressView?> GetProgress(Guid id) => await _service.Get<StudentProgressView>($"Math/Progress/{id}");
+		public async Task<List<LeaderboardClassView>?> GetLeaderboardClasses() => await _service.Get<List<LeaderboardClassView>>("Math/Leaderboard");
+		public async Task<LeaderboardView?> GetLeaderboard(string classId) => await _service.Get<LeaderboardView>($"Math/Leaderboard/{Uri.EscapeDataString(classId)}");
     }
 }

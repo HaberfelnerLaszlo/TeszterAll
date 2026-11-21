@@ -1,0 +1,86 @@
+@using TeszterLibrary.Services
+@inject MathService mService
+
+@if (classes is { Count: > 0 })
+{
+    <div class="leaderboard">
+        <div class="lbHeader">
+            <span class="lbTitle">Heti ranglista</span>
+            @if (classes.Count > 1)
+            {
+                <select class="lbSelect" value="@selectedClassId" @onchange="OnClassChanged" aria-label="Csoport">
+                    @foreach (var c in classes)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <span class="lbClass">@classes[0].Name</span>
+            }
+        </div>
+
+        @if (board is null)
+        {
+            <p class="lbInfo">@(failed ? "A ranglista most nem érhető el." : "Betöltés...")</p>
+        }
+        else
+        {
+            @if (board.MyRank > 0)
+            {
+                <p class="lbMine">@board.MyRank. hely a @board.Total diákból · @board.MyXp XP a héten</p>
+            }
+            <ol class="lbList">
+                @if (board.MoreAbove)
+                {
+                    <li class="lbGap" aria-hidden="true">⋮</li>
+                }
+                @foreach (var e in board.Entries)
+                {
+                    <li class="lbRow @(e.IsMe ? "me" : "")">
+                        <span class="lbRank">@e.Rank.</span>
+                        <span class="lbName">@(e.IsMe ? "Te" : e.Name)</span>
+                        <span class="lbXp">@e.Xp XP</span>
+                    </li>
+                }
+                @if (board.MoreBelow)
+                {
+                    <li class="lbGap" aria-hidden="true">⋮</li>
+                }
+            </ol>
+            <p class="lbInfo">A hét hétfőtől számít. Csak a hozzád közeli helyezéseket látod.</p>
+        }
+    </div>
+}
+
+@code {
+    private List<LeaderboardClassView>? classes;
+    private string? selectedClassId;
+    private LeaderboardView? board;
+    private bool failed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        classes = await mService.GetLeaderboardClasses();
+        selectedClassId = classes?.FirstOrDefault()?.Id;
+        await RefreshAsync();
+    }
+
+    /// <summary>Újratöltés (pl. pontszerzés után a szülő oldalról).</summary>
+    public async Task RefreshAsync()
+    {
+        if (selectedClassId is null) return;
+        var fresh = await mService.GetLeaderboard(selectedClassId);
+        failed = fresh is null;
+        if (fresh is not null) board = fresh;
+        StateHasChanged();
+    }
+
+    private async Task OnClassChanged(ChangeEventArgs e)
+    {
+        selectedClassId = e.Value?.ToString();
+        board = null;
+        await RefreshAsync();
+    }
+}

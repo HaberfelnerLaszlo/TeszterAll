@@ -9,7 +9,10 @@
 @inject ILogger<MathCourse> _logger
 
 <h3>Kitűzött matematika feladat</h3>
-<StudentProgress Progress="progress" />
+<div class="gameRow">
+    <StudentProgress Progress="progress" />
+    <Leaderboard @ref="leaderboard" />
+</div>
 @if (IsClass)
 {
     <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
@@ -38,6 +41,7 @@ else
     private string message = "Betöltés...";
     private List<ClassRecive> recives = new();
     private StudentProgressView? progress;
+    private Leaderboard? leaderboard;
 
     /// <summary>A haladás frissítése; az újonnan megszerzett jelvényeket felugró üzenet jelzi.</summary>
     private async Task RefreshProgress()
@@ -136,7 +140,11 @@ else
         taskRecive = response;
         IsChecked = true;
         StateHasChanged();
-        if (taskRecive.Step > 0 || taskRecive.Score > 0) await RefreshProgress();
+        if (taskRecive.Step > 0 || taskRecive.Score > 0)
+        {
+            await RefreshProgress();
+            if (leaderboard is not null) await leaderboard.RefreshAsync();
+        }
         await Task.Delay(3000);
         taskView.Operations.Remove(operation);
         // Lépett (tovább/vissza), vagy elfogytak a feladatok: a szerver adja a következőket
