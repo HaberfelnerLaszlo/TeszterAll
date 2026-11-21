@@ -4,7 +4,7 @@
 @inject IToastService toastService
 @if (lessons.Count > 0)
 {
-    <button class="btn btn-primary" @onclick="async () => { await SaveLesson.InvokeAsync(Lessons); SaveButton(); }">@Name feladatlistájának mentése</button>
+    <button class="btn btn-primary" @onclick="async () => { ApplyOrder(); await SaveLesson.InvokeAsync(Lessons); SaveButton(); }">@Name feladatlistájának mentése</button>
 }
 else
 {
@@ -98,6 +98,19 @@ else
     private bool AcceptTask(ListTask task)
     {
         return !task.HasCompleted;
+    }
+    /// <summary>
+    /// A megjelenített (húzással rendezett) lista sorrendjét a Lesson-ökbe írja: a teljesítettek után, 1-től.
+    /// Régen a rendezés csak a megjelenítést változtatta, a mentett sorrend a bedobás sorrendje volt.
+    /// </summary>
+    private void ApplyOrder()
+    {
+        int baseOrder = Lessons.Where(l => l.IsCompleted).Select(l => l.Order).DefaultIfEmpty(0).Max();
+        for (int i = 0; i < lessons.Count; i++)
+        {
+            var lesson = Lessons.FirstOrDefault(l => l.TaskId == lessons[i].Id && !l.IsCompleted);
+            if (lesson is not null) lesson.Order = baseOrder + i + 1;
+        }
     }
     private void SaveButton()
     {
@@ -195,7 +208,7 @@ else
         }
         // get the item at the old index in list 2
         var item = lessons[args.OldIndex];
-        var lesson = Lessons.First(l => l.TaskId == item.Id);
+        var lesson = Lessons.FirstOrDefault(l => l.TaskId == item.Id && !l.IsCompleted);
         if (lesson is null)
         {
             toastService.ShowError("Hiba történt nem található a feladat.");

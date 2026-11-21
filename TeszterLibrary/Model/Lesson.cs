@@ -34,5 +34,7 @@ namespace TeszterLibrary.Model
 		public bool IsCompleted { get; set; }
 		public bool IsTipp { get; set; }
 		public bool IsProcessing { get; set; }
+		/// <summary>A lecke helye a tanuló feladatsorában (növekvő; 0 = a végére kerül).</summary>
+		public int Order { get; set; }
 	}
 }

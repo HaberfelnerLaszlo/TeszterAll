@@ -204,7 +204,13 @@ else if (TestMembers.Any())
     }
     async Task Saved(List<Lesson> lessons)
     {
-        var j = await mService.SetLessons(lessons.Where(l => l.Id == 0).ToList());//csak az újat küldi
+        var j = await mService.SetLessons(lessons.Where(l => l.Id == 0).OrderBy(l => l.Order).ToList());//csak az újat küldi
+        // A meglévő, még nem teljesített leckék új sorszáma (átrendezés) is mentődjön.
+        var reordered = lessons.Where(l => l.Id != 0 && !l.IsCompleted).ToList();
+        if (j is not null && reordered.Count > 0 && await mService.UpdateLessons(reordered) is null)
+        {
+            ToastService.ShowWarning("A meglévő feladatok sorrendje nem lett mentve.");
+        }
         if (j is not null)
         {
             if (AllTestMember)
@@ -220,14 +226,16 @@ else if (TestMembers.Any())
                     {
                         await uService.AddUser(new() { Id = StudentId, DisplayName = StudentName });
                     }
-                    var memberLessons = lessons.Where(l => l.Id == 0).ToList();
-                    memberLessons.ForEach(l => l.StudentId = member.Id);
+                    // A sorrend az első tanulóé; a sorszámot a szerver a tanuló meglévő leckéi után osztja ki (Order = 0).
+                    var memberLessons = lessons.Where(l => l.Id == 0).OrderBy(l => l.Order)
+                        .Select(l => new Lesson { TaskId = l.TaskId, StudentId = member.Id, MinCount = l.MinCount, MaxCount = l.MaxCount, WrongCount = l.WrongCount, WrongPercent = l.WrongPercent, Time = l.Time, IsTipp = l.IsTipp })
+                        .ToList();
                     if (member.HasLesson)
                     {
                         var HasLessons = await mService.GetLessons(member.Id);
                         foreach (var hl in HasLessons)
                         {
-                            var toRemove = lessons.FirstOrDefault(l => l.TaskId == hl.TaskId);
+                            var toRemove = memberLessons.FirstOrDefault(l => l.TaskId == hl.TaskId);
                             if (toRemove != null)
                             {
                                 memberLessons.Remove(toRemove);
