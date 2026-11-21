@@ -141,11 +141,16 @@
         var response = await mService.ResultClassView(ids);
         if (response != null)
         {
+            // Aki még nem járt az oldalon, annak nincs neve az adatbázisban: a csoportlistából pótoljuk.
+            foreach (var view in response.Where(v => string.IsNullOrEmpty(v.StudentName)))
+            {
+                view.StudentName = ResultMembers.FirstOrDefault(m => m.Id == view.StudentId)?.DisplayName ?? "Ismeretlen tanuló";
+            }
             resultClassViews = response;
         }
         else
         {
-            toastService.ShowInfo("A kiválasztott tanulónak nincsenek még eredményei");
+            toastService.ShowError("Nem sikerült lekérni az eredményeket.");
         }
     }
     private void ViewStudent(Guid studentId)

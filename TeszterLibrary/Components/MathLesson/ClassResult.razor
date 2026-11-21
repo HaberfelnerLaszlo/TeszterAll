@@ -1,17 +1,35 @@
 ﻿@foreach (var item in classViews)
 {
-	<div class="container row" id="StudentResult" @onclick="()=>Open(item.StudentId)">
+	<div class="container row @RowClass(item)" id="StudentResult" @onclick="()=>Open(item.StudentId)">
 		<div class="col">
 			<span class="float-start d-sm-flex justify-content-sm-start align-items-sm-center NameTxt">@item.StudentName</span>
+			<div class="CurrentTxt">
+				@if (item.Total == 0)
+				{
+					<span>Nincs kiadott feladatsora</span>
+				}
+				else if (item.Position == 0)
+				{
+					<span>Minden leckét teljesített (@item.Total)</span>
+				}
+				else
+				{
+					<span>@item.Position. / @item.Total: @item.CurrentLesson @(item.InProgress ? "– épp oldja" : "")</span>
+				}
+			</div>
 		</div>
 		<div class="col-3">
 			<div class="row d-flex justify-content-end">
 				<span class="badge bg-success float-end d-sm-flex justify-content-sm-end ScoreBadge">Befejezve: @item.Complet</span>
-					<span class="badge bg-danger d-inline-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Visszalépések: @item.Back</span>
-					<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Hátralévők: @item.NoComplet</span>
+				<span class="badge bg-danger d-inline-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Visszalépések: @item.Back</span>
+				<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Hátralévők: @item.NoComplet</span>
+				@if (item.Abandoned > 0)
+				{
+					<span class="badge bg-secondary float-end d-sm-flex justify-content-sm-end ScoreBadge">Félbehagyva: @item.Abandoned</span>
+				}
 			</div>
 			<div class="row d-flex justify-content-end">
-				<span class="activeDate" style="margin: 5px 10px;margin-bottom: 4px;margin-top: 6px;margin-right: 10px;padding-top: 0px;">Aktív	volt @item.LastActive napja</span>
+				<span class="activeDate">@ActiveText(item)</span>
 			</div>
 		</div>
 	</div>
@@ -23,4 +41,13 @@
 	{
 		await Click.InvokeAsync(id);
 	}
+	private static string ActiveText(ResultClassView item) => item.LastActive switch
+	{
+		null => "Még nem kezdte el",
+		0 => "Ma aktív volt",
+		var d => $"Aktív volt {d} napja",
+	};
+	/// <summary>Nincs feladatsora / még nem kezdte: szürke; kész: alap zöld.</summary>
+	private static string RowClass(ResultClassView item) =>
+		item.Total == 0 || item.LastActive is null ? "notStarted" : string.Empty;
 }
