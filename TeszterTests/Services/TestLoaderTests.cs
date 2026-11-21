@@ -37,7 +37,7 @@ namespace TeszterTests.Services
         private ToastRecorder _toasts = null!;
 
         // A diák (TestUser 41) nem kész tesztje időzítővel; a 42-es kész; a 99-es másé.
-        private const string MyOpenTests = """[{"id":5,"title":"Törtek","time":90,"isTimer":true,"isCheck":true,"isPractice":false,"shuffleQuestion":false,"testUserId":41}]""";
+        private const string MyOpenTests = """[{"id":5,"title":"Törtek","time":90,"isTimer":true,"isCheck":true,"isPractice":false,"shuffleQuestion":false,"testUserId":41,"endTime":"2099-01-01T00:00:00"}]""";
         private const string MyReadyTests = """[{"title":"Régi","testUserId":42}]""";
         private const string Questions = """[{"testQuestionId":1,"questionText":"<p>2+2?</p>"}]""";
 
@@ -135,6 +135,33 @@ namespace TeszterTests.Services
 
             Assert.Equal(TestLoader.NotYours, loaded.Error);
             Assert.DoesNotContain(_http.Requests, r => r.Uri.Contains("/TUser/Test/99"));
+        }
+
+        // A Teams-link (/start/{tesztId}) a diák saját listájából dolgozik; a teljes teszt (Test/{id}) tanári végpont lett.
+        [Fact]
+        public async Task The_start_link_finds_the_students_own_open_test()
+        {
+            Arrange();
+
+            var found = await Loader.FindStudentTestAsync(5, new DateTime(2026, 11, 21));
+
+            Assert.True(found.Ok);
+            Assert.Equal(41, found.Value!.TestUserId);
+            Assert.DoesNotContain(_http.Requests, r => r.Uri.Contains("/Test/5"));     // a teljes tesztet nem kéri le
+        }
+
+        [Theory]
+        [InlineData(6, "2026-11-21", "nem neked adták ki")]     // nincs a diák listájában
+        [InlineData(5, "2100-01-01", "lejárt")]
+        [InlineData(0, "2026-11-21", "Nincs ilyen teszt")]
+        public async Task The_start_link_explains_why_a_test_cannot_be_opened(int testId, string today, string reason)
+        {
+            Arrange();
+
+            var found = await Loader.FindStudentTestAsync(testId, DateTime.Parse(today));
+
+            Assert.False(found.Ok);
+            Assert.Contains(reason, found.Error);
         }
 
         [Fact]

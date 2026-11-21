@@ -5,7 +5,7 @@
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 @inject EduUserServices uService
-@inject TestServices tService
+@inject TestLoader loader
 @inject GlobalData data
 @inject IToastService toastService
 @inject NavigationManager NavigationManager
@@ -17,7 +17,7 @@
         <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
             <h4>Üdvözöllek @(user?.DisplayName ?? "Ismeretlen")!</h4>
             <hr />
-            <FluentLabel>@(test?.Subject ?? string.Empty) tantárgyból egy tesztet készítettek Neked!</FluentLabel>
+            <FluentLabel>@(view?.Subject ?? string.Empty) tantárgyból egy tesztet készítettek Neked!</FluentLabel>
         </FluentStack>
 </Authorized>
     <NotAuthorized>
@@ -28,31 +28,13 @@
 @code{
     [Parameter] public int Number { get; set; }   // :int megkötés: nem szám útvonalra 404, nem kivétel
     EducationUser? user;
-    Test? test = new();
-    int testId = 0;
+    TestView? view;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             data.Title = "Teszt kezdete";
-            //var sz = Number.Remove(Number.Length - 4);
-            var testId = Number;
-            if (testId > 0)
-            {
-                test = await tService.GetTest(testId);
-            }
-        else
-                {
-                    toastService.ShowError($"Nincs ilyen teszt! Azonosító: {Number}");
-                
-                    return;
-                }
-            if (test is null || test.EndTime < DateTime.Today)
-            {
-                toastService.ShowWarning("Nincs ilyen teszt vagy lejárt!");
-                return;
-            }
             user = await GraphServiceClient.Education.Me.GetAsync();
             if (user is not null)
             {
@@ -64,14 +46,16 @@
                         await uService.AddUser(new EduUser() { DisplayName = user.DisplayName ?? "NoName", Id = userGuid, Role = user.PrimaryRole!.Value.ToString() ?? EducationUserRole.Student.ToString() });
                     }
                 }
-                var id = test.TestUsers.FirstOrDefault(t => t.UserId.ToString() == user.Id)?.Id ?? 0;
-                if (id > 0)
+                // A diák saját tesztlistájából (nem a teljes tesztből, amely a társai azonosítóit is tartalmazta).
+                var found = await loader.FindStudentTestAsync(Number, DateTime.Today);
+                view = found.Value;
+                if (found.Ok)
                 {
-                    NavigationManager.NavigateTo($"/runtest/{id}");
+                    NavigationManager.NavigateTo($"/runtest/{found.Value!.TestUserId}");
                 }
                 else
                 {
-                    toastService.ShowError("A teszthez nincs hozzáférése!");
+                    toastService.ShowError(found.Error!);
                     await Task.Delay(5000);
                     NavigationManager.NavigateTo("/home");
                 }

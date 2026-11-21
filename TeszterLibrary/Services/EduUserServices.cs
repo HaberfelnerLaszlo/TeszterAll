@@ -26,15 +26,21 @@ namespace TeszterLibrary.Services
 			return await _service.Get<EduUser>($"User/{id}");
 		}
 
+		/// <summary>
+		/// Létezik-e a felhasználó. Az adott rekordot kéri le (GET User/{id}: saját maga vagy tanár), nem a teljes
+		/// felhasználólistát, mint régen (az tanári végpont lett, és diáknál minden felhasználót letöltött).
+		/// A 404 "nem létezik" (ErrorMessage üres, így a hívó felveheti); más hiba esetén ErrorMessage-et állít.
+		/// </summary>
 		public async Task<bool> UserExits(Guid id)
 		{
-			var list = await _service.Get<List<EduUser>>("User");
-			if (list == null)
+			ErrorMessage = string.Empty;
+			var user = await _service.Get<EduUser>($"User/{id}");
+			if (user is not null) return true;
+			if (_service.LastStatusCode != System.Net.HttpStatusCode.NotFound)
 			{
 				ErrorMessage = _service.ErrorMessage;
-				return false;
 			}
-			return list?.Any(t => t.Id == id) ?? false;
+			return false;
 		}
 
 		public async Task<EduUser?> AddUser(EduUser user)

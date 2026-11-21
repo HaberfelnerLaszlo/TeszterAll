@@ -51,6 +51,23 @@ namespace TeszterWeb.Services
             return view is null ? Loaded<Test>.Fail(NotYours) : Loaded<Test>.Success(ToTest(view));
         }
 
+        /// <summary>
+        /// A Teams-feladat linkje (/start/{tesztId}) alapján a diák saját, még nem kész tesztje (benne a TestUserId).
+        /// Régen a Startpage a teljes tesztet kérte le (GET Test/{id}, a többi diák azonosítójával együtt); ez a végpont
+        /// mostantól csak tanárnak érhető el, a diák a saját listájából dolgozik (TUser/Tests/{oid}, tulajdonos-ellenőrzött).
+        /// </summary>
+        public async Task<Loaded<TestView>> FindStudentTestAsync(int testId, DateTime today)
+        {
+            if (testId <= 0) return Loaded<TestView>.Fail($"Nincs ilyen teszt! Azonosító: {testId}");
+            if (await CurrentUserIdAsync() is not Guid me) return Loaded<TestView>.Fail("Nem sikerült azonosítani a felhasználót. Jelentkezz be újra!");
+
+            var mine = await testUsers.GetTests(me);
+            var view = mine?.FirstOrDefault(t => t.Id == testId);
+            if (view is null) return Loaded<TestView>.Fail("Ez a teszt nem érhető el: nem neked adták ki, vagy már megírtad.");
+            if (view.EndTime < today) return Loaded<TestView>.Fail("A teszt határideje lejárt.");
+            return Loaded<TestView>.Success(view);
+        }
+
         /// <summary>A diák egy tesztjének kérdésenkénti eredménye, csak a saját (kész vagy folyamatban lévő) tesztjére.</summary>
         public async Task<Loaded<List<QuestionView>>> LoadResultsForStudentAsync(int testUserId)
         {

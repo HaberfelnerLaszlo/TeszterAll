@@ -26,6 +26,9 @@ namespace TeszterLibrary.Services
         /// <summary>Az IHttpClientFactory-től kapott kliens. A fejlécek kérésenként készülnek, ezen soha nem állítunk állapotot.</summary>
         protected HttpClient Http { get; }
 
+        /// <summary>Az utolsó hívás HTTP-státusza (null, ha nem jött válasz). Minden hívás elején törlődik.</summary>
+        public HttpStatusCode? LastStatusCode { get; private set; }
+
         /// <summary>Az utolsó hívás hibaüzenete. Minden hívás elején törlődik.</summary>
         public string ErrorMessage { get; set; } = string.Empty;
 
@@ -39,6 +42,7 @@ namespace TeszterLibrary.Services
         protected async Task<ApiResult<T>> SendAsync<T>(HttpMethod method, string uri, object? body = null, CancellationToken ct = default)
         {
             ErrorMessage = string.Empty;
+            LastStatusCode = null;
             try
             {
                 using var request = new HttpRequestMessage(method, uri);
@@ -50,6 +54,7 @@ namespace TeszterLibrary.Services
                 }
 
                 using var response = await Http.SendAsync(request, ct);
+                LastStatusCode = response.StatusCode;
                 var text = await response.Content.ReadAsStringAsync(ct);
                 using var document = TryParseJson(text);
                 JsonElement? root = document?.RootElement;
