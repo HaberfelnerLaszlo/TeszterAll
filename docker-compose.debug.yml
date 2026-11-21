@@ -13,4 +13,11 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
     volumes:
       - ~/.aspnet/https:/https:ro
-      - C:/Games:/home/app/.aspnet/DataProtection-Keys	
+      - C:/Games:/home/app/.aspnet/DataProtection-Keys
+      # A feltöltött képek (App_Data/uploads) kötetben: újratelepítéskor sem vesznek el.
+      # Tulajdonos: az "app" felhasználó (UID 1654), lásd: chown -R 1654:1654.
+      - teszter-uploads:/app/App_Data/uploads
+
+volumes:
+  teszter-uploads:
+    name: teszter-uploads   # rögzített név (a compose különben a mappanévvel előtagolná)

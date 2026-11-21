@@ -24,4 +24,9 @@ RUN dotnet publish "./TeszterWeb.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# A feltöltött képek mappája (kötet csatolási pontja) az "app" felhasználóé legyen: a Docker egy új, üres kötet
+# tulajdonosát innen veszi át, különben root-é lenne, és a feltöltés jogosultsági hibát adna.
+USER root
+RUN mkdir -p /app/App_Data/uploads && chown -R app:app /app/App_Data
+USER app
 ENTRYPOINT ["dotnet", "TeszterWeb.dll"]
