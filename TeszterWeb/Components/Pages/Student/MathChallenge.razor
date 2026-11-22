@@ -1,0 +1,198 @@
+@page "/student/challenge"
+@implements IDisposable
+@using TeszterLibrary.Services
+@using TeszterLibrary.ViewModel
+@inject MathService mService
+@inject IToastService toastService
+
+<h3>Időre menő kihívás</h3>
+
+@switch (state)
+{
+    case State.Loading:
+        <p>Betöltés...</p>
+        break;
+
+    case State.Choose:
+        @if (topics.Count == 0)
+        {
+            <p>Kihívást a már teljesített témáidból indíthatsz. Teljesíts egy leckét, és gyere vissza!</p>
+            <a class="btn btn-outline-primary" href="/student/math">Vissza a feladatokhoz</a>
+        }
+        else
+        {
+            <p class="intro">@ChallengeSeconds másodperc alatt adj minél több helyes választ! Minden helyes válasz @XpPerAnswer XP.</p>
+            <ul class="topics">
+                @foreach (var t in topics)
+                {
+                    <li>
+                        <button class="btn btn-primary topicBtn" disabled="@starting" @onclick="() => Begin(t)">@t.Name</button>
+                        <span class="best">@(t.Best > 0 ? $"Rekordod: {t.Best}" : "Még nem próbáltad")</span>
+                    </li>
+                }
+            </ul>
+            <a href="/student/math">Vissza a feladatokhoz</a>
+        }
+        break;
+
+    case State.Running:
+        <div class="hud">
+            <span class="timer @(secondsLeft <= 10 ? "hurry" : "")" aria-live="polite">@secondsLeft mp</span>
+            <span class="score">Helyes: @correct</span>
+            <span class="topicName">@topic?.Name</span>
+            @if (flash is not null)
+            {
+                <span class="flash @(flash == true ? "ok" : "bad")">@(flash == true ? "✓" : "✗")</span>
+            }
+        </div>
+        @if (current is not null)
+        {
+            <MathLesson Assignment="current" Send="@Answer" IsChecked="false" IsFraction="current.IsFraction" />
+        }
+        <button class="btn btn-link giveUp" @onclick="End">Befejezem</button>
+        break;
+
+    case State.Done:
+        <div class="result">
+            @if (result is null)
+            {
+                <p>Nem sikerült lekérni az eredményt.</p>
+            }
+            else
+            {
+                @if (result.IsRecord)
+                {
+                    <p class="record">Új rekord!</p>
+                }
+                <p class="big">@result.Correct helyes válasz</p>
+                <p>Hibás: @result.Wrong · Szerzett XP: @result.Xp · Rekordod ebben a témában: @result.Best</p>
+            }
+            <button class="btn btn-primary" @onclick="() => Begin(topic!)" disabled="@(topic is null || starting)">Újra</button>
+            <button class="btn btn-outline-primary" @onclick="BackToTopics">Másik téma</button>
+            <a class="btn btn-link" href="/student/math">Vissza a feladatokhoz</a>
+        </div>
+        break;
+}
+
+@code {
+    private enum State { Loading, Choose, Running, Done }
+
+    // A szerver értékeivel egyezik (ChallengeService.Seconds, XpRules.ChallengeAnswer); csak a tájékoztató szöveghez.
+    private const int ChallengeSeconds = 60;
+    private const int XpPerAnswer = 3;
+
+    private State state = State.Loading;
+    private List<ChallengeTopicView> topics = new();
+    private ChallengeTopicView? topic;
+    private ChallengeStartView? run;
+    private Queue<OperationView> queue = new();
+    private OperationView? current;
+    private int correct, secondsLeft;
+    private bool? flash;
+    private bool starting, ending;
+    private ChallengeResultView? result;
+    private System.Threading.Timer? ticker;
+
+    protected override async Task OnInitializedAsync() => await LoadTopics();
+
+    private async Task LoadTopics()
+    {
+        topics = await mService.GetChallengeTopics() ?? new();
+        state = State.Choose;
+    }
+
+    private async Task Begin(ChallengeTopicView chosen)
+    {
+        if (starting) return;
+        starting = true;
+        try
+        {
+            var started = await mService.StartChallenge(chosen.TaskId);
+            if (started is null || started.Operations.Count == 0)
+            {
+                toastService.ShowError("Nem sikerült elindítani a kihívást.");
+                return;
+            }
+            topic = chosen;
+            run = started;
+            queue = new Queue<OperationView>(started.Operations);
+            current = queue.Dequeue();
+            correct = 0;
+            flash = null;
+            result = null;
+            ending = false;
+            secondsLeft = started.Seconds;
+            state = State.Running;
+            // Helyi visszaszámlálás; a szerver minden válasznál visszaküldi a valós hátralévő időt, ahhoz igazodunk.
+            ticker?.Dispose();
+            ticker = new System.Threading.Timer(_ => InvokeAsync(Tick), null, 1000, 1000);
+        }
+        finally
+        {
+            starting = false;
+        }
+    }
+
+    private async Task Tick()
+    {
+        if (state != State.Running) return;
+        secondsLeft = Math.Max(0, secondsLeft - 1);
+        if (secondsLeft == 0) await End();
+        else StateHasChanged();
+    }
+
+    private async Task Answer(OperationView operation)
+    {
+        if (run is null || state != State.Running) return;
+        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        if (view is null)
+        {
+            // Ezt a feladatot nem fogadta el a szerver (pl. már megválaszolt): lépjünk tovább.
+            NextOperation();
+            return;
+        }
+        if (view.Expired)
+        {
+            await End();
+            return;
+        }
+        correct = view.Correct;
+        secondsLeft = view.SecondsLeft;
+        flash = view.IsCorrect;
+        NextOperation();
+        _ = ClearFlashLater();
+    }
+
+    private void NextOperation()
+    {
+        if (queue.Count > 0) current = queue.Dequeue();
+        else _ = InvokeAsync(End); // elfogytak a feladatok (60 mp-be ritkán): vége
+    }
+
+    private async Task ClearFlashLater()
+    {
+        await Task.Delay(500);
+        flash = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task End()
+    {
+        if (run is null || ending) return;
+        ending = true;
+        ticker?.Dispose();
+        ticker = null;
+        result = await mService.FinishChallenge(run.RunId);
+        if (result?.IsRecord == true) toastService.ShowSuccess("Új rekord!");
+        state = State.Done;
+        StateHasChanged();
+    }
+
+    private async Task BackToTopics()
+    {
+        state = State.Loading;
+        await LoadTopics();
+    }
+
+    public void Dispose() => ticker?.Dispose();
+}

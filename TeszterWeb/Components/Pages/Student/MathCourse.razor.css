@@ -27,3 +27,7 @@
 .gameRow > ::deep * {
     min-width: 0;
 }
+
+.challengeLink {
+    margin-bottom: 6px;
+}
