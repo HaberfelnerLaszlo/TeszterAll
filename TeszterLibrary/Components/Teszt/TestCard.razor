@@ -7,11 +7,11 @@
                 </h3>
             </FluentStack>
             <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" />
-                <FluentBadge Appearance="Appearance.Lightweight"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" /><strong>@TestItem.ReplaceNumber</strong></FluentBadge>
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" Color="Color.Primary" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" Color="Color.Primary" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" Color="Color.Primary" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" Color="Color.Primary" />
+                <FluentBadge Appearance="BadgeAppearance.Ghost" Color="BadgeColor.Brand" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" Content="@TestItem.ReplaceNumber.ToString()" />
             </FluentStack>
         </FluentStack>
         <FluentStack Orientation="Orientation.Horizontal">
@@ -35,11 +35,11 @@
                 </p>
             </FluentStack>
         </FluentStack>
-        <FluentLabel Typo="Typography.H5">
+        <FluentText As="TextTag.H5" Size="TextSize.Size400" Weight="TextWeight.Semibold">
             <span title="Teszttel készen van" style="color:green;">@TestItem.Ready</span>/
             <span title="Nem kezdte el a tesztett" style="color:red;">@TestItem.NotActive</span>/
             <span title="Összes tesztíró"><b> @TestItem.All</b></span>
-        </FluentLabel>
+        </FluentText>
         <FluentButton OnClick="@(() => Result.InvokeAsync(TestItem))">Eredmények</FluentButton>
 }
 

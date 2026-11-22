@@ -10,7 +10,7 @@
                     {
                         if (answer.Result)
                         {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
                         }
                         else
                         {
@@ -31,7 +31,7 @@
                 <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;background-color:@bgColor; text-align:center; font-size:2vw">@a.Text</p>
                 @if (a.Result)
                 {
-                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
                 }
                 else
                 {
@@ -60,13 +60,13 @@
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="margin:10px">
     @if (IsCheck)
     {
-        <FluentButton Appearance="Appearance.Outline" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
+        <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
             Ellenőrzés
         </FluentButton>
     }
     @if (Next.HasDelegate)
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>Next.InvokeAsync(Answers))">
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>Next.InvokeAsync(Answers))">
             Következő
         </FluentButton>
     }

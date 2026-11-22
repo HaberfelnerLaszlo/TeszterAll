@@ -1,7 +1,7 @@
 ﻿@using TeszterLibrary.ViewModel;
 <form style="min-width:300px;margin:5px auto;">
     <h3 style="text-align:center">Mértékegység átváltás</h3>
-    <FluentNumberField Value="size" TValue="int" ValueChanged="(e)=>SizeChange(e)" Placeholder="Betűméret (ex)" Min="1" Max="10" Step="1" Style="width:80px;margin:auto" Label="Betűméret: " />
+    <FluentNumberInput Value="size" TValue="int" ValueChanged="(e)=>SizeChange(e)" Placeholder="Betűméret (ex)" Min="1" Max="10" Step="1" Style="width:80px;margin:auto" Label="Betűméret: " />
     @if (assignments.Count > 0)
     {
         <table style="font-size:@fontsize">

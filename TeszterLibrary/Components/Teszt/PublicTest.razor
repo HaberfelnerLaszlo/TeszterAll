@@ -11,7 +11,7 @@
 @inject ILogger<PublicTest> _logger
 <EditForm Model="@Teszt" OnValidSubmit="Publish">
     <div class="form-group">
-        <FluentTextField @bind-Value=@Teszt.Title Label="Teszt címe:" />
+        <FluentTextInput @bind-Value=@Teszt.Title Label="Teszt címe:" />
     </div>
     <hr />
     <div class="form-group">
@@ -25,8 +25,8 @@
         <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
         <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
         <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
-        <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" @bind-Value="@Teszt.ShuffleQuestion" Style="margin-bottom: 20px" Label="Kérdések keverése" />
-        <FluentNumberField @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" MaxLength="50" />
+        <FluentSwitch @bind-Value="@Teszt.ShuffleQuestion" Style="margin-bottom: 20px" Label="Kérdések keverése" />
+        <FluentNumberInput @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" />
     </div>
     @if (Teszt.HasSection)
     {
@@ -48,7 +48,7 @@
                                 <td>@item.Name</td>
                                 <td>@item.TestId</td>
                                 <td>
-                                    <FluentNumberField TValue="int" Min="1" Max="@item.TestId.ToString()" @bind-Value="@item.Count" />
+                                    <FluentNumberInput TValue="int" Min="1" Max="@item.TestId" @bind-Value="@item.Count" />
                                 </td>
                             </tr>
                         }
@@ -76,7 +76,7 @@
         </div>
 
     }
-    <FluentSwitch Value="AssigmentCreated" CheckedMessage="Igen" UncheckedMessage="Nem" Label="Teams feladat létrehozása"/>
+    <FluentSwitch Value="AssigmentCreated" Label="Teams feladat létrehozása"/>
     <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
 </EditForm>
 

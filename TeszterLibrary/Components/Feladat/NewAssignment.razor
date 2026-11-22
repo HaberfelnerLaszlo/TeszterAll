@@ -5,24 +5,25 @@
 @*általános rész*@
     <FluentGridItem>
         <DefaultDataAssignment NewQuestion="@newQuestion" />
-        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
     </FluentGridItem>
     @*feladat rész*@
-    <FluentGridItem xs="12" sm="6">
+    <FluentGridItem Xs="12" Sm="6">
         <RichTextEditorWithImage @ref="richTEWI" Context="@newQuestion.Text" ContextChanged="@((value) => newQuestion.Text = value)" DirtyChanged="@OnEditorDirtyChanged" />
     </FluentGridItem>
     @*válasz rész*@
     @if(IsSavedQuestion)
     {
-    <FluentGridItem xs="12" sm="6">
-        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
+    <FluentGridItem Xs="12" Sm="6">
+        <FluentButton Appearance="ButtonAppearance.Primary" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
             @if (newAnswers.Count > 0)
             {
-            <FluentTabs @ref="tabRef" ActiveTabId="@activeTabId" OnTabClose="@ClosedTab" ShowClose="true">
+            <FluentTabs @ref="tabRef" ActiveTabId="@activeTabId">
                 @foreach (var answer in newAnswers) 
                 {
                     var seq = answer.Sequence;
-                    <FluentTab @key="seq" Label="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="answer" Visible="@(!toRemoveSequences?.Contains(seq)??true)">
+                    <FluentTab @key="seq" Header="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="answer" Visible="@(!toRemoveSequences?.Contains(seq)??true)">
+                            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Disabled="@(newAnswers.Count <= 1)" OnClick="@(() => ClosedTab(answer))">Feladat bezárása</FluentButton>
                             <New_Komp_Answer @key="seq" @ref="answerRefs[seq]" NewAnswer="answer"/>
                     </FluentTab>
                 }
@@ -32,7 +33,7 @@
     }
     else{
     <FluentGridItem>
-        <FluentLabel>Válaszok szerkesztéséhez menteni kell a kérdést!</FluentLabel>
+        <FluentText Block="true">Válaszok szerkesztéséhez menteni kell a kérdést!</FluentText>
     </FluentGridItem>
     }
     @if (editorIsDirty)
@@ -207,7 +208,7 @@
             answerRefs[seq] = null;
             AnswerCount = newAnswers.Count;
             activeTabId = $"tab-{seq}"; 
-            await tabRef!.GoToTabAsync(activeTabId);
+            StateHasChanged();   // v5: nincs GoToTabAsync, az ActiveTabId paraméter váltja a fület
             //await InvokeAsync(StateHasChanged);
 
         }
@@ -217,10 +218,9 @@
             AnswerCount = newAnswers.Count;
         }
     }
-    async Task ClosedTab(FluentTab tab)
+    async Task ClosedTab(Answer removedAnswer)
     {
         if (newAnswers.Count <= 1) return;
-        var removedAnswer = (Answer)tab.Data!;
         if (toRemoveSequences is null) toRemoveSequences = new[] { removedAnswer.Sequence };
         else toRemoveSequences.Append(removedAnswer.Sequence);
         await InvokeAsync(StateHasChanged);

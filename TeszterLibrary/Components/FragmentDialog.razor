@@ -1,0 +1,15 @@
+@inherits FluentDialogInstance
+@* Általános párbeszédablak egy tetszőleges RenderFragment tartalommal.
+   A Fluent UI v4-es IDialogService.ShowDialogAsync(RenderFragment, DialogParameters) megfelelője v5-ben:
+   a gombok feliratát a hívó a DialogOptions.Footer-ben adja meg (Mentés/Mégse stb.). *@
+<FluentDialogBody>
+    @Body
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public RenderFragment? Body { get; set; }
+
+    protected override Task OnActionClickedAsync(bool primary)
+        => primary ? DialogInstance.CloseAsync() : DialogInstance.CancelAsync();
+}

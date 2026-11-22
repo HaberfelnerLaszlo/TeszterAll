@@ -9,12 +9,12 @@
                 if (t.Length > 0 && t.All(char.IsAsciiDigit) && t.ToIntOrNull() is int position && position >= 1 && position <= Answers.Count)
                 {
                     int Number = position - 1;
-                    <FluentTextField Appearance="FluentInputAppearance.Filled" Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" />
+                    <FluentTextInput Appearance="TextInputAppearance.FilledDarker" Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" />
                     @if (IsChecked)
                     {
                         if (Answers[Number].Result)
                         {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
                         }
                         else
                         {
@@ -30,7 +30,7 @@
     <div class="container text-center">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
+            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
                 Ellenőrzés
             </FluentButton>
         }

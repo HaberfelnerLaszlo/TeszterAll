@@ -3,7 +3,7 @@
                      OnDropEnd="@(e => HandleDropEnd(e.Source,e.Target))">
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack Orientation="Orientation.Vertical">
-            <FluentListbox Items="@SourceList" TOption="TItem" Label="@SourceLabel" @bind-SelectedOption="selectedSource">
+            <FluentListbox Items="@SourceList" TOption="TItem" TValue="TItem" Label="@SourceLabel" @bind-Value="selectedSource">
                 <OptionTemplate>
                     @if (SourceList.Any())
                     {
@@ -25,7 +25,7 @@
             <FluentButton OnClick="Reverse" Disabled="@(!btnDidabled)">Senki sem</FluentButton>
         </FluentStack>
         <FluentStack Orientation="Orientation.Vertical">
-            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" @bind-SelectedOption="selectedTarget" @bind-SelectedOption:after="HandleSelectedTargetChange">
+            <FluentListbox Items="@TargetList" Label="@TargetLabel" TOption="TItem" TValue="TItem" @bind-Value="selectedTarget" @bind-Value:after="HandleSelectedTargetChange">
                 <OptionTemplate>
                     @if (TargetList.Count == 0)
                     {
@@ -42,7 +42,7 @@
         </FluentStack>
     </FluentStack>
 </FluentDragContainer>
-<FluentLabel>@target</FluentLabel>
+<FluentText Block="true">@target</FluentText>
 @code {
     [Parameter] public required IList<TItem> SourceList { get; set; }
     [Parameter] public required IList<TItem> TargetList { get; set; }

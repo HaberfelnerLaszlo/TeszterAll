@@ -1,14 +1,12 @@
 ﻿@inherits LayoutComponentBase
 <FluentLayout>
-    <FluentStack Class="main" Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Width="100%">
-        <FluentBodyContent>
-            <div class="content">
-                @Body
-            </div>
-            <FluentDialogProvider />
-        </FluentBodyContent>
-    </FluentStack>
+    <FluentLayoutItem Area="LayoutArea.Content">
+        <div class="content">
+            @Body
+        </div>
+    </FluentLayoutItem>
 </FluentLayout>
+<FluentProviders />
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

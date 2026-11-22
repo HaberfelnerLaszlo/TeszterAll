@@ -1,44 +1,39 @@
-﻿@implements IDialogContentComponent<Sablon>
-
-@* Header *@
-<FluentDialogHeader ShowDismiss="true">
-    <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
-        <FluentLabel Typo="Typography.PaneHeader">
-            @Dialog.Instance.Parameters.Title
-        </FluentLabel>
-    </FluentStack>
-</FluentDialogHeader>
-
-@* Footer *@
-<FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Mentés</FluentButton>
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Mégsem</FluentButton>
-</FluentDialogFooter>
-
-@* Body *@
+﻿
 <FluentDialogBody>
-    <EditForm Model="@Content" OnSubmit="@(()=>SaveAsync())">
-        <FluentNumberField @bind-Value="@Content.MaxCount" Min="0" Max="30" MaxLength="2">Legfeljebb ennyi feladatot oldjon meg:</FluentNumberField>
+    <TitleTemplate>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" Color="Color.Primary" />
+        <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">
+            @Dialog.Options.Header.Title
+        </FluentText>
+    </FluentStack>
+    </TitleTemplate>
+    <ChildContent>
+        <EditForm Model="@Content" OnSubmit="@(()=>SaveAsync())">
+        <FluentNumberInput @bind-Value="@Content.MaxCount" Min="0" Max="30" Label="Legfeljebb ennyi feladatot oldjon meg:" />
         <div class="input-group">
-            <FluentNumberField @bind-Value="@Content.MinCount" Min="0" Max="10" MaxLength="3">Legalább ennyi feladatot oldjon meg:</FluentNumberField>
+            <FluentNumberInput @bind-Value="@Content.MinCount" Min="0" Max="10" Label="Legalább ennyi feladatot oldjon meg:" />
         </div>
-        <FluentLabel>Visszalépéshez szükséges értékek közül amelyik előbb teljesül - 0 érték esetén nem veszi figyelembe a gép.</FluentLabel>
+        <FluentText Block="true">Visszalépéshez szükséges értékek közül amelyik előbb teljesül - 0 érték esetén nem veszi figyelembe a gép.</FluentText>
         <div class="input-group">
-            <FluentNumberField @bind-Value="@Content.WrongCount" Min="0" Max="30" MaxLength="3">Rossz válaszok száma:</FluentNumberField>
+            <FluentNumberInput @bind-Value="@Content.WrongCount" Min="0" Max="30" Label="Rossz válaszok száma:" />
         </div>
         <div class="input-group">
-            <FluentNumberField @bind-Value="@Content.WrongPercent" Min="0" Max="100" Step="5" MaxLength="3">Adott % alatti megoldottság:</FluentNumberField>
+            <FluentNumberInput @bind-Value="@Content.WrongPercent" Min="0" Max="100" Step="5" Label="Adott % alatti megoldottság:" />
         </div>
         <div class="input-group">
-            <FluentNumberField @bind-Value="@Content.Time" Min="0" Step="5" MaxLength="3">Ennyi idő alatt befejezni:</FluentNumberField>
+            <FluentNumberInput @bind-Value="@Content.Time" Min="0" Step="5" Label="Ennyi idő alatt befejezni:" />
         </div>
         @*<div class="input-group">
             <FluentCheckbox @bind-Value="tipp">Kiválaszthatja a megoldást?</FluentCheckbox>
         </div>
         <button type="submit" class="btn" @onclick="SaveAsync">Mentés</button>*@
     </EditForm>
-
+    </ChildContent>
+    <ActionTemplate>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@SaveAsync">Mentés</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Default" OnClick="@CancelAsync">Mégsem</FluentButton>
+    </ActionTemplate>
 </FluentDialogBody>
 
 @code {
@@ -46,7 +41,7 @@
     public Sablon Content { get; set; } = default!;
 
     [CascadingParameter]
-    public FluentDialog Dialog { get; set; } = default!;
+    public IDialogInstance Dialog { get; set; } = default!;
 
     private async Task SaveAsync()
     {

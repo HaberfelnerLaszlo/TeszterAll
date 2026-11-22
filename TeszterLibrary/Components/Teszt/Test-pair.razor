@@ -37,9 +37,9 @@
                     @if (IsChecked && !item.Sign)
                     {
                         <span hidden="@item.Result"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" /></span>
+                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" /></span>
                     }
-                    <FluentDivider Orientation="Orientation.Horizontal" Role="DividerRole.Separator"></FluentDivider>
+                    <FluentDivider></FluentDivider>
                 }
             </FluentStack>
             <FluentStack Orientation="Orientation.Vertical">

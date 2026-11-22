@@ -1,36 +1,36 @@
 ﻿@inject IDialogService DialogService
 <FluentDataGrid Id="questiongrid" Items=@FilteredItems?.AsQueryable() Pagination="pagination" GridTemplateColumns="1fr 0.8fr 2.4fr 0.2fr 0.6fr 0.6fr 1fr" TGridItem=QuestionListView ResizableColumns=true>
-    <TemplateColumn Title="Tantárgy" Sortable="true" Align=Align.Center>
+    <TemplateColumn Title="Tantárgy" Sortable="true" Align=DataGridCellAlignment.Center>
         <ColumnOptions>
             <div class="search-box">
-                <FluentSearch type="search" Autofocus=true @bind-Value=subjectFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Tantárgy..." />
+                <FluentTextInput TextInputType="TextInputType.Search" Autofocus="true" @bind-Value=subjectFilter @oninput="HandleSubjectFilter" @bind-Value:after="HandleClear" Placeholder="Tantárgy..."><StartTemplate><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" /></StartTemplate></FluentTextInput>
             </div>
         </ColumnOptions>
         <ChildContent>
             @context.Subject
         </ChildContent>
     </TemplateColumn>
-    <TemplateColumn Title="Témakör" Align="Align.Center" Sortable="true" >
+    <TemplateColumn Title="Témakör" Align="DataGridCellAlignment.Center" Sortable="true" >
         <ColumnOptions>
             <div class="search-box">
-                <FluentSearch type="search" Autofocus=true @bind-Value=titleFilter @oninput="HandleTitleFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..." />
+                <FluentTextInput TextInputType="TextInputType.Search" Autofocus="true" @bind-Value=titleFilter @oninput="HandleTitleFilter" @bind-Value:after="HandleClear" Placeholder="Témakör..."><StartTemplate><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" /></StartTemplate></FluentTextInput>
             </div>
         </ColumnOptions>
         <ChildContent>
             @context.Title
         </ChildContent>
     </TemplateColumn>
-    <TemplateColumn Title="Kérdés" Align="Align.Start" Sortable="true">
+    <TemplateColumn Title="Kérdés" Align="DataGridCellAlignment.Start" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
-                <FluentSearch type="search" Autofocus=true @bind-Value=nameFilter @oninput="HandleCountryFilter" @bind-Value:after="HandleClear" Placeholder="Kérdés..." />
+                <FluentTextInput TextInputType="TextInputType.Search" Autofocus="true" @bind-Value=nameFilter @oninput="HandleCountryFilter" @bind-Value:after="HandleClear" Placeholder="Kérdés..."><StartTemplate><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" /></StartTemplate></FluentTextInput>
             </div>
         </ColumnOptions>
         <ChildContent>
             @SafeHtml.Markup(context.Text)
         </ChildContent>
     </TemplateColumn>
-    <TemplateColumn Sortable="true" Align="Align.Center">
+    <TemplateColumn Sortable="true" Align="DataGridCellAlignment.Center">
         @switch (context.QType)
         {
             case QuestionType.SC:
@@ -65,9 +65,9 @@
                 break;
         }
     </TemplateColumn>
-    <PropertyColumn Title="Pontszám" Property="@(c => c!.Score +" p")" Sortable="false" Align=Align.Center />
-    <PropertyColumn Title="Időtartam" Property="@(c => c!.Time.ToTime())" Sortable="false" Align=Align.Center />
-    <TemplateColumn Title="Műveletek" Align="@Align.End">
+    <PropertyColumn Title="Pontszám" Property="@(c => c!.Score +" p")" Sortable="false" Align=DataGridCellAlignment.Center />
+    <PropertyColumn Title="Időtartam" Property="@(c => c!.Time.ToTime())" Sortable="false" Align=DataGridCellAlignment.Center />
+    <TemplateColumn Title="Műveletek" Align="@DataGridCellAlignment.End">
         @*<button class="btn btn-info m-1" @onclick="(() => CopyQuestion(question.Id))" data-toggle="tooltip" data-placement="top" title="Kérdés másolása"> <i class="oi oi-layers" /></button>*@
         <FluentButton Title="Betekintés" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Search())" OnClick="@(()=>OpenAsync(context))"></FluentButton>
         <FluentButton Title="Szerkesztés" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => SetQuestionForUpdate(context))" />
@@ -213,19 +213,17 @@
         // to allow the user to cancel the update
         //var data = question with { Id = question.Id };
         var data = question;
-        var dialog = await DialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<QADialog>(options =>
         {
-            //Height = "350px",
-            Width="75%",
-            Title = $"A kérdés megtekintése",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Width = "75%";
+            options.Header.Title = $"A kérdés megtekintése";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", data);
         });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            question = (Question)result.Data;
+            question = (Question)result.Value;
         }
     }
     async Task DeleteQ(QuestionListView question)

@@ -1,69 +1,65 @@
-﻿@implements IDialogContentComponent<Question>
-@using System.Numerics;
+﻿@using System.Numerics;
 
-@* Header *@
-<FluentDialogHeader ShowDismiss="true">
-    <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
-        <FluentLabel Typo="Typography.PaneHeader">
-            @Dialog.Instance.Parameters.Title
-        </FluentLabel>
-    </FluentStack>
-    <FluentStack>
-        <FluentNumberField style="width:60px" @bind-Value="Content.Score">Pontszám:</FluentNumberField>
-        <FluentNumberField style="width:70px" @bind-Value="Content.Time">Idő:</FluentNumberField>
-    </FluentStack>
-</FluentDialogHeader>
-
-@* Footer *@
-<FluentDialogFooter>
-@*     <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>Check(null))">Ellenőrzés</FluentButton> *@
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Bezárás</FluentButton>
-</FluentDialogFooter>
-
-@* Body *@
 <FluentDialogBody>
-    <EditForm Model="@Content">
-        @if (Content.QType == QuestionType.Comp)
-        {
-            <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
-        }
-        else if(Content.QType != QuestionType.Komp)
-        {
-            <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(questionView.QuestionText)</FluentLabel>
-        }
-        <hr />
-        @switch (Content.QType)
-        {
-            case QuestionType.SC:
-                <Test_choise Type="@("radio")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            case QuestionType.MC:
-                <Test_choise Type="@("checkbox")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            case QuestionType.TF:
-                <Test_TF Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            case QuestionType.Open:
-                <Test_open Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            case QuestionType.Seq:
-                <Test_sequence Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
-                break;
-            case QuestionType.Pair:
-                <Test_pair Answers="questionView.Answers" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
-                break;
-            case QuestionType.Comp:
-                <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            case QuestionType.Komp:
-                <Test_komp Answers="questionView.Answers" questionText="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
-                break;
-            default:
-                <p>Nem tudom mi történt!  @Content.QType.ToString()</p>
-                break;
-        }
-    </EditForm>
+    <TitleTemplate>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" Color="Color.Primary" />
+            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">
+                @Dialog.Options.Header.Title
+            </FluentText>
+        </FluentStack>
+        <FluentStack>
+            <FluentNumberInput style="width:60px" @bind-Value="Content.Score" Label="Pontszám:" />
+            <FluentNumberInput style="width:70px" @bind-Value="Content.Time" Label="Idő:" />
+        </FluentStack>
+    </TitleTemplate>
+    <ChildContent>
+        <EditForm Model="@Content">
+            @if (Content.QType == QuestionType.Comp)
+            {
+                <FluentText Block="true">Egészítsd ki a szöveget!</FluentText>
+            }
+            else if(Content.QType != QuestionType.Komp)
+            {
+                <FluentText As="TextTag.Paragraph" Size="TextSize.Size400" Weight="TextWeight.Semibold">@SafeHtml.Markup(questionView.QuestionText)</FluentText>
+            }
+            <hr />
+            @switch (Content.QType)
+            {
+                case QuestionType.SC:
+                    <Test_choise Type="@("radio")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                case QuestionType.MC:
+                    <Test_choise Type="@("checkbox")" Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                case QuestionType.TF:
+                    <Test_TF Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                case QuestionType.Open:
+                    <Test_open Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                case QuestionType.Seq:
+                    <Test_sequence Answers="questionView.Answers" IsCheck="true" IsChecked="IsChecking" CallCheck="Check"></Test_sequence>
+                    break;
+                case QuestionType.Pair:
+                    <Test_pair Answers="questionView.Answers" IsCheck="true" CallCheck="Check" IsChecked="IsChecking" />
+                    break;
+                case QuestionType.Comp:
+                    <Test_comp Answers="questionView.Answers" Texts="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                case QuestionType.Komp:
+                    <Test_komp Answers="questionView.Answers" questionText="@questionView.QuestionText" IsCheck="true" IsChecked="IsChecking" CallCheck="Check" />
+                    break;
+                default:
+                    <p>Nem tudom mi történt!  @Content.QType.ToString()</p>
+                    break;
+            }
+        </EditForm>
+    </ChildContent>
+    <ActionTemplate>
+    @*     <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>Check(null))">Ellenőrzés</FluentButton> *@
+        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@CancelAsync">Bezárás</FluentButton>
+    </ActionTemplate>
 </FluentDialogBody>
 
 @code {
@@ -71,7 +67,7 @@
     public Question Content { get; set; } = default!;
 
     [CascadingParameter]
-    public FluentDialog Dialog { get; set; } = default!;
+    public IDialogInstance Dialog { get; set; } = default!;
     [Parameter]
     public EventCallback<Question> Delete { get; set; }
 

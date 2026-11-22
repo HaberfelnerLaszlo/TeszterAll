@@ -20,23 +20,23 @@
 @if (Members.Count > 0 || TestMembers.Count > 0)
 {
     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
-        <FluentGridItem xs="12" sm="4">
+        <FluentGridItem Xs="12" Sm="4">
             <h5>Csoport tagjai</h5>
             <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" Context="member">
                 <ItemTemplate>
                     @if (member.HasLesson)
                     {
                         <div style="color:darkblue; font-weight:bold; background-color:green">&#10003; @member.DisplayName</div>
-                        <FluentButton Id="myPopover" OnClick="()=>ViewLesson(member.Id)">  <FluentIcon Icon="Icons.Color.Size28.SearchSparkle" /></FluentButton>
-                        <FluentPopover Style="width: 300px;" AnchorId="myPopover" @bind-Open="visible" AutoFocus="false">
-                            <Header>A feladatok listája: </Header>
-                            <Body>
-                                <FluentListbox Items="ViewLessons" TOption="Lesson" OptionText="@(l=>l.TaskList.Description)" />
-                            </Body>
-                            <Footer>@ViewLessons.Count darab feladat</Footer>
+                        <FluentButton Id="myPopover" OnClick="()=>ViewLesson(member.Id)">  <FluentIcon Value="@(new Icons.Color.Size28.SearchSparkle())" /></FluentButton>
+                        <FluentPopover Style="width: 300px;" AnchorId="myPopover" @bind-Opened="visible">
+                            <FluentText Weight="TextWeight.Semibold" Block="true">A feladatok listája: </FluentText>
+                            
+                                <FluentListbox Items="ViewLessons" TOption="Lesson" TValue="Lesson" OptionText="@(l => l?.TaskList.Description ?? string.Empty)" />
+                            
+                            <FluentText Block="true">@ViewLessons.Count darab feladat</FluentText>
                         </FluentPopover>
                         @*<FluentOverlay Visible="visible"
-                                           Transparent="false">
+                                           >
                             </FluentOverlay>*@
                     }
                     else
@@ -47,14 +47,14 @@
                 </ItemTemplate>
             </FluentSortableList>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="3">
+        <FluentGridItem Xs="12" Sm="3">
             <FluentStack Orientation=" Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" VerticalGap="20">
                 <FluentButton OnClick="All" Disabled="BtnDidabled">Mindenki</FluentButton>
                 <FluentButton OnClick="AllOhneTask" Disabled="BtnDidabled">Akinek nincs</FluentButton>
                 <FluentButton OnClick="Reverse" Disabled="!BtnDidabled">Vissza</FluentButton>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="4">
+        <FluentGridItem Xs="12" Sm="4">
             <h5>Feladatsort kap</h5>
             <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@TestMembers" Context="testmember">
                 <ItemTemplate>@testmember.DisplayName</ItemTemplate>

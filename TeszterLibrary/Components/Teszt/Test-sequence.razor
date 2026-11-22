@@ -15,7 +15,7 @@
                     @if (IsChecked)
                     {
                         <span hidden="@item.Result"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" /></span>
+                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" /></span>
                     }
                 </FluentStack>
             }
@@ -25,13 +25,13 @@
     <div class="container text-center" style="margin:10px">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Items))">
+            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Items))">
                 Ellenőrzés
             </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-            <FluentButton Appearance="Appearance.Neutral" OnClick="@(()=>Next.InvokeAsync(Items))">Következő</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(()=>Next.InvokeAsync(Items))">Következő</FluentButton>
         }
     </div>
 }

@@ -8,21 +8,21 @@
 @inject Microsoft.Extensions.Logging.ILogger<AddTest> _logger
 
  @*   <FluentAccordion>
-            <FluentAccordionItem Heading="Szűrő">
+            <FluentAccordionItem Header="Szűrő">
                 <QuestionFilter @bind-Questions="questions" Subject=@newTest.Subject/>
             </FluentAccordionItem>
         </FluentAccordion>*@
-    <FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--neutral-layer-3); max-height:90vh;">
-        <FluentGridItem xs="12" Justify="JustifyContent.SpaceBetween">
+    <FluentGrid Spacing="3" OnBreakpointEnter="@OnBreakpointEnterHandler" Style="background-color: var(--colorNeutralBackground3); max-height:90vh;">
+        <FluentGridItem Xs="12" Justify="JustifyContent.SpaceBetween">
             <FluentStack>
-                <FluentTextField @bind-Value="@(newTest.Title)" Placeholder="Teszt címe..." Label="Teszt címe" />
-                <FluentCombobox Items="@subjects" OptionText="@(t => t.Name)" OptionValue="@(t => t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." SelectedOptionChanged="subjectChange">
+                <FluentTextInput @bind-Value="@(newTest.Title)" Placeholder="Teszt címe..." Label="Teszt címe" />
+                <FluentCombobox Items="@subjects" OptionText="@(t => t.Name)" OptionValue="@(t => t.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })">
                 </FluentCombobox>
-                <FluentSwitch CheckedMessage="Bekapcsolva" UncheckedMessage="Kikapcsolva" ValueChanged="SectionChange" Label="Felosztás?" Value="hasSection"></FluentSwitch>
-                <FluentButton Appearance="Appearance.Accent" OnClick="TestAdd">Mentés</FluentButton>
+                <FluentSwitch ValueChanged="SectionChange" Label="Felosztás?" Value="hasSection"></FluentSwitch>
+                <FluentButton Appearance="ButtonAppearance.Primary" OnClick="TestAdd">Mentés</FluentButton>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="7" Style="overflow-y:auto;height:80vh">
+        <FluentGridItem Xs="12" Sm="7" Style="overflow-y:auto;height:80vh">
             @if (TesztQ.Count != 0)
             {
                 foreach (var tq in TesztQ)
@@ -31,14 +31,14 @@
                 }
             }
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="5" Style="overflow-y:auto;height:80vh" >
+        <FluentGridItem Xs="12" Sm="5" Style="overflow-y:auto;height:80vh" >
            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
                 @if (hasSection)
                 {
                     <FluentStack Orientation="Orientation.Horizontal">
                         <FluentButton OnClick="NewSection" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Add())" />
                         <FluentButton OnClick="@(() => EditSection(selectSection))" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Pen())" />
-                        <FluentListbox Items="sections" TOption="Section" OptionText="@(s => s.Name)" OptionValue="@(s => s.Id.ToString())" SelectedOption="selectSection" />
+                        <FluentListbox Items="sections" TOption="Section" TValue="Section" OptionText="@(s => s?.Name ?? string.Empty)" @bind-Value="selectSection" />
                     </FluentStack>
                 }
                 @foreach (var question in questions)
@@ -139,20 +139,16 @@
     }
     private async Task NewSection()
     {
-        DialogParameters parameters = new()
+        var result = await dialogService.ShowDialogAsync<EditSectionDialog>(options =>
         {
-            Title = $"Új szekció felvétele {newTest?.Title ?? string.Empty} tesztbe",
-            PrimaryAction = "Yes",
-            PrimaryActionEnabled = false,
-            SecondaryAction = "No",
-            Width = "500px",
-            PreventScroll = true
-        };
-        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(new Section(), parameters);
-        DialogResult? result = await dialog.Result;
-        if (result.Data is not null)
+            options.Header.Title = $"Új szekció felvétele {newTest?.Title ?? string.Empty} tesztbe";
+            options.Width = "500px";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", new Section());
+        });
+        if (result.Value is not null)
         {
-            Section? newSection = result.Data as Section;
+            Section? newSection = result.Value as Section;
             if (newSection is not null)
             {
                 newSection.Id = sections.Count + 1;
@@ -183,20 +179,16 @@
             toastService.ShowInfo("A szekciók közül válaszon ki egyet.");
             return;
         }
-        DialogParameters parameters = new()
+        var result = await dialogService.ShowDialogAsync<EditSectionDialog>(options =>
         {
-            Title = $"Szekció szerkesztése {newTest?.Title ?? string.Empty} tesztbe",
-            //PrimaryAction = "Yes",
-            //PrimaryActionEnabled = false,
-            //SecondaryAction = "No",
-            Width = "500px",
-            //PreventScroll = true
-        };
-        var dialog = await dialogService.ShowDialogAsync<EditSectionDialog>(section, parameters);
-        DialogResult? result = await dialog.Result;
-        if (result.Data is not null)
+            options.Header.Title = $"Szekció szerkesztése {newTest?.Title ?? string.Empty} tesztbe";
+            options.Width = "500px";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", section);
+        });
+        if (result.Value is not null)
         {
-            Section? newSection = result.Data as Section;
+            Section? newSection = result.Value as Section;
             if (newSection is not null)
             {
                 sections.Remove(section);
@@ -212,19 +204,17 @@
     private async Task ModalOpen(Question q)
     {
         var data = q;
-        var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+        var result = await dialogService.ShowDialogAsync<QADialog>(options =>
         {
-            //Height = "350px",
-            Width = "75%",
-            Title = "A kérdés megtekintése",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Width = "75%";
+            options.Header.Title = "A kérdés megtekintése";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", data);
         });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            q = (Question)result.Data;
+            q = (Question)result.Value;
         }
     }
     private void subjectChange(Subject subject)

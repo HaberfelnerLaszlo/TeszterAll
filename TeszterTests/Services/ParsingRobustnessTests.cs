@@ -155,7 +155,7 @@ namespace TeszterTests.Services
             // "{}" üres helyőrző és "{9}" nem létező válasz: régen FormatException / ArgumentOutOfRangeException.
             var cut = Render<Test_comp>(p => p.Add(c => c.Answers, answers).Add(c => c.Texts, "A {1} és {} meg {9} vége"));
 
-            Assert.Single(cut.FindAll("fluent-text-field"));
+            Assert.Single(cut.FindAll("fluent-text-input"));   // Fluent UI v5: FluentTextInput → <fluent-text-input>
             Assert.Contains("vége", cut.Markup);
         }
 

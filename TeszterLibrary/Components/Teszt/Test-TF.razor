@@ -11,7 +11,7 @@
                 {
                     if (answer.Result)
                     {
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" />
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
                     }
                     else
                     {
@@ -24,13 +24,13 @@
     <div class="container text-center">
         @if (IsCheck)
         {
-            <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
+            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
                 Ellenőrzés
             </FluentButton>
         }
         @if (Next.HasDelegate)
         {
-            <FluentButton Appearance="Appearance.Neutral" OnClick="@(()=>Next.InvokeAsync(Answers))">
+            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(()=>Next.InvokeAsync(Answers))">
                 Következő
             </FluentButton>
         }

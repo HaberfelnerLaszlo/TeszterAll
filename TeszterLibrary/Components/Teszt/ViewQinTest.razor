@@ -6,24 +6,24 @@
 @if (noError)
 {
     @* Header *@
-    <FluentLayout Style="margin-top: 10px;">
-        <FluentHeader>
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
+    <div style="margin-top: 10px;">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Class="question-header">
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" Color="Color.Primary" />
             <FluentSpacer />
-            <FluentLabel Typo="Typography.PaneHeader">@Title</FluentLabel>
-        </FluentHeader>
+            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">@Title</FluentText>
+        </FluentStack>
         @if (actualq is not null && actualq.QuestionType != QuestionType.All)
         {
             <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Width="100%">
-                <FluentBodyContent Style="text-align: center;">
+                <div style="text-align: center;">
                     <EditForm Model="@actualq">
                         @if (actualq.QuestionType == QuestionType.Comp)
                         {
-                            <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+                            <FluentText Block="true">Egészítsd ki a szöveget!</FluentText>
                         }
                         else
                         {
-                            <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(actualq.QuestionText)</FluentLabel>
+                            <FluentText As="TextTag.Paragraph" Size="TextSize.Size400" Weight="TextWeight.Semibold">@SafeHtml.Markup(actualq.QuestionText)</FluentText>
                         }
 
                         @switch (actualq.QuestionType)
@@ -59,25 +59,25 @@
                     </EditForm>
                     <span>@time.ToTime() / @actualq.Time.ToTime()</span>
 
-                </FluentBodyContent>
+                </div>
             </FluentStack>
 
             @* Footer*@
             @if (IsTimer)
             {
-                <FluentFooter Style="@("height: 40px; color: white; text-align: center;")">
-                    <FluentProgress Value="time" Min="0" Max="actualq.Time" Stroke="ProgressStroke.Large" Width="300px">
-                        <span>@time</span>
-                    </FluentProgress>
+                <div style="height: 40px; text-align: center;">
+                    @* v5: a FluentProgressBar-nak nincs ChildContent-je, a hátralévő időt mellé írjuk *@
+                    <FluentProgressBar Value="time" Min="0" Max="actualq.Time" Thickness="ProgressThickness.Large" Width="300px" Style="margin: 0 auto;" />
+                    <span>@time</span>
                     @*<FluentStack Orientation="Orientation.Horizontal">
-                            <FluentButton Appearance="Appearance.Accent" OnClick="@Check">Ellenőrzés</FluentButton>
+                            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@Check">Ellenőrzés</FluentButton>
                             <FluentSpacer />
-                            <FluentButton Appearance="Appearance.Neutral" OnClick="@Next">@(questions.Count==1?"Teszt vége": "Következő")</FluentButton>
+                            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@Next">@(questions.Count==1?"Teszt vége": "Következő")</FluentButton>
                         </FluentStack>*@
-                </FluentFooter>
+                </div>
             }
         }
-    </FluentLayout>
+    </div>
 }
 else
 {

@@ -17,7 +17,7 @@
         <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
             <h4>Üdvözöllek @(user?.DisplayName ?? "Ismeretlen")!</h4>
             <hr />
-            <FluentLabel>@(view?.Subject ?? string.Empty) tantárgyból egy tesztet készítettek Neked!</FluentLabel>
+            <FluentText Block="true">@(view?.Subject ?? string.Empty) tantárgyból egy tesztet készítettek Neked!</FluentText>
         </FluentStack>
 </Authorized>
     <NotAuthorized>
