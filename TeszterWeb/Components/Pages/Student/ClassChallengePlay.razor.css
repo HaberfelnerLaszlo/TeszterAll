@@ -1,0 +1,114 @@
+.hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin: 6px 0 12px 0;
+}
+
+.className {
+    font-weight: 700;
+    color: #555;
+}
+
+.clock {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.clock.hurry {
+    color: #d00000;
+}
+
+.score {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #00a000;
+}
+
+.flash {
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.flash.ok { color: #00a000; }
+.flash.bad { color: #d00000; }
+
+.playRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.play {
+    flex: 1 1 420px;
+    min-width: 0;
+}
+
+.lobby {
+    font-size: 1.3rem;
+}
+
+.result .big {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.standings {
+    flex: 0 1 300px;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    padding: 8px 12px;
+    background: #fff;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 360px;
+}
+
+.stTitle {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.standings ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.standings li {
+    display: flex;
+    gap: 8px;
+    padding: 3px 6px;
+    border-radius: 6px;
+}
+
+.standings li.me {
+    background: #e7f1ff;
+    font-weight: 700;
+}
+
+.standings .rank {
+    width: 2.5em;
+    text-align: right;
+    color: #555;
+}
+
+.standings .name {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.standings .correct {
+    font-weight: 700;
+    color: #00a000;
+}
+
+.standings .gap {
+    justify-content: center;
+    color: #9aa0a6;
+}

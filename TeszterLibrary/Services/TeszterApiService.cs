@@ -46,6 +46,10 @@ namespace TeszterLibrary.Services
         public async Task<T?> Post<T>(string uri, T t)
             => (await SendAsync<T>(HttpMethod.Post, uri, t)).Value;
 
+        /// <summary>POST, ahol a válasz típusa eltér a küldött törzsétől (vagy nincs törzs).</summary>
+        public async Task<TResponse?> PostAs<TResponse>(string uri, object? body = null)
+            => (await SendAsync<TResponse>(HttpMethod.Post, uri, body)).Value;
+
         public async Task<T?> Put<T>(string uri, T t)
             => (await SendAsync<T>(HttpMethod.Put, uri, t)).Value;
 

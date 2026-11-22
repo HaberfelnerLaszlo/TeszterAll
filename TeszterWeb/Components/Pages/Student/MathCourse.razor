@@ -9,6 +9,19 @@
 @inject ILogger<MathCourse> _logger
 
 <h3>Kitűzött matematika feladat</h3>
+<a class="btn btn-outline-primary challengeLink" href="/student/challenge">Időre menő kihívás</a>
+@foreach (var cc in classChallenges)
+{
+    <div class="classChallengeBanner" role="status">
+        <span><strong>Osztály-kihívás</strong> a(z) @cc.ClassName csoportban: @cc.TopicName
+            @(cc.State == 0 ? $"– indul {cc.SecondsToStart} mp múlva" : "– már tart")</span>
+        <a class="btn btn-warning btn-sm" href="/student/classchallenge/@cc.Id">@(cc.Joined ? "Vissza a kihíváshoz" : "Csatlakozom")</a>
+    </div>
+}
+<div class="gameRow">
+    <StudentProgress Progress="progress" />
+    <Leaderboard @ref="leaderboard" />
+</div>
 @if (IsClass)
 {
     <ClassLesson TaskView="taskView" Recives="recives" Send="CheckClass" IsChecked=IsChecked Next="NextClass"></ClassLesson>
@@ -17,6 +30,10 @@
 {
     <p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
     <MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction" />
+    @if (IsChecked && taskRecive.Score > 0)
+    {
+        <span class="xpGain">+@taskRecive.Score XP</span>
+    }
 
 }
 else
@@ -32,6 +49,36 @@ else
     private int time = 0, allTime = 0;
     private string message = "Betöltés...";
     private List<ClassRecive> recives = new();
+    private StudentProgressView? progress;
+    private Leaderboard? leaderboard;
+    private List<ClassChallengeView> classChallenges = new();
+    private System.Threading.Timer? challengePoll;
+
+    /// <summary>A csoport élő osztály-kihívásai (értesítő sáv); 10 mp-enként frissül.</summary>
+    private async Task PollClassChallenges()
+    {
+        var active = await mService.ActiveClassChallenges();
+        if (active is null) return;
+        bool changed = active.Count != classChallenges.Count || active.Any(a => !classChallenges.Any(c => c.Id == a.Id && c.State == a.State));
+        classChallenges = active;
+        if (changed) StateHasChanged();
+    }
+
+    /// <summary>A haladás frissítése; az újonnan megszerzett jelvényeket felugró üzenet jelzi.</summary>
+    private async Task RefreshProgress()
+    {
+        var earnedBefore = progress?.Badges.Where(b => b.Earned).Select(b => b.Code).ToHashSet();
+        var fresh = await mService.GetProgress(UserId);
+        if (fresh is null) return;
+        if (earnedBefore is not null)
+        {
+            foreach (var badge in fresh.Badges.Where(b => b.Earned && !earnedBefore.Contains(b.Code)))
+                toastService.ShowSuccess($"Új jelvény: {badge.Name}!");
+            if (fresh.Level > progress!.Level)
+                toastService.ShowSuccess($"Szintet léptél: {fresh.Level}. szint!");
+        }
+        progress = fresh;
+    }
 
     protected override void OnInitialized()
     {
@@ -45,6 +92,7 @@ else
         // Enélkül az időzítő elnavigálás után is futna, és életben tartaná a komponenst.
         timer.Stop();
         timer.Dispose();
+        challengePoll?.Dispose();
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -74,6 +122,9 @@ else
                 return;
             }
             UserId = userGuid;
+            await RefreshProgress();
+            await PollClassChallenges();
+            challengePoll = new System.Threading.Timer(_ => InvokeAsync(PollClassChallenges), null, 10000, 10000);
             var first = await mService.Start(UserId);
             if (first is not null && first.Operations.Count > 0)
             {
@@ -97,14 +148,27 @@ else
         var response = await mService.Result(recive);
         if (response is null)
         {
-            // Régen csendben semmi sem történt (és null esetén összeomlott volna a jelző).
-            toastService.ShowError("Nem sikerült elküldeni a választ. Próbáld újra!");
+            // A szerver csak a neki kiadott, még megválaszolatlan feladatra fogad választ (pl. egy másik lapon már
+            // továbbléptél, vagy frissítés volt): friss feladatsort kérünk, hogy ne ragadjon be ugyanarra.
+            toastService.ShowWarning("Ezt a feladatot már nem lehet beküldeni, új feladatot kapsz.");
+            var fresh = await mService.Start(UserId);
+            if (fresh is not null && fresh.Operations.Count > 0)
+            {
+                taskView = fresh;
+                currentOperation = taskView.Operations[0];
+            }
+            time = 0;
             timer.Start();
             return;
         }
         taskRecive = response;
         IsChecked = true;
         StateHasChanged();
+        if (taskRecive.Step > 0 || taskRecive.Score > 0)
+        {
+            await RefreshProgress();
+            if (leaderboard is not null) await leaderboard.RefreshAsync();
+        }
         await Task.Delay(3000);
         taskView.Operations.Remove(operation);
         // Lépett (tovább/vissza), vagy elfogytak a feladatok: a szerver adja a következőket

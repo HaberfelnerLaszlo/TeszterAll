@@ -7,6 +7,7 @@
 @inject IToastService toastService
 @inject ILogger<ClassResultView> _logger
 <h4>Csoport eredményeinek áttekintése</h4>
+<a class="btn btn-outline-primary mb-2" href="/teacher/classchallenge">Osztály-kihívás indítása</a>
 <FluentSelect Items="Groups" OptionText="i=>i.DisplayName" OptionValue="i=>i.Id" ValueChanged="SelectGroup" Placeholder="Válasz csoportot..."></FluentSelect>
 <FluentButton Appearance="Appearance.Outline" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
 
