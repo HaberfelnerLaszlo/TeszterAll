@@ -160,6 +160,25 @@ namespace TeszterTests.Services
         }
 
         [Fact]
+        public void A_pair_question_whose_pair_members_have_the_same_sign_renders_instead_of_crashing()
+        {
+            Services.AddSingleton(TeszterTests.Helpers.ToastRecorder.Create(out _));
+            // Régi Excel-feltöltésből: a pár mindkét tagja Right = true → Sign = true (régen: "same key" kivétel).
+            var answers = new List<AnswerView>
+            {
+                new() { AnswerId = 20, Sequence = 1, Sign = true, Text = "futás" },
+                new() { AnswerId = 21, Sequence = 1, Sign = true, Text = "egyenletes" },
+                new() { AnswerId = 22, Sequence = 2, Sign = true, Text = "esés" },
+                new() { AnswerId = 23, Sequence = 2, Sign = true, Text = "gyorsuló" },
+            };
+
+            var cut = Render<Test_pair>(p => p.Add(c => c.Answers, answers));
+            cut.Render();
+
+            Assert.NotNull(cut.Markup);
+        }
+
+        [Fact]
         public void The_closed_tests_page_reports_an_invalid_user_id_instead_of_crashing()
         {
             var http = new StubHttpHandler();

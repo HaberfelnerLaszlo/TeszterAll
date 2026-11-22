@@ -208,6 +208,16 @@
             {
                 newAnswers.Add(new Answer() { Right = item.Right, Sequence = item.Sequence, Text = item.Text });
             }
+            if (newQuestion.QType == QuestionType.Pair)
+            {
+                // Párosításnál a pár első tagja Right = true, a második false. A régebben hibásan mentett
+                // (mindkét tag azonos jelölésű) párokat itt helyrerakjuk, így újramentéskor javul az adat.
+                foreach (var pair in newAnswers.GroupBy(a => a.Sequence))
+                {
+                    var i = 0;
+                    foreach (var answer in pair) answer.Right = i++ == 0;
+                }
+            }
         }
     }
     private async Task Insert()
@@ -361,10 +371,14 @@
     private void AddAnswer()
     {
         var i = newAnswers.Last().Sequence;
-        newAnswers.Add(new Answer() { Sequence = i + 1 });
         if (newQuestion.QType == QuestionType.Pair)
         {
-            newAnswers.Add(new Answer() { Sequence = i + 1 , Right=false});
+            newAnswers.Add(new Answer() { Sequence = i + 1, Right = true });    // a pár első tagja
+            newAnswers.Add(new Answer() { Sequence = i + 1, Right = false });   // a pár második tagja
+        }
+        else
+        {
+            newAnswers.Add(new Answer() { Sequence = i + 1 });
         }
         StateHasChanged();
     }
@@ -377,7 +391,13 @@
             hiddenForm = false;
             //StateHasChanged();
         }
-        if (newQuestion.QType == QuestionType.Comp || newQuestion.QType==QuestionType.Pair)
+        if (newQuestion.QType == QuestionType.Pair)
+        {
+            newAnswers.Clear();
+            newAnswers.Add(new Answer() { Sequence = 1, Right = true });
+            newAnswers.Add(new Answer() { Sequence = 1, Right = false });
+        }
+        else if (newQuestion.QType == QuestionType.Comp)
         {
             newAnswers.Clear();
             newAnswers.Add(new Answer() { Sequence = 1 });

@@ -80,16 +80,20 @@
     {
         if (firstRender)
         {
-        foreach (var item in Answers)
+        // Egy pár = két válasz azonos Sequence-szel; a Sign (= Answer.Right) dönti el, melyik oldalra kerül.
+        // Régebben (Excel-feltöltés, kézi szerkesztő) mindkét tag azonos jelölést kapott – ilyenkor a
+        // sorrend dönt: az első a fix oldal, a második a mozgatható.
+        foreach (var pair in Answers.GroupBy(a => a.Sequence))
         {
-                if (item.Sign)
-                {
-                    pairs.Add(item.Sequence, item.Text);
-                }
-                else
-                {
-                    dynamic.Add(item.Sequence, item.Text);
-                }
+            var items = pair.OrderBy(a => a.AnswerId).ToList();
+            var fix = items.FirstOrDefault(a => a.Sign) ?? items[0];
+            pairs.TryAdd(pair.Key, fix.Text);
+            var other = items.FirstOrDefault(a => !ReferenceEquals(a, fix));
+            if (other is not null) dynamic.TryAdd(pair.Key, other.Text);
+            if (items.Count > 2)
+            {
+                logger.LogWarning("Párosítás: a(z) {Sequence}. párhoz {Count} válasz tartozik, a fölöslegesek kimaradnak.", pair.Key, items.Count);
+            }
         }
         if (dynamic.Any())
         {

@@ -30,7 +30,7 @@
     <Steps>
         <FluentWizardStep Label="Általános" DisplayStepNumber="true" 
                           OnChange="@OnStepChange">
-            <EditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
+            <WizardEditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
                 <DataAnnotationsValidator />
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" VerticalGap="10">
                     <FluentText Block="true">Az új teszt adatai:</FluentText>
@@ -63,11 +63,11 @@
                 </FluentStack>
                 </FluentStack>
                 <FluentValidationSummary style="color:darkred" />
-            </EditForm>
+            </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Kérdések"
                           OnChange="@OnStepChange">
-            <EditForm Model="TesztQ" FormName="addressInfo" OnValidSubmit="OnValidTQSubmit" OnInvalidSubmit="OnInvalidTQSubmit">
+            <WizardEditForm Model="TesztQ" FormName="addressInfo" OnValidSubmit="OnValidTQSubmit" OnInvalidSubmit="OnInvalidTQSubmit">
                 <DataAnnotationsValidator />
                 <FluentGrid>
                     <FluentGridItem Xs="12" Sm="7" Style="overflow-y:auto;height:80vh">
@@ -111,7 +111,7 @@
                     </FluentGridItem>
                 </FluentGrid>
                 <FluentValidationSummary style="color:darkred" />
-            </EditForm>
+            </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Publikálás"
                           Summary="Tesztírók meghatározása"
@@ -559,12 +559,10 @@
         _overlayIsVisible = true;
         newSaved = true;
         if (newTest.TestQuestions is null) { newTest.TestQuestions = new(); }
-        if (newTest.TestQuestions.Count > 0)
-        {
-            newTest.TestQuestions.Clear();
-            newTest.Summa = 0;
-            newTest.Time = 0;
-        }
+        // Minden mentésnél újraszámoljuk, hogy oda-vissza lépkedéskor se duplázódjon az összeg.
+        newTest.TestQuestions.Clear();
+        newTest.Summa = 0;
+        newTest.Time = 0;
         foreach (var item in TesztQ)
         {
             newTest.TestQuestions.Add(item);

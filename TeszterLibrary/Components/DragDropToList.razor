@@ -8,7 +8,7 @@
                     @if (SourceList.Any())
                     {
                         <FluentDropZone Id="lista" Draggable="true" Droppable="true" Data="context">
-                            @SourceContent?(context)
+                            @(SourceContent?.Invoke(context))
                         </FluentDropZone>
                     }
                     else
@@ -34,7 +34,7 @@
                     else
                     {
                         <FluentDropZone Id="valasz" Draggable="true" Droppable="true" Data="context">
-                            @TargetContent?(context)
+                            @(TargetContent?.Invoke(context))
                         </FluentDropZone>
                     }
                     </OptionTemplate>
