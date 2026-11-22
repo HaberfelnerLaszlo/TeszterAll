@@ -1,35 +1,330 @@
 ﻿@page "/TaskList"
+@using System.Text.Json
+@using TeszterLibrary.Services
+@using TeszterLibrary.ViewModel
 @inject MathService mService
-<h3>ManageTaskList</h3>
-@if (taskLists is not null && taskLists.Count > 0)
+@inject IToastService toastService
+
+<h3>Témák szerkesztése</h3>
+<p class="hint">Itt állíthatod be, milyen feladatokat generáljon a program egy témában, és létrehozhatsz új témát egy meglévő másolásával. Mentés előtt az előnézettel nézd meg a mintafeladatokat. A módosítás minden csoportra érvényes, és csak az ezután kiadott feladatokra hat.</p>
+
+@if (topics is null)
 {
-    <FluentDataGrid Items="@taskLists.AsQueryable()">
-        <PropertyColumn Property="@(i => i.Topic)" />
-        <PropertyColumn Property="@(i => i.Description)" />
-        <PropertyColumn Property="@(i => i.Sablon.Time)" />
-        <PropertyColumn Property="@(i => i.Sablon.MinCount)" />
-        <PropertyColumn Property="@(i => i.Sablon.MaxCount)" />
-        <PropertyColumn Property="@(i => i.Sablon.WrongCount)" />
-        <PropertyColumn Property="@(i => i.Sablon.WrongPercent)" />
-    </FluentDataGrid>
+    <p>Betöltés...</p>
 }
 else
 {
-    <FluentButton>Feladatlista feltöltése</FluentButton>
+    <div class="layout">
+        <div class="list">
+            <input class="filter" placeholder="Keresés..." @bind="filter" @bind:event="oninput" aria-label="Témák szűrése" />
+            @foreach (var group in Filtered().GroupBy(t => t.Topic))
+            {
+                <div class="group">@group.Key</div>
+                @foreach (var t in group)
+                {
+                    <button class="item @(edit?.Id == t.Id ? "selected" : "")" @onclick="() => Select(t)">
+                        <span class="id">@t.Id</span> @t.Description
+                    </button>
+                }
+            }
+        </div>
+
+        <div class="editor">
+            @if (edit is null)
+            {
+                <p class="hint">Válassz egy témát a listából.</p>
+            }
+            else
+            {
+                <h4>@(edit.Id == 0 ? "Új téma" : $"{edit.Id}. téma")</h4>
+                <div class="grid">
+                    <label>Leírás <input @bind="edit.Description" maxlength="255" /></label>
+                    <label>Név <input @bind="edit.Name" maxlength="100" /></label>
+                    <label>Témakör <input @bind="edit.Topic" maxlength="30" /></label>
+                </div>
+
+                @if (IsPractice)
+                {
+                    <p class="hint">A gyakorló teszt a tanuló korábbi témáiból válogat, ezért nincs saját generátora.</p>
+                }
+                else
+                {
+                    <fieldset>
+                        <legend>Feladatgenerátor</legend>
+                        <label>
+                            Fajta
+                            <select value="@edit.GeneratorKind" @onchange="KindChanged">
+                                <option value="Natural">Természetes számok műveletei</option>
+                                <option value="Integer">Egész számok műveletei</option>
+                                <option value="Fraction">Törtek</option>
+                                <option value="Units">Mértékegység-váltás</option>
+                            </select>
+                        </label>
+
+                        @switch (edit.GeneratorKind)
+                        {
+                            case "Natural":
+                            case "Integer":
+                                <div class="ops" role="group" aria-label="Műveletek">
+                                    Műveletek:
+                                    @foreach (var (op, label) in OpLabels)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@arithmetic.Ops.Contains(op)" @onchange="e => ToggleOp(op, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <div class="grid">
+                                    <label>Tagok száma <input type="number" min="2" max="8" @bind="arithmetic.Members" /></label>
+                                    <label>Számok ettől <input type="number" @bind="arithmetic.From" /></label>
+                                    <label>eddig <input type="number" @bind="arithmetic.To" /></label>
+                                    <label>
+                                        Szorzó/osztó jegyei
+                                        <select @bind="arithmetic.Digit">
+                                            <option value="0">nem számít</option>
+                                            <option value="1">egyjegyű</option>
+                                            <option value="2">kétjegyű</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <label class="check"><input type="checkbox" @bind="arithmetic.Parenthesis" /> Zárójel (3 tagtól)</label>
+                                @if (edit.GeneratorKind == "Integer")
+                                {
+                                    <label class="check"><input type="checkbox" @bind="arithmetic.NaturalFirst" /> Az első tag természetes szám</label>
+                                }
+                                break;
+
+                            case "Fraction":
+                                <label>
+                                    Feladattípus
+                                    <select @bind="fraction.Level">
+                                        @for (int level = 42; level <= 61; level++)
+                                        {
+                                            <option value="@level">@FractionName(level)</option>
+                                        }
+                                    </select>
+                                </label>
+                                break;
+
+                            case "Units":
+                                <div class="grid">
+                                    <label>
+                                        Mennyiség
+                                        <select @bind="units.Units">
+                                            <option value="length">hosszúság</option>
+                                            <option value="mass">tömeg</option>
+                                            <option value="space">űrmérték</option>
+                                            <option value="area">terület</option>
+                                            <option value="volume">térfogat</option>
+                                            <option value="spaceVolume">térfogat és űrmérték</option>
+                                        </select>
+                                    </label>
+                                    <label>Összevonandó mennyiségek <input type="number" min="1" max="3" @bind="units.Members" /></label>
+                                    <label>Számok ettől <input type="number" @bind="units.From" /></label>
+                                    <label>eddig <input type="number" @bind="units.To" /></label>
+                                    <label>Tizedesjegyek <input type="number" min="0" max="3" @bind="units.Digit" /></label>
+                                </div>
+                                <label class="check"><input type="checkbox" @bind="units.IntegerOnly" /> Csak egész eredmény</label>
+                                <p class="hint">Ha az alsó határ -1 és a felső 10 alatti, a számok 10 hatványai lesznek (1, 10, 100, …).</p>
+                                break;
+                        }
+                    </fieldset>
+                }
+
+                <fieldset>
+                    <legend>Haladás (alapértelmezett sablon új kiosztáskor)</legend>
+                    <div class="grid">
+                        <label>Legalább ennyi feladat <input type="number" min="0" max="10" @bind="edit.MinCount" /></label>
+                        <label>Legfeljebb ennyi feladat <input type="number" min="0" max="30" @bind="edit.MaxCount" /></label>
+                        <label>Ennyi hiba után vissza <input type="number" min="0" max="30" @bind="edit.WrongCount" /></label>
+                        <label>Ennyi % helyes kell <input type="number" min="0" max="100" step="5" @bind="edit.WrongPercent" /></label>
+                        <label>Átlagidő-korlát (mp) <input type="number" min="0" @bind="edit.Time" /></label>
+                    </div>
+                </fieldset>
+
+                <div class="buttons">
+                    @if (!IsPractice)
+                    {
+                        <button class="btn btn-outline-primary" disabled="@busy" @onclick="Preview">Előnézet</button>
+                    }
+                    <button class="btn btn-primary" disabled="@busy" @onclick="Save">Mentés</button>
+                    @if (edit.Id != 0 && !IsPractice)
+                    {
+                        <button class="btn btn-outline-secondary" disabled="@busy" @onclick="CopyAsNew">Másolás új témaként</button>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <p class="error" role="alert">@error</p>
+                }
+                @if (samples.Count > 0)
+                {
+                    <div class="samples">
+                        <div class="samplesTitle">Mintafeladatok</div>
+                        <ul>
+                            @foreach (var s in samples)
+                            {
+                                <li><span class="text">@s.Text</span> <span class="answer">→ @s.Outcome</span></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
 }
 
-@code {//Todo csak a sablon módosítható, mivel kódba vannak égetve a feladatok!
-    List<TaskList> taskLists = new();
-    protected override async Task OnParametersSetAsync()
+@code {
+    // A szerver paraméterformátumával egyező (TeszterData Services/Generators/TaskGenerators.cs); a JSON a mezőkből áll össze.
+    private sealed class ArithmeticForm
     {
-        var list = await mService.GetTaskList();
-        if (list is not null && list.Count > 0)
+        public List<string> Ops { get; set; } = ["+"];
+        public int Members { get; set; } = 2;
+        public bool Parenthesis { get; set; }
+        public int From { get; set; }
+        public int To { get; set; } = 20;
+        public int Digit { get; set; }
+        public bool NaturalFirst { get; set; }
+    }
+    private sealed class FractionForm { public int Level { get; set; } = 42; }
+    private sealed class UnitsForm
+    {
+        public string Units { get; set; } = "length";
+        public int Members { get; set; } = 1;
+        public bool IntegerOnly { get; set; } = true;
+        public int From { get; set; } = 1;
+        public int To { get; set; } = 1000;
+        public int Digit { get; set; }
+    }
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly (string Op, string Label)[] OpLabels = [("+", "összeadás"), ("-", "kivonás"), ("*", "szorzás"), ("/", "osztás")];
+
+    private List<TopicEditView>? topics;
+    private TopicEditView? edit;
+    private ArithmeticForm arithmetic = new();
+    private FractionForm fraction = new();
+    private UnitsForm units = new();
+    private List<TopicSampleView> samples = new();
+    private string filter = string.Empty, error = string.Empty;
+    private bool busy;
+
+    private bool IsPractice => edit is { Id: > 0 and < 3 };
+
+    protected override async Task OnInitializedAsync() => topics = await mService.GetTopics() ?? new();
+
+    private IEnumerable<TopicEditView> Filtered() => (topics ?? new()).Where(t =>
+        string.IsNullOrWhiteSpace(filter)
+        || t.Description.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
+        || t.Topic.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
+        || t.Id.ToString() == filter.Trim());
+
+    private string FractionName(int level) =>
+        topics?.FirstOrDefault(t => t.Id == level)?.Description is { Length: > 0 } d ? $"{level}: {d}" : level.ToString();
+
+    private void Select(TopicEditView topic)
+    {
+        // Másolaton dolgozunk: mentés nélkül a lista nem változik.
+        edit = JsonSerializer.Deserialize<TopicEditView>(JsonSerializer.Serialize(topic, Json), Json);
+        LoadForms();
+        samples.Clear();
+    }
+
+    private void LoadForms()
+    {
+        arithmetic = new();
+        fraction = new();
+        units = new();
+        error = string.Empty;
+        if (edit is null || string.IsNullOrWhiteSpace(edit.GeneratorParams)) return;
+        try
         {
-            taskLists.AddRange(list);
+            switch (edit.GeneratorKind)
+            {
+                case "Natural":
+                case "Integer": arithmetic = JsonSerializer.Deserialize<ArithmeticForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Fraction": fraction = JsonSerializer.Deserialize<FractionForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Units": units = JsonSerializer.Deserialize<UnitsForm>(edit.GeneratorParams, Json) ?? new(); break;
+            }
+        }
+        catch (JsonException)
+        {
+            error = "A tárolt paraméterek nem olvashatók; az alapértékek jelennek meg.";
         }
     }
-    void AddTask()
+
+    private void KindChanged(ChangeEventArgs e)
+    {
+        if (edit is null) return;
+        edit.GeneratorKind = e.Value?.ToString() ?? string.Empty;
+        samples.Clear();
+    }
+
+    private void ToggleOp(string op, bool on)
+    {
+        if (on && !arithmetic.Ops.Contains(op)) arithmetic.Ops.Add(op);
+        if (!on) arithmetic.Ops.Remove(op);
+    }
+
+    /// <summary>A szerkesztett mezőkből a generátor paraméterei (JSON).</summary>
+    private string BuildParams() => edit?.GeneratorKind switch
+    {
+        "Natural" or "Integer" => JsonSerializer.Serialize(arithmetic, Json),
+        "Fraction" => JsonSerializer.Serialize(fraction, Json),
+        "Units" => JsonSerializer.Serialize(units, Json),
+        _ => string.Empty,
+    };
+
+    private async Task Preview()
+    {
+        if (edit is null) return;
+        busy = true;
+        error = string.Empty;
+        try
         {
-            
+            var result = await mService.PreviewTopic(new TopicPreviewRequest { GeneratorKind = edit.GeneratorKind, GeneratorParams = BuildParams() });
+            samples = result?.Samples ?? new();
+            error = result is null ? "Nem sikerült lekérni az előnézetet." : result.Ok ? string.Empty : result.Error;
         }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (edit is null) return;
+        busy = true;
+        error = string.Empty;
+        try
+        {
+            if (!IsPractice) edit.GeneratorParams = BuildParams();
+            bool isNew = edit.Id == 0;
+            var (saved, message) = await mService.SaveTopic(edit);
+            if (saved is null)
+            {
+                error = string.IsNullOrWhiteSpace(message) ? "A mentés nem sikerült." : message;
+                return;
+            }
+            topics ??= new();
+            int index = topics.FindIndex(t => t.Id == saved.Id);
+            if (index >= 0) topics[index] = saved; else topics.Add(saved);
+            toastService.ShowSuccess(isNew ? "Az új téma elkészült." : "A téma mentve.");
+            Select(saved);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void CopyAsNew()
+    {
+        if (edit is null) return;
+        edit.GeneratorParams = BuildParams();
+        edit.Id = 0;
+        edit.Description += " (másolat)";
+        samples.Clear();
+        error = string.Empty;
+    }
 }

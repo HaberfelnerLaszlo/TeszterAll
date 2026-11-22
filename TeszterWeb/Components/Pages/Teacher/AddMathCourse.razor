@@ -7,6 +7,7 @@
 @inject IToastService ToastService
 @inject ILogger<AddMathCourse> _logger
 <h3>AddMathCourse</h3>
+<a class="btn btn-outline-primary mb-2" href="/TaskList">Témák szerkesztése</a>
 <EditForm Model="Groups">
     <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
         <option disabled selected>Válasz csoportot...</option>
