@@ -1,0 +1,175 @@
+@page "/teacher/classchallenge"
+@implements IDisposable
+@using TeszterLibrary.Services
+@using TeszterLibrary.ViewModel
+@inject MathService mService
+@inject IToastService toastService
+
+<h3>Osztály-kihívás</h3>
+
+@if (view is null)
+{
+    @if (classes is null || topics is null)
+    {
+        <p>Betöltés...</p>
+    }
+    else if (classes.Count == 0)
+    {
+        <p>Nem találtam a csoportjaidat (vagy a Graph most nem érhető el).</p>
+    }
+    else
+    {
+        <div class="setup">
+            <label>
+                Csoport
+                <select @bind="classId">
+                    @foreach (var c in classes)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Téma
+                <select @bind="taskId">
+                    @foreach (var t in topics)
+                    {
+                        <option value="@t.Id">@t.Description</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Időtartam
+                <select @bind="seconds">
+                    <option value="60">1 perc</option>
+                    <option value="120">2 perc</option>
+                    <option value="180">3 perc</option>
+                    <option value="300">5 perc</option>
+                </select>
+            </label>
+            <button class="btn btn-primary" disabled="@busy" @onclick="Start">Indítás</button>
+        </div>
+        <p class="hint">Indítás után a diákoknak 15 másodpercük van csatlakozni a matek feladatoldalon megjelenő sávból. A rangsor a helyes válaszok száma; ezt az oldalt kivetítheted.</p>
+    }
+}
+else
+{
+    <div class="board">
+        <div class="boardHeader">
+            <span class="className">@view.ClassName</span>
+            <span class="topic">@view.TopicName</span>
+            <span class="participants">Résztvevők: @view.Participants</span>
+        </div>
+        <div class="clock @(view.State == 1 && secondsShown <= 10 ? "hurry" : "")">
+            @switch (view.State)
+            {
+                case 0: <span>Kezdés: @secondsShown mp – csatlakozzatok!</span> break;
+                case 1: <span>Hátra: @secondsShown mp</span> break;
+                default: <span>Vége!</span> break;
+            }
+        </div>
+        <ol class="standings">
+            @foreach (var e in view.Entries)
+            {
+                <li class="@(e.Rank <= 3 && view.State == 2 ? $"podium p{e.Rank}" : "")">
+                    <span class="rank">@e.Rank.</span>
+                    <span class="name">@e.Name</span>
+                    <span class="correct">@e.Xp</span>
+                </li>
+            }
+        </ol>
+        @if (view.Entries.Count == 0)
+        {
+            <p class="hint">Még senki sem csatlakozott.</p>
+        }
+        @if (view.State < 2)
+        {
+            <button class="btn btn-outline-danger" @onclick="Stop">Leállítás</button>
+        }
+        else
+        {
+            <button class="btn btn-primary" @onclick="NewRound">Új kihívás</button>
+        }
+    </div>
+}
+
+@code {
+    private List<LeaderboardClassView>? classes;
+    private List<TaskList>? topics;
+    private string classId = string.Empty;
+    private int taskId, seconds = 60;
+    private bool busy;
+    private ClassChallengeView? view;
+    private int secondsShown;
+    private System.Threading.Timer? ticker;
+    private int tickCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        classes = await mService.GetLeaderboardClasses() ?? new();
+        topics = (await mService.GetTaskList() ?? new()).Where(t => t.Id > 2).OrderBy(t => t.Id).ToList();
+        classId = classes.FirstOrDefault()?.Id ?? string.Empty;
+        taskId = topics.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private async Task Start()
+    {
+        busy = true;
+        try
+        {
+            view = await mService.CreateClassChallenge(new ClassChallengeRequest { ClassId = classId, TaskId = taskId, Seconds = seconds });
+            if (view is null)
+            {
+                toastService.ShowError("Nem sikerült elindítani a kihívást.");
+                return;
+            }
+            Sync();
+            ticker?.Dispose();
+            tickCount = 0;
+            // Másodpercenként léptetjük az órát; kétmásodpercenként frissítjük az állást a szerverről.
+            ticker = new System.Threading.Timer(_ => InvokeAsync(Tick), null, 1000, 1000);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void Sync() => secondsShown = view is null ? 0 : view.State == 0 ? view.SecondsToStart : view.SecondsLeft;
+
+    private async Task Tick()
+    {
+        if (view is null) return;
+        if (secondsShown > 0) secondsShown--;
+        if (++tickCount % 2 == 0 || secondsShown == 0)
+        {
+            var fresh = await mService.ClassChallengeStandings(view.Id);
+            if (fresh is not null)
+            {
+                view = fresh;
+                Sync();
+                if (view.State == 2) { ticker?.Dispose(); ticker = null; }
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task Stop()
+    {
+        if (view is null) return;
+        await mService.StopClassChallenge(view.Id);
+        var fresh = await mService.ClassChallengeStandings(view.Id);
+        if (fresh is not null) { view = fresh; Sync(); }
+        ticker?.Dispose();
+        ticker = null;
+    }
+
+    private void NewRound()
+    {
+        ticker?.Dispose();
+        ticker = null;
+        view = null;
+    }
+
+    public void Dispose() => ticker?.Dispose();
+}

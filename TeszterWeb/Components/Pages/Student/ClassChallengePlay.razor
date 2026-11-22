@@ -1,0 +1,170 @@
+@page "/student/classchallenge/{Id:int}"
+@implements IDisposable
+@using TeszterLibrary.Services
+@using TeszterLibrary.ViewModel
+@inject MathService mService
+@inject IToastService toastService
+
+<h3>Osztály-kihívás</h3>
+
+@if (failed)
+{
+    <p>Ehhez a kihíváshoz most nem tudsz csatlakozni (lehet, hogy már véget ért).</p>
+    <a class="btn btn-outline-primary" href="/student/math">Vissza a feladatokhoz</a>
+}
+else if (view is null || run is null)
+{
+    <p>Csatlakozás...</p>
+}
+else
+{
+    <div class="hud">
+        <span class="className">@view.ClassName · @view.TopicName</span>
+        @switch (view.State)
+        {
+            case 0: <span class="clock">Kezdés: @secondsShown mp</span> break;
+            case 1: <span class="clock @(secondsShown <= 10 ? "hurry" : "")">@secondsShown mp</span> break;
+            default: <span class="clock">Vége!</span> break;
+        }
+        <span class="score">Helyes: @view.MyCorrect</span>
+        @if (flash is not null)
+        {
+            <span class="flash @(flash == true ? "ok" : "bad")">@(flash == true ? "✓" : "✗")</span>
+        }
+    </div>
+
+    <div class="playRow">
+        <div class="play">
+            @if (view.State == 0)
+            {
+                <p class="lobby">Mindjárt indul! @view.Participants diák csatlakozott eddig.</p>
+            }
+            else if (view.State == 1 && current is not null)
+            {
+                <MathLesson Assignment="current" Send="@Answer" IsChecked="false" IsFraction="current.IsFraction" />
+            }
+            else if (view.State == 2)
+            {
+                <div class="result">
+                    <p class="big">@view.MyRank. hely · @view.MyCorrect helyes válasz</p>
+                    @if (result is not null)
+                    {
+                        <p>Hibás: @result.Wrong · Szerzett XP: @result.Xp</p>
+                    }
+                    <a class="btn btn-primary" href="/student/math">Vissza a feladatokhoz</a>
+                </div>
+            }
+        </div>
+
+        <div class="standings">
+            <div class="stTitle">Állás (@view.Participants résztvevő)</div>
+            <ol>
+                @if (view.MoreAbove)
+                {
+                    <li class="gap" aria-hidden="true">⋮</li>
+                }
+                @foreach (var e in view.Entries)
+                {
+                    <li class="@(e.IsMe ? "me" : "")">
+                        <span class="rank">@e.Rank.</span>
+                        <span class="name">@(e.IsMe ? "Te" : e.Name)</span>
+                        <span class="correct">@e.Xp</span>
+                    </li>
+                }
+                @if (view.MoreBelow)
+                {
+                    <li class="gap" aria-hidden="true">⋮</li>
+                }
+            </ol>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ClassChallengeView? view;
+    private ChallengeStartView? run;
+    private Queue<OperationView> queue = new();
+    private OperationView? current;
+    private ChallengeResultView? result;
+    private bool failed, finished;
+    private bool? flash;
+    private int secondsShown, tickCount;
+    private System.Threading.Timer? ticker;
+
+    protected override async Task OnInitializedAsync()
+    {
+        run = await mService.JoinClassChallenge(Id);
+        view = await mService.ClassChallengeStandings(Id);
+        if (run is null || view is null)
+        {
+            failed = true;
+            return;
+        }
+        queue = new Queue<OperationView>(run.Operations);
+        current = queue.Count > 0 ? queue.Dequeue() : null;
+        Sync();
+        // Másodpercenként léptetjük az órát, kétmásodpercenként frissítjük az állást (a szerver órája a mérvadó).
+        ticker = new System.Threading.Timer(_ => InvokeAsync(Tick), null, 1000, 1000);
+    }
+
+    private void Sync() => secondsShown = view is null ? 0 : view.State == 0 ? view.SecondsToStart : view.SecondsLeft;
+
+    private async Task Tick()
+    {
+        if (view is null) return;
+        if (secondsShown > 0) secondsShown--;
+        if (++tickCount % 2 == 0 || secondsShown == 0) await Refresh();
+        StateHasChanged();
+    }
+
+    private async Task Refresh()
+    {
+        var fresh = await mService.ClassChallengeStandings(Id);
+        if (fresh is null) return;
+        view = fresh;
+        Sync();
+        if (view.State == 2) await Finish();
+    }
+
+    private async Task Answer(OperationView operation)
+    {
+        if (run is null || view?.State != 1) return;
+        var answer = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        if (answer?.Expired == true)
+        {
+            await Refresh();
+            return;
+        }
+        if (answer is not null)
+        {
+            view.MyCorrect = answer.Correct;
+            secondsShown = answer.SecondsLeft;
+            flash = answer.IsCorrect;
+            _ = ClearFlashLater();
+        }
+        current = queue.Count > 0 ? queue.Dequeue() : null;
+    }
+
+    private async Task ClearFlashLater()
+    {
+        await Task.Delay(500);
+        flash = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Finish()
+    {
+        if (finished || run is null) return;
+        finished = true;
+        ticker?.Dispose();
+        ticker = null;
+        result = await mService.FinishChallenge(run.RunId);
+        var final = await mService.ClassChallengeStandings(Id);
+        if (final is not null) view = final;
+        if (view?.MyRank is > 0 and <= 3) toastService.ShowSuccess($"Gratulálunk, {view.MyRank}. hely!");
+    }
+
+    public void Dispose() => ticker?.Dispose();
+}

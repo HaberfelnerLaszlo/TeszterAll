@@ -31,3 +31,18 @@
 .challengeLink {
     margin-bottom: 6px;
 }
+
+/* Élő osztály-kihívás értesítő. */
+.classChallengeBanner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 10px;
+    background: #fff4c2;
+    border: 1px solid #e0b400;
+    max-width: 900px;
+}

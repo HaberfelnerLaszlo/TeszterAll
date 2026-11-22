@@ -30,6 +30,11 @@ namespace TeszterLibrary.Services
 		public async Task<ChallengeStartView?> StartChallenge(int taskId) => await _service.PostAs<ChallengeStartView>($"Math/Challenge/Start/{taskId}");
 		public async Task<ChallengeAnswerView?> ChallengeAnswer(ChallengeAnswerRequest request) => await _service.PostAs<ChallengeAnswerView>("Math/Challenge/Answer", request);
 		public async Task<ChallengeResultView?> FinishChallenge(int runId) => await _service.PostAs<ChallengeResultView>($"Math/Challenge/Finish/{runId}");
+		public async Task<ClassChallengeView?> CreateClassChallenge(ClassChallengeRequest request) => await _service.PostAs<ClassChallengeView>("Math/ClassChallenge", request);
+		public async Task StopClassChallenge(int id) => await _service.PostAs<object>($"Math/ClassChallenge/{id}/Stop");
+		public async Task<List<ClassChallengeView>?> ActiveClassChallenges() => await _service.Get<List<ClassChallengeView>>("Math/ClassChallenge/Active");
+		public async Task<ChallengeStartView?> JoinClassChallenge(int id) => await _service.PostAs<ChallengeStartView>($"Math/ClassChallenge/{id}/Join");
+		public async Task<ClassChallengeView?> ClassChallengeStandings(int id) => await _service.Get<ClassChallengeView>($"Math/ClassChallenge/{id}");
 		public async Task<LeaderboardView?> GetLeaderboard(string classId) => await _service.Get<LeaderboardView>($"Math/Leaderboard/{Uri.EscapeDataString(classId)}");
     }
 }

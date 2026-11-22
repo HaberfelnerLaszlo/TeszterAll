@@ -14,6 +14,8 @@
 	{
 		public int RunId { get; set; }
 		public int Seconds { get; set; }
+		/// <summary>Kezdés (UTC); osztály-kihívásnál a gyülekező vége, addig nem lehet válaszolni.</summary>
+		public DateTime StartsAt { get; set; }
 		/// <summary>Vége (UTC), a szerver órája szerint.</summary>
 		public DateTime EndsAt { get; set; }
 		public List<OperationView> Operations { get; set; } = new();

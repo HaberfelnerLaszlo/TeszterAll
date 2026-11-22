@@ -10,6 +10,14 @@
 
 <h3>Kitűzött matematika feladat</h3>
 <a class="btn btn-outline-primary challengeLink" href="/student/challenge">Időre menő kihívás</a>
+@foreach (var cc in classChallenges)
+{
+    <div class="classChallengeBanner" role="status">
+        <span><strong>Osztály-kihívás</strong> a(z) @cc.ClassName csoportban: @cc.TopicName
+            @(cc.State == 0 ? $"– indul {cc.SecondsToStart} mp múlva" : "– már tart")</span>
+        <a class="btn btn-warning btn-sm" href="/student/classchallenge/@cc.Id">@(cc.Joined ? "Vissza a kihíváshoz" : "Csatlakozom")</a>
+    </div>
+}
 <div class="gameRow">
     <StudentProgress Progress="progress" />
     <Leaderboard @ref="leaderboard" />
@@ -43,6 +51,18 @@ else
     private List<ClassRecive> recives = new();
     private StudentProgressView? progress;
     private Leaderboard? leaderboard;
+    private List<ClassChallengeView> classChallenges = new();
+    private System.Threading.Timer? challengePoll;
+
+    /// <summary>A csoport élő osztály-kihívásai (értesítő sáv); 10 mp-enként frissül.</summary>
+    private async Task PollClassChallenges()
+    {
+        var active = await mService.ActiveClassChallenges();
+        if (active is null) return;
+        bool changed = active.Count != classChallenges.Count || active.Any(a => !classChallenges.Any(c => c.Id == a.Id && c.State == a.State));
+        classChallenges = active;
+        if (changed) StateHasChanged();
+    }
 
     /// <summary>A haladás frissítése; az újonnan megszerzett jelvényeket felugró üzenet jelzi.</summary>
     private async Task RefreshProgress()
@@ -72,6 +92,7 @@ else
         // Enélkül az időzítő elnavigálás után is futna, és életben tartaná a komponenst.
         timer.Stop();
         timer.Dispose();
+        challengePoll?.Dispose();
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -102,6 +123,8 @@ else
             }
             UserId = userGuid;
             await RefreshProgress();
+            await PollClassChallenges();
+            challengePoll = new System.Threading.Timer(_ => InvokeAsync(PollClassChallenges), null, 10000, 10000);
             var first = await mService.Start(UserId);
             if (first is not null && first.Operations.Count > 0)
             {
