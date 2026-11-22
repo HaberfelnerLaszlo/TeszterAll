@@ -19,7 +19,7 @@ namespace TeszterLibrary.Services
 		public async Task<TaskView> ClassLesson(Guid classId) => await _service.Get<TaskView>($"Math/Class/{classId}");
 		public async Task<List<ClassLesson>> GetClassLessons(Guid classId) => await _service.Get<List<ClassLesson>>($"Math/ClassLessons/{classId}");
 		public async Task<List<ClassRecive>> ClassResult(List<ClassRecive> classRecivies) => await _service.Post("Math/ClassResult", classRecivies);
-		public async Task<List<Lesson>> UpdateClassLessons(List<Lesson> lessons) => await _service.Put("Math", lessons);
+		public async Task<List<Lesson>> UpdateLessons(List<Lesson> lessons) => await _service.Put("Math", lessons);
 		public async Task<List<ResultClassView>> ResultClassView(string ids) => await _service.Get<List<ResultClassView>>($"Math/ResultClass/{ids}");
 		public async Task<List<ResultStudentView>> ResultStudentViews(string id) => await _service.Get<List<ResultStudentView>>($"Math/ResultStudent/{id}");
 		public async Task<List<ResultTaskView>> ResultTaskViews(int id) => await _service.Get<List<ResultTaskView>>($"Math/ResultTask/{id}");

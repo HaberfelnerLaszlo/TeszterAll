@@ -15,10 +15,26 @@
     border-radius: 10px;
     border-width: 2px;
     border-style: solid;
-    height: 70px;
+    min-height: 70px;
     margin: 5px 10px;
     background: linear-gradient(90deg,#54d771 25%,#fff 100%);
     max-width: 650px;
     min-width: 300px
 }
 
+
+/* Nincs feladatsora vagy még nem kezdte el: régen ezek a tanulók ki sem látszottak. */
+#StudentResult.notStarted {
+    background: linear-gradient(90deg,#c8c8c8 25%,#fff 100%);
+}
+
+.CurrentTxt {
+    clear: both;
+    margin-left: 10px;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.activeDate {
+    margin: 5px 10px 4px 10px;
+}

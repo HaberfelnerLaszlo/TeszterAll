@@ -1,6 +1,6 @@
 ﻿@foreach (var item in studentViews)
 {
-	<div class="row" style="@((item.TaskType==1)?"background:linear-gradient(90deg,#ff4d4d 25%,#fff 100%)":"background:linear-gradient(90deg,#00b700 25%,#fff 100%)");margin:2px" @onclick="()=>Open(item.CompletTaskId)">
+	<div class="row" style="background:linear-gradient(90deg,@Color(item.Status) 25%,#fff 100%);margin:2px" @onclick="()=>Open(item.CompletTaskId)">
 		<div class="col">
 			<span class="float-start d-sm-flex justify-content-sm-start align-items-sm-center NameTxt"
 				  id="Name">@item.TaskName</span>
@@ -12,7 +12,9 @@
 				<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge" id="NoComplet">Átlag idő: @item.AvgTime mp</span>
 			</div>
 			<div class="row d-flex justify-content-end">
-				<span class="activeDate" id="ActiveDate" style="margin: 5px 10px;margin-bottom: 4px;margin-top: 6px;margin-right: 10px;padding-top: 0px;">Befejezte: @item.Date.ToString("yyyy.MM.dd hh:mm")</span>
+				<span class="activeDate" id="ActiveDate" style="margin: 5px 10px;margin-bottom: 4px;margin-top: 6px;margin-right: 10px;padding-top: 0px;">
+					@StatusText(item.Status)@(item.Date > DateTime.MinValue ? ": " + item.Date.ToString("yyyy.MM.dd HH:mm") : "")
+				</span>
 			</div>
 		</div>
 	</div>
@@ -21,4 +23,20 @@
 	[Parameter] public List<ResultStudentView> studentViews { get; set; } = new();
 	[Parameter] public EventCallback<int> Click { get; set; }
 	private async Task Open(int id) => await Click.InvokeAsync(id);
+
+	// Status: 0 folyamatban, 1 teljesítve, 2 visszalépett, 3 félbehagyta. Régen a félbehagyott is zöld (sikeres) volt.
+	private static string Color(byte status) => status switch
+	{
+		0 => "#4da6ff",
+		1 => "#00b700",
+		2 => "#ff4d4d",
+		_ => "#b0b0b0",
+	};
+	private static string StatusText(byte status) => status switch
+	{
+		0 => "Folyamatban",
+		1 => "Teljesítette",
+		2 => "Visszalépett",
+		_ => "Félbehagyta",
+	};
 }
