@@ -39,7 +39,7 @@
                             <div>
                                 @if (subjects.Count > 0)
                                 {
-                                    <FluentSelect Id="Subject" Items="subjects" TOption="Subject" TValue="string" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Name)">
+                                    <FluentSelect Id="Subject" Items="subjects" TOption="Subject" TValue="string" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s => s?.Name ?? string.Empty)" OptionValue="@(s => s?.Name)">
                                     </FluentSelect>
                                 }
                                 <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>

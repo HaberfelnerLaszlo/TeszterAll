@@ -36,7 +36,7 @@
                     <FluentText Block="true">Az új teszt adatai:</FluentText>
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
                     <FluentTextInput Placeholder="Teszt neve..." @bind-Value="newTest.Title" Required="true" />
-                    <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })" Required="true">
+                    <FluentCombobox Items="@subjects" OptionText="@(t => t?.Name ?? string.Empty)" OptionValue="@(t => t?.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })" Required="true">
                     </FluentCombobox>
 
                     <FluentCheckbox @bind-Value="newTest.IsPractice" Label="Gyakorló teszt?" />
@@ -151,8 +151,8 @@
                           Placeholder="Válasz csoportot..."
                           TOption="EducationClass"
                           TValue="string"
-                          OptionText="@((c)=>c.DisplayName)"
-                          OptionValue="@((c)=>c.Id)"
+                          OptionText="@(c => c?.DisplayName ?? string.Empty)"
+                          OptionValue="@(c => c?.Id)"
                           Value="@SelectGroupId"
                           ValueExpression="@(()=>SelectGroupId)"
                           ValueChanged="SelectGroup" />

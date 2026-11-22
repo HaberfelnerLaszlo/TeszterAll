@@ -7,7 +7,7 @@
 @inject ILogger<ClassLessonHost> logger
 
 <h3>Válasz osztályt!</h3>
-<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="Group" TValue="string" Items="Groups" OptionText="g=>g.Name" OptionValue="g=>g.Id.ToString()" Placeholder="Válasz egy csoportot...">
+<FluentSelect ValueChanged="@(e => SelectedClass(e))" TOption="Group" TValue="string" Items="Groups" OptionText="@(g => g?.Name ?? string.Empty)" OptionValue="@(g => g?.Id.ToString())" Placeholder="Válasz egy csoportot...">
 </FluentSelect>
 @if (!string.IsNullOrEmpty(selectClass) && taskView.Operations is not null)
 {

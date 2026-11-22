@@ -4,6 +4,8 @@
 @inject GlobalData data
 <FluentLayout>
     <FluentLayoutItem Area="LayoutArea.Header">
+        @* v5: 768px alatt a navigáció rejtett, a hamburger gomb nyitja meg *@
+        <FluentLayoutHamburger />
         @data.Title
         <FluentSpacer />
         <LoginDisplay />

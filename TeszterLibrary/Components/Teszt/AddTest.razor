@@ -16,7 +16,7 @@
         <FluentGridItem Xs="12" Justify="JustifyContent.SpaceBetween">
             <FluentStack>
                 <FluentTextInput @bind-Value="@(newTest.Title)" Placeholder="Teszt címe..." Label="Teszt címe" />
-                <FluentCombobox Items="@subjects" OptionText="@(t => t.Name)" OptionValue="@(t => t.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })">
+                <FluentCombobox Items="@subjects" OptionText="@(t => t?.Name ?? string.Empty)" OptionValue="@(t => t?.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })">
                 </FluentCombobox>
                 <FluentSwitch ValueChanged="SectionChange" Label="Felosztás?" Value="hasSection"></FluentSwitch>
                 <FluentButton Appearance="ButtonAppearance.Primary" OnClick="TestAdd">Mentés</FluentButton>
