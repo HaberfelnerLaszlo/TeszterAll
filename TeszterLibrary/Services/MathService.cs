@@ -23,6 +23,14 @@ namespace TeszterLibrary.Services
 		public async Task<List<ResultClassView>> ResultClassView(string ids) => await _service.Get<List<ResultClassView>>($"Math/ResultClass/{ids}");
 		public async Task<List<ResultStudentView>> ResultStudentViews(string id) => await _service.Get<List<ResultStudentView>>($"Math/ResultStudent/{id}");
 		public async Task<List<ResultTaskView>> ResultTaskViews(int id) => await _service.Get<List<ResultTaskView>>($"Math/ResultTask/{id}");
+		public async Task<List<TopicEditView>?> GetTopics() => await _service.Get<List<TopicEditView>>("Math/Topics");
+		public async Task<TopicPreviewView?> PreviewTopic(TopicPreviewRequest request) => await _service.PostAs<TopicPreviewView>("Math/Topics/Preview", request);
+		/// <summary>Téma mentése; hibánál a szerver indoklása.</summary>
+		public async Task<(TopicEditView? Saved, string Error)> SaveTopic(TopicEditView topic)
+		{
+			var saved = await _service.PostAs<TopicEditView>("Math/Topics", topic);
+			return (saved, saved is null ? _service.ErrorMessage : string.Empty);
+		}
 		public async Task<List<Guid>?> GetGroups() => await _service.Get<List<Guid>>("Math/Groups");
 		public async Task<StudentProgressView?> GetProgress(Guid id) => await _service.Get<StudentProgressView>($"Math/Progress/{id}");
 		public async Task<List<LeaderboardClassView>?> GetLeaderboardClasses() => await _service.Get<List<LeaderboardClassView>>("Math/Leaderboard");
