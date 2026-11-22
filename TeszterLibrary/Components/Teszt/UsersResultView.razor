@@ -11,7 +11,7 @@
     <PropertyColumn Property="@(c=>c.ReplaceNumber)" Sortable="true" Title="@("Ismétlések")" />
     <PropertyColumn Property="@(c=>c.NoDecided!.Count)" Sortable="true" Title="Szükséges beavatkozás" />
     <TemplateColumn Title="Művelet">
-        <FluentButton Appearance="Appearance.Accent" @onclick="@(() => ViewAnswer(context))">Válaszok</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" @onclick="@(() => ViewAnswer(context))">Válaszok</FluentButton>
     </TemplateColumn>
 </FluentDataGrid>
 <FluentPaginator State="@pagination" />
@@ -22,34 +22,34 @@
         <FluentCard>
             @if (qR.Type == QuestionType.Comp)
             {
-                <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+                <FluentText Block="true">Egészítsd ki a szöveget!</FluentText>
             }
             else
             {
-                <FluentLabel>@SafeHtml.Markup(qR.QText)</FluentLabel>
+                <FluentText Block="true">@SafeHtml.Markup(qR.QText)</FluentText>
             }
-        <FluentTabs OnTabChange="HandleOnTabChange">
+        <FluentTabs ActiveTabChanged="HandleOnTabChange">
             @foreach (var answers in qR.ViewAnswers)
             {
                 @if (qR.NoDecided?.Contains(answers.Id)?? false)
                 {
-                    <FluentTab Id="@("tab-" +tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()" Icon="new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowDownExclamation()">
+                    <FluentTab Id="@("tab-" +tabsIndex.ToString() + tabindex.ToString())" Header="@answers.ReplaceN.ToString()" IconStart="new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowDownExclamation()">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
-                            <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
-                            <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
-                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
-                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Ok(answers,qR)">Elfogadva</FluentButton>
+                            <FluentText Block="true">@($"{answers.Score} / {qR.QScore} pont")</FluentText>
+                            <FluentText Block="true">@(answers.Time.ToTime())</FluentText>
+                            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
+                            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="()=>Ok(answers,qR)">Elfogadva</FluentButton>
                         </FluentStack>
                         <ViewAnswerResult Answers="answers.Answers" QType="qR.Type" Texts="@qR.QText" />
                     </FluentTab>
                 }
                 else
                 {
-                    <FluentTab Id="@("tab-" + tabsIndex.ToString() + tabindex.ToString())" Label="@answers.ReplaceN.ToString()">
+                    <FluentTab Id="@("tab-" + tabsIndex.ToString() + tabindex.ToString())" Header="@answers.ReplaceN.ToString()">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="20">
-                            <FluentLabel>@($"{answers.Score} / {qR.QScore} pont")</FluentLabel>
-                            <FluentLabel>@(answers.Time.ToTime())</FluentLabel>
-                            <FluentButton Appearance="Appearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
+                            <FluentText Block="true">@($"{answers.Score} / {qR.QScore} pont")</FluentText>
+                            <FluentText Block="true">@(answers.Time.ToTime())</FluentText>
+                            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="()=>Change(answers,qR)">Módosítás</FluentButton>
                         </FluentStack>
                         <ViewAnswerResult Answers="answers.Answers" QType="qR.Type" Texts="@qR.QText" />
                     </FluentTab>
@@ -70,7 +70,7 @@
     FluentTab? changedto;
     int tabindex = 1, tabsIndex=0;
 
-    private void HandleOnTabChange(FluentTab tab)
+    private void HandleOnTabChange(FluentTab? tab)
     {
         changedto = tab;
     }
@@ -90,18 +90,17 @@
         // to allow the user to cancel the update
         var rn = data.ReplaceN;
         data.ReplaceN = viewResult.QScore;
-        var dialog = await DialogService.ShowDialogAsync<ScoreUpdateDialog>(data, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<ScoreUpdateDialog>(options =>
         {
-            Height = "240px",
-            Title = $"{rn}. sorozat pontszámának módosítása",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Height = "240px";
+            options.Header.Title = $"{rn}. sorozat pontszámának módosítása";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", data);
         });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            var updated = (QuestionResult)result.Data;
+            var updated = (QuestionResult)result.Value;
             updated.ReplaceN = rn;
             viewResult.NoDecided?.Remove(data.Id);
             await Update.InvokeAsync(updated);

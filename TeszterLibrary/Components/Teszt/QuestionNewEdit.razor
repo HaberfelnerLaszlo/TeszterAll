@@ -15,7 +15,7 @@
         </BodyContent>
     </Modal>
     <FluentGrid>
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
                 @*A kérdés általános adatai*@
                 <div class="col bg-light m-2 justify-content-start">
@@ -24,14 +24,14 @@
                         <DataAnnotationsValidator />
                         <ValidationSummary />
                         <div style="margin:10px 0px">
-                            <FluentSelect Id="qType" TOption="QuestionType" Value="newQuestion.QType" ValueChanged=qTypeChanged Disabled=!New Placeholder="Válassza ki a kérdés fajtáját.." Label="Kérdés típusa:">
-                                <FluentOption Value="SC">Felelet választás</FluentOption>
-                                <FluentOption Value="MC">Több válaszos</FluentOption>
-                                <FluentOption Value="TF">Igaz-Hamis</FluentOption>
-                                <FluentOption Value="Open">Nyílt végű</FluentOption>
-                                <FluentOption Value="Seq">Sorbarendezés</FluentOption>
-                                <FluentOption Value="Pair">Párosítás</FluentOption>
-                                <FluentOption Value="Comp">Kiegészítő</FluentOption>
+                            <FluentSelect Id="qType" TOption="string" TValue="string" Value="@newQuestion.QType.ToString()" ValueChanged="@((string? t) => qTypeChanged(t ?? string.Empty))" Disabled=!New Placeholder="Válassza ki a kérdés fajtáját.." Label="Kérdés típusa:">
+                                <FluentOption TValue="string" Value="@("SC")">Felelet választás</FluentOption>
+                                <FluentOption TValue="string" Value="@("MC")">Több válaszos</FluentOption>
+                                <FluentOption TValue="string" Value="@("TF")">Igaz-Hamis</FluentOption>
+                                <FluentOption TValue="string" Value="@("Open")">Nyílt végű</FluentOption>
+                                <FluentOption TValue="string" Value="@("Seq")">Sorbarendezés</FluentOption>
+                                <FluentOption TValue="string" Value="@("Pair")">Párosítás</FluentOption>
+                                <FluentOption TValue="string" Value="@("Comp")">Kiegészítő</FluentOption>
                             </FluentSelect>
                         </div>
                         @if (!hiddenForm)
@@ -39,7 +39,7 @@
                             <div>
                                 @if (subjects.Count > 0)
                                 {
-                                    <FluentSelect Id="Subject" Items="subjects" TOption="Subject" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Name)">
+                                    <FluentSelect Id="Subject" Items="subjects" TOption="Subject" TValue="string" @bind-Value="@newQuestion.Subject" Label="Tantárgy" OptionText="@(s => s?.Name ?? string.Empty)" OptionValue="@(s => s?.Name)">
                                     </FluentSelect>
                                 }
                                 <Modal Accept="SaveSubject" AcceptButtom="Tantárgy mentése" Cancel="CloseSubjectModal" CancelButtom="Mégsem" Show=showModal>
@@ -51,7 +51,7 @@
                                         <input type="text" id="Name" @bind-value="subjectName" />
                                     </BodyContent>
                                 </Modal>
-                                <FluentButton Appearance="Appearance.Accent" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
+                                <FluentButton Appearance="ButtonAppearance.Primary" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
                                 <div style="margin:10px 0px">
                                     <label for="title">Kérdés címe / témaköre</label>
                                     <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
@@ -70,19 +70,19 @@
                                 </div>
                                 <div style="margin:10px 0px">
                                     <FluentGrid>
-                                        <FluentGridItem xs="12" sm="6">
-                                            <FluentNumberField Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
+                                        <FluentGridItem Xs="12" Sm="6">
+                                            <FluentNumberInput Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
                                         </FluentGridItem>
-                                        <FluentGridItem xs="12" sm="6">
-                                            <FluentNumberField Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
+                                        <FluentGridItem Xs="12" Sm="6">
+                                            <FluentNumberInput Name="time" class="ido-sec" @bind-Value="@newQuestion.Time" Label="Időtartam /másodperc/" />
                                         </FluentGridItem>
                                     </FluentGrid>
                                 </div>
                                 <div>
                                     <div class="input-group">
-                                        <FluentNumberField Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
+                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
                                         <span> -  </span>
-                                        <FluentNumberField Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
+                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
                                     </div>
                                 </div>
                             </div>
@@ -91,7 +91,7 @@
                 </div>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
                 <div class="col bg-light m-2 justify-content-start" hidden="@hiddenForm">
                     <div class="p-3 mb-3 bg-primary text-white text-center">Válaszok</div>
@@ -207,6 +207,16 @@
             foreach (var item in newQuestion.Answers)
             {
                 newAnswers.Add(new Answer() { Right = item.Right, Sequence = item.Sequence, Text = item.Text });
+            }
+            if (newQuestion.QType == QuestionType.Pair)
+            {
+                // Párosításnál a pár első tagja Right = true, a második false. A régebben hibásan mentett
+                // (mindkét tag azonos jelölésű) párokat itt helyrerakjuk, így újramentéskor javul az adat.
+                foreach (var pair in newAnswers.GroupBy(a => a.Sequence))
+                {
+                    var i = 0;
+                    foreach (var answer in pair) answer.Right = i++ == 0;
+                }
             }
         }
     }
@@ -361,10 +371,14 @@
     private void AddAnswer()
     {
         var i = newAnswers.Last().Sequence;
-        newAnswers.Add(new Answer() { Sequence = i + 1 });
         if (newQuestion.QType == QuestionType.Pair)
         {
-            newAnswers.Add(new Answer() { Sequence = i + 1 , Right=false});
+            newAnswers.Add(new Answer() { Sequence = i + 1, Right = true });    // a pár első tagja
+            newAnswers.Add(new Answer() { Sequence = i + 1, Right = false });   // a pár második tagja
+        }
+        else
+        {
+            newAnswers.Add(new Answer() { Sequence = i + 1 });
         }
         StateHasChanged();
     }
@@ -377,7 +391,13 @@
             hiddenForm = false;
             //StateHasChanged();
         }
-        if (newQuestion.QType == QuestionType.Comp || newQuestion.QType==QuestionType.Pair)
+        if (newQuestion.QType == QuestionType.Pair)
+        {
+            newAnswers.Clear();
+            newAnswers.Add(new Answer() { Sequence = 1, Right = true });
+            newAnswers.Add(new Answer() { Sequence = 1, Right = false });
+        }
+        else if (newQuestion.QType == QuestionType.Comp)
         {
             newAnswers.Clear();
             newAnswers.Add(new Answer() { Sequence = 1 });

@@ -3,35 +3,33 @@
 @inject TeszterApiService apiService
 @inject GlobalData data
 <FluentLayout>
-    <FluentHeader>
+    <FluentLayoutItem Area="LayoutArea.Header">
+        @* v5: 768px alatt a navigáció rejtett, a hamburger gomb nyitja meg *@
+        <FluentLayoutHamburger />
         @data.Title
-        <FluentStack HorizontalAlignment="HorizontalAlignment.End" Width="95%">
-            <LoginDisplay />
-        </FluentStack>
-    </FluentHeader>
-    <FluentStack Class="main" Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Width="100%">
+        <FluentSpacer />
+        <LoginDisplay />
+    </FluentLayoutItem>
+    <FluentLayoutItem Area="LayoutArea.Navigation" Width="250px">
         <NavMenu />
-        <FluentBodyContent>
-            <div class="content">
-                @Body
-            </div>
-        </FluentBodyContent>
-    </FluentStack>
-    <FluentFooter>
+    </FluentLayoutItem>
+    <FluentLayoutItem Area="LayoutArea.Content">
+        <div class="content">
+            @Body
+        </div>
+    </FluentLayoutItem>
+    <FluentLayoutItem Area="LayoutArea.Footer">
         <div id="version">
             <span>
-                Verzió: 0.8.6
+                Verzió: 0.9.0
             </span>
             <FluentTooltip Anchor="version">
-                2026.01.25
+                2026.11.22
             </FluentTooltip>
         </div>
-    </FluentFooter>
+    </FluentLayoutItem>
 </FluentLayout>
-<FluentDialogProvider />
-<FluentToastProvider MaxToastCount="10" Position="ToastPosition.BottomRight"/>
-<FluentTooltipProvider />
-<FluentMenuProvider />
+<FluentProviders />
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>

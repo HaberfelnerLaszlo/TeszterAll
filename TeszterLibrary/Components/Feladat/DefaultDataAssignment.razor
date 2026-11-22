@@ -1,9 +1,9 @@
 ﻿<FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-    <FluentLabel Typo="Typography.H2">Új feladat</FluentLabel>
-    <FluentTextField Label="Tantárgy" Placeholder="Tantárgy" @bind-Value="NewQuestion.Subject" Style="width:200px" />
-    <FluentTextField Label="Téma" Placeholder="Téma" @bind-Value="NewQuestion.Title" Style="width:200px" />
-    <FluentTextField Label="Kategória" Placeholder="Kategória" @bind-Value="NewQuestion.Subtitle" Style="width:200px" />
-    <FluentTextField Label="Leírás" Placeholder="Leírás" @bind-Value="NewQuestion.Description" Style="width:200px" />
+    <FluentText As="TextTag.H2" Size="TextSize.Size700" Weight="TextWeight.Semibold">Új feladat</FluentText>
+    <FluentTextInput Label="Tantárgy" Placeholder="Tantárgy" @bind-Value="NewQuestion.Subject" Style="width:200px" />
+    <FluentTextInput Label="Téma" Placeholder="Téma" @bind-Value="NewQuestion.Title" Style="width:200px" />
+    <FluentTextInput Label="Kategória" Placeholder="Kategória" @bind-Value="NewQuestion.Subtitle" Style="width:200px" />
+    <FluentTextInput Label="Leírás" Placeholder="Leírás" @bind-Value="NewQuestion.Description" Style="width:200px" />
 </FluentStack>
 
 @code {

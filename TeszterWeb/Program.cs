@@ -45,7 +45,16 @@ builder.Services.AddRazorComponents()
     .AddHubOptions(options => options.MaximumReceiveMessageSize = 4 * 1024 * 1024);   // a szerkesztő a base64 képekkel együtt küldi a HTML-t; a képkorlát: Uploads:MaxImageBytes (2 MB)
 builder.Services.AddHttpClient();
 builder.Services.AddBlazorDragDrop();
-builder.Services.AddFluentUIComponents();
+builder.Services.AddFluentUIComponents(config =>
+{
+    // v4 → v5: a FluentStack alapértelmezett 10px-es térköze és a FluentGrid 3-as Spacing-je megszűnt; a régi kinézetért visszaállítjuk.
+    config.DefaultValues.For<FluentStack>().Set(p => p.HorizontalGap, "10px");
+    config.DefaultValues.For<FluentStack>().Set(p => p.VerticalGap, "10px");
+    config.DefaultValues.For<FluentGrid>().Set(p => p.Spacing, 3);
+    config.Toast.MaxToastCount = 10;
+    config.Toast.Position = ToastPosition.BottomEnd;
+});
+builder.Services.AddScoped<IToastService, FluentToastService>();   // v5-ben nincs IToastService: saját adapter az INotificationService fölé
 builder.Services.AddApexCharts();
 builder.Services.TryAddSingleton(TimeProvider.System);   // az órai nézet idejét tesztben lecserélhetjük
 builder.Services.AddImageStorage(builder.Configuration);   // képfeltöltés: ellenőrzés + tárolás (App_Data/uploads)

@@ -12,8 +12,8 @@
     <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start">
         @foreach (var j in tabs)
         {
-            if (actual == j) { apperance = Appearance.Accent; }
-            else { apperance = Appearance.Neutral; }
+            if (actual == j) { apperance = ButtonAppearance.Primary; }
+            else { apperance = ButtonAppearance.Default; }
             <FluentButton OnClick="@(() => ActualChanged(j))" Appearance="apperance">@j</FluentButton>
         }
     </FluentStack>
@@ -23,14 +23,14 @@
         <FluentCard>
             @if (actualq.QuestionType == QuestionType.Comp)
             {
-                <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+                <FluentText Block="true">Egészítsd ki a szöveget!</FluentText>
             }
             else
             {
-                <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(actualq.QuestionText)</FluentLabel>
+                <FluentText As="TextTag.Paragraph" Size="TextSize.Size400" Weight="TextWeight.Semibold">@SafeHtml.Markup(actualq.QuestionText)</FluentText>
             }
 
-            <FluentLabel>Kapott pontok: @actualq.Score pont</FluentLabel>
+            <FluentText Block="true">Kapott pontok: @actualq.Score pont</FluentText>
             @switch (actualq.QuestionType)
             {
                 case QuestionType.SC:
@@ -66,11 +66,11 @@
     }
     @if (i == 0)
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("/"))">Bezár</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>navi.NavigateTo("/"))">Bezár</FluentButton>
     }
     else
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(()=>navi.NavigateTo("student/testsResult"))">Bezár</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>navi.NavigateTo("student/testsResult"))">Bezár</FluentButton>
     }
 }
 else
@@ -85,7 +85,7 @@ else
     int max = 1, actual=1;
     int[] tabs = {1};
     string errorMessage = string.Empty;
-    Appearance apperance= Appearance.Neutral;
+    ButtonAppearance apperance = ButtonAppearance.Default;
 
     protected override async Task OnInitializedAsync()
     {

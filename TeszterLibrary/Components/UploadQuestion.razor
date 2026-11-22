@@ -206,7 +206,7 @@
                                         for (int j = 8; j < cellCount; j += 2)
                                         {
                                             answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j).StringCellValue, Right = true, Sequence = k });
-                                            answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j + 1).StringCellValue, Right = true, Sequence = k });
+                                            answers.Add(new Answer { QuestionId = question.Id, Text = row.GetCell(j + 1).StringCellValue, Right = false, Sequence = k });   // a pár második tagja: Right = false
                                             k += 1;
                                         }
                                     }

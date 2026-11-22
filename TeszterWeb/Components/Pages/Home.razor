@@ -33,15 +33,15 @@
     @if (tanuloData is not null)
     {
         <FluentCard MinimalStyle="false">
-            <FluentLabel Typo="Typography.H1">Aktuális pontszámod: @tanuloData.PontSzam</FluentLabel>
-            <FluentLabel Typo="Typography.H2">Az osztályod átlaga: @tanuloData.Atlag.ToString("F2")</FluentLabel>
-            <FluentLabel Typo="Typography.H3">Az osztályban @tanuloData.Min és @tanuloData.Max pontok között vannak a társaid.</FluentLabel>
+            <FluentText As="TextTag.H1" Size="TextSize.Size800" Weight="TextWeight.Semibold">Aktuális pontszámod: @tanuloData.PontSzam</FluentText>
+            <FluentText As="TextTag.H2" Size="TextSize.Size700" Weight="TextWeight.Semibold">Az osztályod átlaga: @tanuloData.Atlag.ToString("F2")</FluentText>
+            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Az osztályban @tanuloData.Min és @tanuloData.Max pontok között vannak a társaid.</FluentText>
             @if (tanuloData.Max == tanuloData.PontSzam)
             {
-                <FluentLabel Typo="Typography.H3">Gratulálok! Te vagy a legjobb! </FluentLabel>
+                <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Gratulálok! Te vagy a legjobb! </FluentText>
             }
             else if (tanuloData.PontSzam >= 0.9 * tanuloData.Max)
-            { <FluentLabel Typo="Typography.H3">Gratulálok! A legjobbak között vagy! </FluentLabel>
+            { <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Gratulálok! A legjobbak között vagy! </FluentText>
             }
         </FluentCard>
         @if (datas is not null || datas?.Count > 0)
@@ -55,8 +55,8 @@
                                  YAggregate="@(e => e.Sum(e=>e.Pontszam))" />
             </ApexChart>
         }
-        <FluentLabel Typo="Typography.H4" Style="margin: 10px">Az utolsó pontjaid (maximum 20 darab): </FluentLabel>
-        <FluentCard MinimalStyle="true">
+        <FluentText As="TextTag.H4" Size="TextSize.Size500" Weight="TextWeight.Semibold" Style="margin: 10px">Az utolsó pontjaid (maximum 20 darab): </FluentText>
+        <FluentCard Appearance="CardAppearance.Subtle">
             <FluentDataGrid Items="@pontok" AutoItemsPerPage="true">
                 <PropertyColumn Property="@(p=>p.Datum)" Title="Dátum" />
                 <PropertyColumn Property="@(p=>p.PontTipus)" Title="Pont fajtája" Tooltip="true" HeaderTooltip="Lecke,Pótlás,Szorgalmi,Szaktanári,Gyakorló,-50,-100,Kvíz,Javítás,Mértékváltás, " />
@@ -66,7 +66,7 @@
     }
     else
     {
-        <FluentLabel Typo="Typography.H4" Style="margin: 10px">Nem elérhetők a pontjaid. </FluentLabel>
+        <FluentText As="TextTag.H4" Size="TextSize.Size500" Weight="TextWeight.Semibold" Style="margin: 10px">Nem elérhetők a pontjaid. </FluentText>
     }
     <nav class="d-flex flex-row w-100">
         <NavLink class="nav-doboz nav-link" href="studenttests">Tesztjeim</NavLink>

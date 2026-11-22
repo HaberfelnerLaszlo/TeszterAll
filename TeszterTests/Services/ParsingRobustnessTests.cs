@@ -155,8 +155,27 @@ namespace TeszterTests.Services
             // "{}" üres helyőrző és "{9}" nem létező válasz: régen FormatException / ArgumentOutOfRangeException.
             var cut = Render<Test_comp>(p => p.Add(c => c.Answers, answers).Add(c => c.Texts, "A {1} és {} meg {9} vége"));
 
-            Assert.Single(cut.FindAll("fluent-text-field"));
+            Assert.Single(cut.FindAll("fluent-text-input"));   // Fluent UI v5: FluentTextInput → <fluent-text-input>
             Assert.Contains("vége", cut.Markup);
+        }
+
+        [Fact]
+        public void A_pair_question_whose_pair_members_have_the_same_sign_renders_instead_of_crashing()
+        {
+            Services.AddSingleton(TeszterTests.Helpers.ToastRecorder.Create(out _));
+            // Régi Excel-feltöltésből: a pár mindkét tagja Right = true → Sign = true (régen: "same key" kivétel).
+            var answers = new List<AnswerView>
+            {
+                new() { AnswerId = 20, Sequence = 1, Sign = true, Text = "futás" },
+                new() { AnswerId = 21, Sequence = 1, Sign = true, Text = "egyenletes" },
+                new() { AnswerId = 22, Sequence = 2, Sign = true, Text = "esés" },
+                new() { AnswerId = 23, Sequence = 2, Sign = true, Text = "gyorsuló" },
+            };
+
+            var cut = Render<Test_pair>(p => p.Add(c => c.Answers, answers));
+            cut.Render();
+
+            Assert.NotNull(cut.Markup);
         }
 
         [Fact]

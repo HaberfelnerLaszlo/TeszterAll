@@ -8,13 +8,13 @@
 @inject ILogger<ClassResultView> _logger
 <h4>Csoport eredményeinek áttekintése</h4>
 <a class="btn btn-outline-primary mb-2" href="/teacher/classchallenge">Osztály-kihívás indítása</a>
-<FluentSelect Items="Groups" OptionText="i=>i.DisplayName" OptionValue="i=>i.Id" ValueChanged="SelectGroup" Placeholder="Válasz csoportot..."></FluentSelect>
-<FluentButton Appearance="Appearance.Outline" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
+<FluentSelect TOption="Microsoft.Graph.Models.EducationClass" TValue="string" Items="Groups" OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)" ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válasz csoportot..."></FluentSelect>
+<FluentButton Appearance="ButtonAppearance.Outline" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
 
 @if (Members.Count > 0 || ResultMembers.Count > 0)
 {
     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
-        <FluentGridItem xs="12" sm="4" Style="max-height:400px; overflow-y:auto;">
+        <FluentGridItem Xs="12" Sm="4" Style="max-height:400px; overflow-y:auto;">
             <h5>Csoport tagjai</h5>
             <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" ItemFilter="@(i=>i.Style.Equals("NoLesson"))" Context="member">
                 <ItemTemplate>
@@ -22,13 +22,13 @@
                 </ItemTemplate>
             </FluentSortableList>
         </FluentGridItem>
-        <FluentGridItem sm="2" HiddenWhen="GridItemHidden.MdAndDown">
+        <FluentGridItem Sm="2" HiddenWhen="GridItemHidden.MdAndDown">
             <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" VerticalGap="30" HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentButton Appearance="Appearance.Accent" OnClick="All" Disabled="BtnDidabled">Mindenki</FluentButton>
-                <FluentButton Appearance="Appearance.Accent" OnClick="Reverse" Disabled="!BtnDidabled">Senki sem</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Primary" OnClick="All" Disabled="BtnDidabled">Mindenki</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Primary" OnClick="Reverse" Disabled="!BtnDidabled">Senki sem</FluentButton>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="4">
+        <FluentGridItem Xs="12" Sm="4">
             <h5>Eredményét kérem</h5>
             <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@ResultMembers" Context="resultmember">
                 <ItemTemplate>

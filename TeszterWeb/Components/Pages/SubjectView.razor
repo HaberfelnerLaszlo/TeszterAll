@@ -8,12 +8,12 @@
 <FluentDataGrid Items="@subjects.AsQueryable()">
     <PropertyColumn Property="c=>c.Name" Title="Tantárgy neve"></PropertyColumn>
     <TemplateColumn Title="Műveletek">
-        <FluentButton Appearance="Appearance.Neutral" BackgroundColor="#009973" Color="white" OnClick="()=>Edit(context)">Szerkesztés</FluentButton>
-        <FluentButton Appearance="Appearance.Neutral" BackgroundColor="#ff1a1a" Color="white" OnClick="()=>Delete(context)">Törlés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Default" BackgroundColor="#009973" Color="white" OnClick="()=>Edit(context)">Szerkesztés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Default" BackgroundColor="#ff1a1a" Color="white" OnClick="()=>Delete(context)">Törlés</FluentButton>
     </TemplateColumn>
 </FluentDataGrid>
 <FluentStack>
-    <FluentTextField @bind-Value="@newSubject" Placeholder="Új tantárgy neve..."></FluentTextField>
+    <FluentTextInput @bind-Value="@newSubject" Placeholder="Új tantárgy neve..." />
     <FluentButton OnClick="Add">Új</FluentButton>
 </FluentStack>
 @code {
@@ -52,18 +52,17 @@
     {
         var data = new Subject();
         data = subject;
-        var dialog = await dService.ShowDialogAsync<EditSubjectDialog>(data, new DialogParameters()
-    {
-        Height = "240px",
-        Title = $"{subject.Id}.tantárgy módosítása",
-        PreventDismissOnOverlayClick = true,
-        PreventScroll = true,
-    });
-
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        var result = await dService.ShowDialogAsync<EditSubjectDialog>(options =>
         {
-            data = await sService.UpdateSubjectAsync((Subject)result.Data);
+            options.Height = "240px";
+            options.Header.Title = $"{subject.Id}.tantárgy módosítása";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", data);
+        });
+
+        if (!result.Cancelled && result.Value != null)
+        {
+            data = await sService.UpdateSubjectAsync((Subject)result.Value);
             if (data is null)
             {
                 noError = false;

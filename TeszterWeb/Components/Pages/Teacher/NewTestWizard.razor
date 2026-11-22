@@ -30,47 +30,47 @@
     <Steps>
         <FluentWizardStep Label="Általános" DisplayStepNumber="true" 
                           OnChange="@OnStepChange">
-            <FluentEditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
+            <WizardEditForm Model="newTest" FormName="Teszt" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
                 <DataAnnotationsValidator />
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" VerticalGap="10">
-                    <FluentLabel>Az új teszt adatai:</FluentLabel>
+                    <FluentText Block="true">Az új teszt adatai:</FluentText>
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
-                    <FluentTextField Placeholder="Teszt neve..." @bind-Value="newTest.Title" Required="true" />
-                    <FluentCombobox Items="@subjects" OptionText="@(t=>t.Name)" OptionValue="@(t=>t.Name)" TOption="Subject" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." SelectedOptionChanged="subjectChange" Required="true">
+                    <FluentTextInput Placeholder="Teszt neve..." @bind-Value="newTest.Title" Required="true" />
+                    <FluentCombobox Items="@subjects" OptionText="@(t => t?.Name ?? string.Empty)" OptionValue="@(t => t?.Name)" TOption="Subject" TValue="string" @bind-Value="newTest.Subject" Placeholder="Tantárgy..." @bind-Value:after="@(() => { var s = subjects?.FirstOrDefault(x => x?.Name == newTest.Subject); if (s is not null) subjectChange(s); })" Required="true">
                     </FluentCombobox>
 
                     <FluentCheckbox @bind-Value="newTest.IsPractice" Label="Gyakorló teszt?" />
                     <FluentCheckbox @bind-Value="newTest.IsCheck" Label="Tanuló ellenőrizheti?" />
                     <FluentCheckbox @bind-Value="newTest.IsTimer" Label="Válasz időre megy?" />
-                    <FluentSwitch CheckedMessage="Igen" UncheckedMessage="Nem" @bind-Value=@newTest.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
-                   <FluentSwitch CheckedMessage="Bekapcsolva" UncheckedMessage="Kikapcsolva" Label="Felosztás?" Value="newTest.HasSection" ValueChanged="SectionChange"></FluentSwitch>
+                    <FluentSwitch @bind-Value=@newTest.ShuffleQuestion Style="margin-bottom: 20px" Label="Kérdések keverése" />
+                   <FluentSwitch Label="Felosztás?" Value="newTest.HasSection" ValueChanged="SectionChange"></FluentSwitch>
                     <div hidden ="@(newTest.HasSection is false)">
                         Ez akkor látszik ha be van kapcsolva
                     </div>
                 </FluentStack>
                 <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
-                    <FluentLabel>Időkorlát:</FluentLabel>
+                    <FluentText Block="true">Időkorlát:</FluentText>
                     <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalGap="10">
                         <FluentDatePicker @bind-Value="@start" @bind-Value:after="CheckStart" Placeholder="Kezdés ideje..." Required="true" Label="Kezdés" />
-                        <FluentTimePicker @bind-Value="@start" @bind-Value:after="CheckStart" Label="Időpont" TimeDisplay="@TimeDisplay.HourMinute" />
+                        <FluentTimePicker @bind-Value="@start" @bind-Value:after="CheckStart" Label="Időpont" />
                     </FluentStack>
                     <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" HorizontalGap="10">
                         <FluentDatePicker @bind-Value="@end" @bind-Value:after="CheckEnd" Placeholder="Befejezés ideje..." Required="true" Label="Befejezés" />
-                        <FluentTimePicker @bind-Value="@end" @bind-Value:after="CheckEnd" Label="Időpont" TimeDisplay="@TimeDisplay.HourMinute" />
+                        <FluentTimePicker @bind-Value="@end" @bind-Value:after="CheckEnd" Label="Időpont" />
                     </FluentStack>
-                    <FluentNumberField @bind-Value="newTest.ReplaceNumber" Label="Hányszor ismételhető?" Min="1" Max="30" Style="width:80px" />
+                    <FluentNumberInput @bind-Value="newTest.ReplaceNumber" Label="Hányszor ismételhető?" Min="1" Max="30" Style="width:80px" />
 
                 </FluentStack>
                 </FluentStack>
                 <FluentValidationSummary style="color:darkred" />
-            </FluentEditForm>
+            </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Kérdések"
                           OnChange="@OnStepChange">
-            <FluentEditForm Model="TesztQ" FormName="addressInfo" OnValidSubmit="OnValidTQSubmit" OnInvalidSubmit="OnInvalidTQSubmit">
+            <WizardEditForm Model="TesztQ" FormName="addressInfo" OnValidSubmit="OnValidTQSubmit" OnInvalidSubmit="OnInvalidTQSubmit">
                 <DataAnnotationsValidator />
                 <FluentGrid>
-                    <FluentGridItem xs="12" sm="7" Style="overflow-y:auto;height:80vh">
+                    <FluentGridItem Xs="12" Sm="7" Style="overflow-y:auto;height:80vh">
                         @if (TesztQ.Count != 0)
                         {
                             foreach (var tq in TesztQ)
@@ -79,7 +79,7 @@
                             }
                         }
                     </FluentGridItem>
-                    <FluentGridItem xs="12" sm="5" Style="overflow-y:auto;height:80vh">
+                    <FluentGridItem Xs="12" Sm="5" Style="overflow-y:auto;height:80vh">
                         <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" VerticalGap="5">
                             @*@if (newTest.HasSection)
                             {
@@ -88,7 +88,7 @@
                                         <FluentButton OnClick="NewSection" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Add())" />
                                         <FluentButton OnClick="@(() => EditSection(selectSection))" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Pen())" />
                                     </FluentStack>
-                                    <FluentListbox Items="sections" TOption="Section" OptionText="@(s => s.Name)" OptionValue="@(s => s.Id.ToString())" SelectedOption="selectSection" />
+                                    <FluentListbox Items="sections" TOption="Section" TValue="Section" OptionText="@(s => s?.Name ?? string.Empty)" @bind-Value="selectSection" />
 
                                 </FluentStack>
                             }*@
@@ -111,7 +111,7 @@
                     </FluentGridItem>
                 </FluentGrid>
                 <FluentValidationSummary style="color:darkred" />
-            </FluentEditForm>
+            </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Publikálás"
                           Summary="Tesztírók meghatározása"
@@ -136,7 +136,7 @@
                                         <td>@item.Name</td>
                                         <td>@item.TestId</td>
                                         <td>
-                                            <FluentNumberField TValue="int" Min="1" Max="@item.TestId.ToString()" @bind-Value="@item.Count" />
+                                            <FluentNumberInput TValue="int" Min="1" Max="@item.TestId" @bind-Value="@item.Count" />
                                         </td>
                                     </tr>
                                 }
@@ -148,11 +148,11 @@
             <hr />
             <FluentSelect Items="Groups"
                           Style="min-width: 200px;"
-                          Height="300px"
                           Placeholder="Válasz csoportot..."
                           TOption="EducationClass"
-                          OptionText="@((c)=>c.DisplayName)"
-                          OptionValue="@((c)=>c.Id)"
+                          TValue="string"
+                          OptionText="@(c => c?.DisplayName ?? string.Empty)"
+                          OptionValue="@(c => c?.Id)"
                           Value="@SelectGroupId"
                           ValueExpression="@(()=>SelectGroupId)"
                           ValueChanged="SelectGroup" />
@@ -160,27 +160,26 @@
                 <SourceContent>@list.DisplayName</SourceContent>
                 <TargetContent>@list.DisplayName</TargetContent>
             </DragDropToList>
-            <FluentSwitch Value="AssigmentCreated" CheckedMessage="Igen" UncheckedMessage="Nem" Label="Teams feladat létrehozása" />
+            <FluentSwitch Value="AssigmentCreated" Label="Teams feladat létrehozása" />
 
         </FluentWizardStep>
         <FluentWizardStep Label="Összegzés" DeferredLoading="true">
-            <FluentLabel>címe: @newTest.Title</FluentLabel>
-            <FluentLabel>tantárgy: @newTest.Subject</FluentLabel>
-            <FluentLabel>kezdete: @newTest.StartTime</FluentLabel>
-            <FluentLabel>vége: @newTest.EndTime</FluentLabel>
-            <FluentLabel>Összes pont: @newTest.Summa pont</FluentLabel>
-            <FluentLabel>Időtartam: @newTest.Time.ToTime()</FluentLabel>
-            <FluentLabel>Kérdések száma: @(newTest.TestQuestions is null ?  0 : newTest.TestQuestions.Count) db</FluentLabel>
-            <FluentLabel>Tesztírók száma: @(newTest.TestUsers is null ? 0 : newTest.TestUsers.Count) fő</FluentLabel>
+            <FluentText Block="true">címe: @newTest.Title</FluentText>
+            <FluentText Block="true">tantárgy: @newTest.Subject</FluentText>
+            <FluentText Block="true">kezdete: @newTest.StartTime</FluentText>
+            <FluentText Block="true">vége: @newTest.EndTime</FluentText>
+            <FluentText Block="true">Összes pont: @newTest.Summa pont</FluentText>
+            <FluentText Block="true">Időtartam: @newTest.Time.ToTime()</FluentText>
+            <FluentText Block="true">Kérdések száma: @(newTest.TestQuestions is null ?  0 : newTest.TestQuestions.Count) db</FluentText>
+            <FluentText Block="true">Tesztírók száma: @(newTest.TestUsers is null ? 0 : newTest.TestUsers.Count) fő</FluentText>
         </FluentWizardStep>
     </Steps>
 </FluentWizard>
 
 <FluentOverlay @bind-Visible=@_overlayIsVisible
-               Opacity="0.4"
-               Alignment="Microsoft.FluentUI.AspNetCore.Components.Align.Center"
-               Justification="@JustifyContent.Center">
-    <FluentProgressRing />
+               Opacity="40"
+               >
+    <FluentSpinner />
 </FluentOverlay>
 
 @code
@@ -203,7 +202,6 @@
     private string SelectGroupId = string.Empty;
     private EducationUser lastdropped { get; set; } = new();
     private bool BtnDidabled = false, AssigmentCreated = false;
-    private IDialogReference? _dialog;
     private DateTime? start=DateTime.Now, end=DateTime.Now.AddDays(1);
     protected override async Task OnInitializedAsync()
     {
@@ -307,19 +305,14 @@
     private async Task OpenPanelRightAsync()
     {
         SetupSelection();
-        DialogParameters<List<TeszterLibrary.Model.Section>> parameters = new()
+        var result = await dialogService.ShowDrawerAsync<SectionDialog>(options =>
         {
-            Content = sections,
-            Title = $"A teszt felosztása.",
-            Alignment = HorizontalAlignment.Right,
-            Modal = false,
-            ShowDismiss = false,
-            PrimaryAction = "Mentés",
-            SecondaryAction = "Mégsem",
-            Width = "300px",
-        };
-        _dialog = await dialogService.ShowPanelAsync<SectionDialog>(sections,parameters);
-        DialogResult result = await _dialog.Result;
+            options.Header.Title = $"A teszt felosztása.";
+            options.Alignment = DialogAlignment.End;
+            options.Modal = false;
+            options.Width = "300px";
+            options.Parameters.Add("Content", sections);
+        });
         HandlePanel(result);
 
     }
@@ -330,9 +323,9 @@
             return;
         }
 
-        if (result.Data is not null)
+        if (result.Value is not null)
         {
-            if (result?.Data is List<TeszterLibrary.Model.Section> sectionList && sectionList is not null)
+            if (result?.Value is List<TeszterLibrary.Model.Section> sectionList && sectionList is not null)
             {
                 sections.AddRange(sectionList);
             }
@@ -342,19 +335,17 @@
     private async Task ModalOpen(Question q)
     {
         var data = q;
-        var dialog = await dialogService.ShowDialogAsync<QADialog>(data, new DialogParameters()
+        var result = await dialogService.ShowDialogAsync<QADialog>(options =>
         {
-            //Height = "350px",
-            Width = "75%",
-            Title = "A kérdés megtekintése",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Width = "75%";
+            options.Header.Title = "A kérdés megtekintése";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", data);
         });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            q = (Question)result.Data;
+            q = (Question)result.Value;
         }
     }
     private void subjectChange(Subject subject)
@@ -568,12 +559,10 @@
         _overlayIsVisible = true;
         newSaved = true;
         if (newTest.TestQuestions is null) { newTest.TestQuestions = new(); }
-        if (newTest.TestQuestions.Count > 0)
-        {
-            newTest.TestQuestions.Clear();
-            newTest.Summa = 0;
-            newTest.Time = 0;
-        }
+        // Minden mentésnél újraszámoljuk, hogy oda-vissza lépkedéskor se duplázódjon az összeg.
+        newTest.TestQuestions.Clear();
+        newTest.Summa = 0;
+        newTest.Time = 0;
         foreach (var item in TesztQ)
         {
             newTest.TestQuestions.Add(item);

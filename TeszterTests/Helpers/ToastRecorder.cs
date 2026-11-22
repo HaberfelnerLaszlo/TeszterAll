@@ -1,11 +1,11 @@
 ﻿using System.Reflection;
 
-using Microsoft.FluentUI.AspNetCore.Components;
+using TeszterLibrary.Services;
 
 namespace TeszterTests.Helpers
 {
     /// <summary>
-    /// IToastService-hamisítvány, ami rögzíti a hívásokat ("ShowInfo:üzenet"). DispatchProxy, így nem függ az interfész
+    /// IToastService-hamisítvány (a TeszterLibrary saját, v4-stílusú toast interfésze), ami rögzíti a hívásokat ("ShowInfo:üzenet"). DispatchProxy, így nem függ az interfész
     /// pontos tagjaitól és túlterheléseitől.
     /// </summary>
     public class ToastRecorder : DispatchProxy

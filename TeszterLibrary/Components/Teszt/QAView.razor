@@ -4,11 +4,11 @@
 <div style="position:relative; margin:5px 0">
     <FluentCard>
         <FluentStack>
-            <FluentNumberField style="width:60px" @bind-Value="question.Score">Pontszám:</FluentNumberField>
-            <FluentNumberField style="width:70px" @bind-Value="question.Time" Step="5">Idő:</FluentNumberField>
+            <FluentNumberInput style="width:60px" @bind-Value="question.Score" Label="Pontszám:" />
+            <FluentNumberInput style="width:70px" @bind-Value="question.Time" Step="5" Label="Idő:" />
             @if (sections.Count > 0)
             {
-                <FluentCombobox Items="sections" TOption="Section" OptionText="@(s=>s.Name)" OptionValue="@(s=>s.Id.ToString())" SelectedOptionChanged="@((e)=>SectionChanged(e))" />
+                <FluentCombobox Items="sections" TOption="Section" TValue="Section" OptionText="@(s => s?.Name ?? string.Empty)" ValueChanged="@((Section? e) => SectionChanged(e!))" />
             }
             <FluentButton IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())"
                           Title="Törlés"
@@ -17,11 +17,11 @@
         </FluentStack>
         @if (question.Question.QType == QuestionType.Comp)
         {
-            <FluentLabel>Egészítsd ki a szöveget!</FluentLabel>
+            <FluentText Block="true">Egészítsd ki a szöveget!</FluentText>
         }
         else if (question.Question.QType != QuestionType.Komp)
         {
-            <FluentLabel Typo="Typography.Subject">@SafeHtml.Markup(questionView.QuestionText)</FluentLabel>
+            <FluentText As="TextTag.Paragraph" Size="TextSize.Size400" Weight="TextWeight.Semibold">@SafeHtml.Markup(questionView.QuestionText)</FluentText>
         }
         <hr />
         @switch (question.Question.QType)

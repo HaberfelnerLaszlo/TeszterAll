@@ -1,23 +1,19 @@
-﻿@implements IDialogContentComponent<Section>
-@* Header *@
-<FluentDialogHeader ShowDismiss="true">
-    <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
-        <FluentLabel Typo="Typography.PaneHeader">
-            @Dialog.Instance.Parameters.Title
-        </FluentLabel>
-    </FluentStack>
-</FluentDialogHeader>
-
-@* Footer *@
-<FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Mentés</FluentButton>
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Mégsem</FluentButton>
-</FluentDialogFooter>
-
-@* Body *@
-<FluentDialogBody>
-    <FluentTextField @bind-Value="@Content.Name">Szekció neve:</FluentTextField>
+﻿<FluentDialogBody>
+    <TitleTemplate>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" Color="Color.Primary" />
+            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">
+                @Dialog.Options.Header.Title
+            </FluentText>
+        </FluentStack>
+    </TitleTemplate>
+    <ChildContent>
+        <FluentTextInput @bind-Value="@Content.Name" Label="Szekció neve:" />
+    </ChildContent>
+    <ActionTemplate>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@SaveAsync">Mentés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@CancelAsync">Mégsem</FluentButton>
+    </ActionTemplate>
 </FluentDialogBody>
 
 @code {
@@ -25,7 +21,7 @@
     public Section Content { get; set; } = default!;
 
     [CascadingParameter]
-    public FluentDialog Dialog { get; set; } = default!;
+    public IDialogInstance Dialog { get; set; } = default!;
 
     private async Task SaveAsync()
     {

@@ -8,16 +8,16 @@
             </h4>
         </FluentStack>
         <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" />
-            <FluentBadge Appearance="Appearance.Lightweight"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" /><strong>@TestItem.TestReplaceNumber</strong></FluentBadge>
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" Color="Color.Primary" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" Color="Color.Primary" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" Color="Color.Primary" />
+            <FluentBadge Appearance="BadgeAppearance.Ghost" Color="BadgeColor.Brand" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" Content="@TestItem.TestReplaceNumber.ToString()" />
         </FluentStack>
     </FluentStack>
     @if (TestItem.HasNoDecided)
     {
         <FluentStack>
-            <FluentLabel Typo="Typography.H5" Style="color:orangered;">Néhány kérdés pontozása beavatkozást igényel.</FluentLabel>
+            <FluentText As="TextTag.H5" Size="TextSize.Size400" Weight="TextWeight.Semibold" Style="color:orangered;">Néhány kérdés pontozása beavatkozást igényel.</FluentText>
             
         </FluentStack>
     }

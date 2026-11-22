@@ -8,11 +8,11 @@
 @*általános rész*@
     <FluentGridItem>
         <DefaultDataAssignment NewQuestion="@newQuestion" />
-        <FluentButton Appearance="Appearance.Accent" Color="@Color.Error.ToString()" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" Color="@Color.Error.ToString()" @onclick="async () => await SaveQuestion()">Kérdés mentése</FluentButton>
         <span> Aktív tab: @activeTabId </span>
     </FluentGridItem>
     @*feladat rész*@
-    <FluentGridItem xs="12" sm="6">
+    <FluentGridItem Xs="12" Sm="6">
         <FluentButton OnClick="() => OpenTextEditor(newQuestion.Text)"> @(_ = String.IsNullOrEmpty(newQuestion.Text) ? "Szöveg felvétele" : "Szöveg szerkesztése") </FluentButton>
         @if (String.IsNullOrWhiteSpace(newQuestion.Text))
         {
@@ -25,20 +25,21 @@
             </div>
         }
         <FluentSpacer />
-        <FluentNumberField Label="Időtartam (mp)" TValue="int" @bind-Value="newQuestion.Time" Min="0" Step="5" Style="width:100px"/>
+        <FluentNumberInput Label="Időtartam (mp)" TValue="int" @bind-Value="newQuestion.Time" Min="0" Step="5" Style="width:100px"/>
     </FluentGridItem>
     @*válasz rész*@
     @if(IsSavedQuestion)
     {
-    <FluentGridItem xs="12" sm="6">
-        <FluentButton Appearance="Appearance.Accent" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
+    <FluentGridItem Xs="12" Sm="6">
+        <FluentButton Appearance="ButtonAppearance.Primary" @onclick="async () => await AddAnswer()">Új válasz hozzáadása</FluentButton>
             @if (newAnswers.Count > 0)
             {
-                <FluentTabs @ref="tabRef" ShowClose="true" OnTabClose="@(tab => ClosedTab(tab))" ActiveTabIdChanged="@(id => activeTabId = id)">
+                <FluentTabs @ref="tabRef" ActiveTabId="@activeTabId" ActiveTabIdChanged="@(id => activeTabId = id ?? string.Empty)">
                 @foreach (var answer in newAnswers) 
                 {
                     var seq = answer.Sequence;
-                    <FluentTab @key="@seq" Label="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="@answer">
+                    <FluentTab @key="@seq" Header="@($"{seq}. feladat")" Id="@($"tab-{seq}")" Data="@answer">
+                        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Disabled="@(newAnswers.Count <= 1)" OnClick="@(() => ClosedTab(answer))">Feladat bezárása</FluentButton>
                         <FluentButton OnClick="() => OnOpen(answer)"> @(_=String.IsNullOrEmpty(answer.Text) ? "Kérdés felvétele" : "Kérdés szerkesztése") </FluentButton>
                         <New_Komp_Answer @key="@seq" NewAnswer="answer"/> 
                         @if (answer.Id > 0)
@@ -48,34 +49,32 @@
                         else
                         {
 
-                            <FluentLabel>Mentse el a választ, hogy segítséget adhasson hozzá!</FluentLabel>
+                            <FluentText Block="true">Mentse el a választ, hogy segítséget adhasson hozzá!</FluentText>
                         }
                         @if(answerHelpers.Count > 0 && answerHelpers.Where(h => h.AnswerId==answer.Id).Any())
                         {
-                            <FluentLabel>@answer.Id Válasz segítők: </FluentLabel>
+                            <FluentText Block="true">@answer.Id Válasz segítők: </FluentText>
                             @foreach(var item in answerHelpers.Where(h => h.AnswerId==answer.Id))
                             {
-                                <FluentCard MinimalStyle="true" Style="width:80%; margin:5px 0">
+                                <FluentCard Appearance="CardAppearance.Subtle" Style="width:80%; margin:5px 0">
                                         <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween" Orientation="Orientation.Horizontal">
-                                        <FluentLabel>@item.Sequence. @item.Id </FluentLabel>
+                                        <FluentText Block="true">@item.Sequence. @item.Id </FluentText>
                                         <div>@SafeHtml.Markup(item.Text.Substring(0, Math.Min(item.Text.Length, 40)))</div>
-                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(async () => 
+                                        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(async () => 
                                         {
-                                            var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(item.Text, new DialogParameters()
+                                            var result = await DialogService.ShowDialogAsync<TextEditorDialog>(options =>
                                             {
-                                                Alignment = HorizontalAlignment.Center,
-                                                Title = $"{item.Id}. segítség szerkesztése",
-                                                PreventDismissOnOverlayClick = true,
-                                                PreventScroll = true,
+                                                options.Header.Title = $"{item.Id}. segítség szerkesztése";
+                                                options.Header.CloseAction.Visible = true;
+                                                options.Parameters.Add("Content", item.Text);
                                             });
-                                            var result = await dialog.Result;
-                                            if (!result.Cancelled && result.Data != null)
+                                            if (!result.Cancelled && result.Value != null)
                                             {
-                                                item.Text = (string)result.Data;
+                                                item.Text = (string)result.Value;
                                                 toastService.ShowSuccess("Segítség sikeresen frissítve.");
                                             }
                                         })">Szerkesztés</FluentButton>
-                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Neutral" OnClick="@(async () =>
+                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Default" OnClick="@(async () =>
                                         {
                                             if (answerHelpers.Contains(item))
                                             {
@@ -97,7 +96,7 @@
     }
     else{
     <FluentGridItem>
-        <FluentLabel>Válaszok szerkesztéséhez menteni kell a kérdést!</FluentLabel>
+        <FluentText Block="true">Válaszok szerkesztéséhez menteni kell a kérdést!</FluentText>
     </FluentGridItem>
     }
 </FluentGrid>
@@ -290,7 +289,7 @@
             activeTabId = $"tab-{seq}"; 
             if (tabRef is not null)
             {
-                await tabRef.GoToTabAsync(activeTabId);
+                StateHasChanged();   // v5: nincs GoToTabAsync, az ActiveTabId paraméter váltja a fület
             }
             await InvokeAsync(StateHasChanged);
 
@@ -301,10 +300,9 @@
             AnswerCount = newAnswers.Count;
         }
     }
-    async Task ClosedTab(FluentTab tab)
+    async Task ClosedTab(Answer removedAnswer)
     {
         if (newAnswers.Count <= 1) return;
-        var removedAnswer = (Answer)tab.Data!;
         newAnswers.Remove(removedAnswer);
         if (removedAnswer.Id > 0)
         {            // Ha az answer még nincs mentve, akkor nem kell törölni az adatbázisból
@@ -316,25 +314,23 @@
         activeTabId = newAnswers.Count > 0 ? $"tab-{newAnswers.Last().Sequence}" : string.Empty;
         if (tabRef is not null)
         {
-            await tabRef.GoToTabAsync(activeTabId);
+            StateHasChanged();   // v5: nincs GoToTabAsync, az ActiveTabId paraméter váltja a fület
         }
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnOpen(Answer ans)
     {
-        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(ans.Text, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<TextEditorDialog>(options =>
         {
-            Alignment = HorizontalAlignment.Center,
-            Title = $"{ans.Sequence}. kérdés szerkesztése",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Header.Title = $"{ans.Sequence}. kérdés szerkesztése";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", ans.Text);
         });
 
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            ans.Text = (string)result.Data;
+            ans.Text = (string)result.Value;
         }
         activeTabId = $"tab-{ans.Sequence}";
     }
@@ -342,34 +338,30 @@
     {
         var darab = answerHelpers.Count(h => h.AnswerId == answerId);
         answerHelper = new AnswerHelper() { Sequence = darab + 1, AnswerId = answerId };
-        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(answerHelper.Text, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<TextEditorDialog>(options =>
         {
-            Alignment = HorizontalAlignment.Center,
-            Title = $"Új segítség hozzáadása",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Header.Title = $"Új segítség hozzáadása";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", answerHelper.Text);
         });
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            answerHelper.Text = (string)result.Data;
+            answerHelper.Text = (string)result.Value;
             answerHelpers.Add(answerHelper);
             toastService.ShowSuccess("Segítség sikeresen hozzáadva.");
         }
     }
     private async Task OpenTextEditor(string content)
     {
-        var dialog = await DialogService.ShowDialogAsync<TextEditorDialog>(content, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<TextEditorDialog>(options =>
         {
-            Alignment = HorizontalAlignment.Center,
-            Title = $"Kérdés szerkesztése",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+            options.Header.Title = $"Kérdés szerkesztése";
+            options.Header.CloseAction.Visible = true;
+            options.Parameters.Add("Content", content);
         });
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            newQuestion.Text = (string)result.Data;
+            newQuestion.Text = (string)result.Value;
         }
         else
         {

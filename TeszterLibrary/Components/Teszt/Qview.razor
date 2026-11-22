@@ -1,11 +1,11 @@
 ﻿
 <FluentCard Style=@($"border-color:{bgColor}; border-width:medium;padding:5px 30px")>
-    <FluentLabel Style="margin: 0; position: absolute; right: 20px; top: 5px;">@qType</FluentLabel> <br />
+    <FluentText Block="true" Style="margin: 0; position: absolute; right: 20px; top: 5px;">@qType</FluentText> <br />
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack><b>@question.Subject <br /> @question.Title</b></FluentStack>
         <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
             <span class="badge text-bg-primary"><b>@question.Time mp</b></span>
-            <FluentBadge><b>@question.Score pont</b></FluentBadge>
+            <FluentBadge Content="@($"{question.Score} pont")" />
         </FluentStack>
     </FluentStack>
     <p class="p-1">@SafeHtml.Markup(question.Text)</p>

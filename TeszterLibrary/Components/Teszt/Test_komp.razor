@@ -1,40 +1,40 @@
 ﻿@inject IDialogService DialogService
-<FluentSplitter Orientation="Orientation.Horizontal" Panel1MinSize="20%" Panel2MinSize="50%">
-    <Panel1>
+<FluentMultiSplitter Orientation="Orientation.Horizontal">
+    <FluentMultiSplitterPane Min="20%">
         <div style="padding: 10px; border: 1px solid #ccc; margin: 10px;">
             @SafeHtml.Markup(Texts)
         </div>
-    </Panel1>
-    <Panel2>
+    </FluentMultiSplitterPane>
+    <FluentMultiSplitterPane Min="50%">
             @if (Answers.Count > 0)
             {
-                <FluentTabs ShowClose="false">
+                <FluentTabs>
                     @foreach (var answer in Answers) 
                     {
                         var seq = answer.Sequence;
-                        <FluentTab @key="@seq" Label="@($"{seq}. feladat {answer.Score} pont")" Id="@($"tab-{seq}")" Data="@answer">
+                        <FluentTab @key="@seq" Header="@($"{seq}. feladat {answer.Score} pont")" Id="@($"tab-{seq}")" Data="@answer">
                             <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
                                 @SafeHtml.Markup(answer.Text)
                             </div>
-                        <FluentTextField @bind-Value="answer.AnswerText" Placeholder="Írd ide a válaszod!" Label="Válaszod"/>
+                        <FluentTextInput @bind-Value="answer.AnswerText" Placeholder="Írd ide a válaszod!" Label="Válaszod"/>
                             @if(answer.AnswerHelpers?.Count > 0)
                             {
-                                <FluentLabel>Válasz segítők: </FluentLabel>
+                                <FluentText Block="true">Válasz segítők: </FluentText>
                                 @foreach (var item in answer.AnswerHelpers) 
                                 {
-                                    <FluentButton Title="@item.Sequence.ToString()" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())" OnClick="@(() =>{DialogService.ShowInfo(item.Text,$"{item.Sequence}. segítség","Bezár");})" />
+                                    <FluentButton Title="@item.Sequence.ToString()" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())" OnClick="@(async () => await DialogService.ShowInfoAsync(item.Text, $"{item.Sequence}. segítség", "Bezár"))" />
                                 }
                             }
                         </FluentTab> 
                     }
                 </FluentTabs>
             }
-    </Panel2>
-</FluentSplitter>
+    </FluentMultiSplitterPane>
+</FluentMultiSplitter>
 <div class="container text-center">
     @if (IsCheck)
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
             Ellenőrzés
         </FluentButton>
     }

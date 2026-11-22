@@ -15,20 +15,20 @@ else
 @if (default_Sablon)
 {
     <FluentAccordion>
-        <FluentAccordionItem Heading="Feladat hozzáadásakor a következő sablon értékek lesznek alkalmazva:">
-            <FluentLabel>Maximális próbálkozások száma: @sablon.MaxCount</FluentLabel>
-            <FluentLabel>Legalább ennyi feladat: @sablon.MinCount</FluentLabel>
-            <FluentLabel>A feladat ennyi százaléka helyes: @sablon.WrongPercent</FluentLabel>
-            <FluentLabel>A feladat ennyi rossz válasz lehet: @sablon.WrongCount</FluentLabel>
-            <FluentLabel>A feladat időtartama: @sablon.Time</FluentLabel>
+        <FluentAccordionItem Header="Feladat hozzáadásakor a következő sablon értékek lesznek alkalmazva:">
+            <FluentText Block="true">Maximális próbálkozások száma: @sablon.MaxCount</FluentText>
+            <FluentText Block="true">Legalább ennyi feladat: @sablon.MinCount</FluentText>
+            <FluentText Block="true">A feladat ennyi százaléka helyes: @sablon.WrongPercent</FluentText>
+            <FluentText Block="true">A feladat ennyi rossz válasz lehet: @sablon.WrongCount</FluentText>
+            <FluentText Block="true">A feladat időtartama: @sablon.Time</FluentText>
         </FluentAccordionItem>
     </FluentAccordion>
 }
 <hr />
-<FluentLabel> </FluentLabel>
+<FluentText Block="true"> </FluentText>
 <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="20">
     <FluentStack Orientation="Orientation.Vertical">
-        <FluentSelect Items="topics" TOption="string" Title="Kategóriák: " SelectedOptionChanged="(e)=>Select(e)" />
+        <FluentSelect Items="topics" TOption="string" TValue="string" Label="Kategóriák: " ValueChanged="@((string? e) => Select(e!))" />
 
         <h5>Feladatok listája</h5>
         <FluentSortableList Id="sharedTask1" Class="darker" Group="sharedTaskLists" OnUpdate="@SortList1" OnRemove="@List1Remove" Items="@filteredTasks" Context="topic" Style="height:400px; overflow-y:auto;">
@@ -39,7 +39,7 @@ else
         <h5>A tanuló feladatai:</h5>
         @if (completLessons.Count > 0)
         {
-            <FluentListbox Items="completLessons" />
+            <FluentListbox TOption="ListTask" TValue="ListTask" Items="completLessons" />
         }
         <FluentSortableList Id="sharedTask2" Group="sharedTaskLists" OnUpdate="@SortList2" OnRemove="@List2Remove" Items="@lessons" Context="lesson" Drop="IsLessonSave">
             <ItemTemplate>@lesson.Description</ItemTemplate>
@@ -172,20 +172,18 @@ else
         }
         if (!default_Sablon)
         {
-            var dialog = await dialogService.ShowDialogAsync<SetTaskSablonDialog>(sablon, new DialogParameters()
+            var result = await dialogService.ShowDialogAsync<SetTaskSablonDialog>(options =>
             {
-                //Height = "340px",
-                Title = $"{item.Topic} beállítása",
-                PreventDismissOnOverlayClick = true,
-                PreventScroll = true,
+                options.Header.Title = $"{item.Topic} beállítása";
+                options.Header.CloseAction.Visible = true;
+                options.Parameters.Add("Content", sablon);
             });
 
-            var result = await dialog.Result;
-            if (!result.Cancelled && result.Data != null)
+            if (!result.Cancelled && result.Value != null)
             {
-                sablon = (Sablon)result.Data;
+                sablon = (Sablon)result.Value;
             }
-            else if (result.Cancelled || result.Data is null)
+            else if (result.Cancelled || result.Value is null)
             {
                 toastService.ShowWarning("Nem sikerült a feladat áthelyezése.");
                 return;

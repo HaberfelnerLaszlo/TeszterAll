@@ -3,14 +3,14 @@
 body {
     --body-font: "Segoe UI Variable", "Segoe UI", sans-serif;
     font-family: var(--body-font);
-    font-size: var(--type-ramp-base-font-size);
-    line-height: var(--type-ramp-base-line-height);
+    font-size: var(--fontSizeBase300);
+    line-height: var(--lineHeightBase300);
     margin: 0;
 }
 
 .main {
     height: calc(100dvh - 96px);
-    color: var(--neutral-foreground-rest);
+    color: var(--colorNeutralForeground1);
 }
 
 .content {
@@ -20,8 +20,8 @@ body {
 footer {
     display: grid;
     grid-template-columns: 10px auto auto 10px;
-    background: var(--neutral-layer-4);
-    color: var(--neutral-foreground-rest);
+    background: var(--colorNeutralBackground4);
+    color: var(--colorNeutralForeground1);
     align-items: center;
     padding: 10px 10px;
 }
@@ -37,7 +37,7 @@ footer {
     }
 
     footer a {
-        color: var(--neutral-foreground-rest);
+        color: var(--colorNeutralForeground1);
         text-decoration: none;
     }
 
@@ -51,7 +51,7 @@ footer {
         }
 
 .alert {
-    border: 1px dashed var(--accent-fill-rest);
+    border: 1px dashed var(--colorBrandBackground);
     padding: 5px;
 }
 

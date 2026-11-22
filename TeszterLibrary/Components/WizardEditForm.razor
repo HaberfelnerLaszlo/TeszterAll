@@ -1,0 +1,39 @@
+@* EditForm, amely beregisztrálja magát a befoglaló FluentWizardStep-be.
+   Fluent UI v4-ben a FluentEditForm ezt magától megtette: a varázsló "Next"/"Finish" gombja validálta
+   az űrlapot és meghívta az OnValidSubmit/OnInvalidSubmit kezelőt. v5-ben a FluentEditForm megszűnt,
+   a FluentWizardStepValidator pedig csak validál – a submit kezelők nem futnának le. *@
+<EditForm @ref="_form" Model="Model" FormName="@FormName" OnValidSubmit="OnValidSubmit" OnInvalidSubmit="OnInvalidSubmit">
+    @ChildContent
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    public FluentWizardStep? WizardStep { get; set; }
+
+    [Parameter, EditorRequired]
+    public object Model { get; set; } = default!;
+
+    [Parameter]
+    public string? FormName { get; set; }
+
+    [Parameter]
+    public EventCallback<EditContext> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<EditContext> OnInvalidSubmit { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private EditForm? _form;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // A regisztráció idempotens (TryAdd); minden render után megismételjük, mert a varázsló
+        // a DeferredLoading lépéseknél lépésváltáskor törli a regisztrált űrlapokat.
+        if (_form?.EditContext is { } editContext)
+        {
+            WizardStep?.RegisterEditFormAndContext(_form, editContext);
+        }
+    }
+}

@@ -2,42 +2,37 @@
 @using TeszterLibrary.Services.Images
 @inject IImageStorage ImageStorage
 @inject IToastService toastService
-@implements IDialogContentComponent<string>
-
-@* Header *@
-<FluentDialogHeader ShowDismiss="true">
-    <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentLabel Typo="Typography.PaneHeader">
-            @Dialog.Instance.Parameters.Title
-        </FluentLabel>
-    </FluentStack>
-</FluentDialogHeader>
-
-@* Footer *@
-<FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Mentés</FluentButton>
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Mégsem</FluentButton>
-</FluentDialogFooter>
-
-@* Body *@
 
 <FluentDialogBody>
-    @if (!hide)
-    {
-        <BlazoredTextEditor @ref="textEditor" DebugLevel="warn" EditorCssStyle="width:100%; height:auto;">
-        <ToolbarContent>
-            <span class="ql-formats">
-                <button class="ql-bold"></button>
-                <button class="ql-italic"></button>
-                <button class="ql-underline"></button>
-                <button class="ql-image"></button>
-            </span>
-        </ToolbarContent>
-        <EditorContent>
-           @SafeHtml.Markup(Content)
-        </EditorContent>
-        </BlazoredTextEditor>
-    }
+    <TitleTemplate>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">
+                @Dialog.Options.Header.Title
+            </FluentText>
+        </FluentStack>
+    </TitleTemplate>
+    <ChildContent>
+        @if (!hide)
+        {
+            <BlazoredTextEditor @ref="textEditor" DebugLevel="warn" EditorCssStyle="width:100%; height:auto;">
+            <ToolbarContent>
+                <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-image"></button>
+                </span>
+            </ToolbarContent>
+            <EditorContent>
+               @SafeHtml.Markup(Content)
+            </EditorContent>
+            </BlazoredTextEditor>
+        }
+    </ChildContent>
+    <ActionTemplate>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@SaveAsync">Mentés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@CancelAsync">Mégsem</FluentButton>
+    </ActionTemplate>
 </FluentDialogBody>
 
 @code {
@@ -45,7 +40,7 @@
     public string Content { get; set; } = default!;
 
     [CascadingParameter]
-    public FluentDialog Dialog { get; set; } = default!;
+    public IDialogInstance Dialog { get; set; } = default!;
     private BlazoredTextEditor textEditor = new();
     bool hide = false;
 

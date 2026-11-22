@@ -61,8 +61,7 @@
     </FluentSlider> 
 				<FluentSlider Min="1" Max="12" Step="1" ValueChanged="@((int v)=>GradeChanged(v,true))" ValueExpression="@(()=>filter.MinGrade)">
 				</FluentSlider>*@
-			<FluentSlider Min="1" Max="12" Step="1" AfterBindValue="@((int v)=>GradeChanged(v,false))" bind-value="@filter.MaxGrade">
-            </FluentSlider>
+			<FluentSlider TValue="int" Min="1" Max="12" Step="1" @bind-Value="filter.MaxGrade" @bind-Value:after="@(() => GradeChanged(filter.MaxGrade, false))" />
 		</label>
 	</div>
 	<div id="Search" class="d-inline">

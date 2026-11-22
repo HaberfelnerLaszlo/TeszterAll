@@ -17,14 +17,14 @@
 }
 else if (tanulokByCsoport.Count() == 0)
 {
-    <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c => c.Name)" OptionValue="@(c => c.Id)" SelectedOptionChanged="@(SelectedCsoport)" />
+    <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" ValueChanged="@((Csoport? c) => SelectedCsoport(c!))" />
     <p>Nincs tanuló az adatbázisban.</p>
 }
 else
 {
-    <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@(SelectedCsoport)" />
-    <FluentSelect Items="@(Enum.GetValues<DataGridSelectMode>())"
-                  @bind-SelectedOption="@Mode" />
+    <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" ValueChanged="@((Csoport? c) => SelectedCsoport(c!))" />
+    <FluentSelect TOption="DataGridSelectMode" TValue="DataGridSelectMode" Items="@(Enum.GetValues<DataGridSelectMode>())"
+                  @bind-Value="@Mode" />
     <FluentDataGrid Items="tanulokByCsoport.AsQueryable()" Pagination="pagination" ShowHover="true">
         <SelectColumn TGridItem="TanuloWithSelect"
                       SelectMode="@Mode"
@@ -33,7 +33,7 @@ else
         <PropertyColumn Property="@(t=>t.Tanulo.Name)" Title="Tanuló neve" />
         <PropertyColumn Property="@(t=>t.Tanulo.Pont)" Title="Elért pontszám" />
         <PropertyColumn Property="@(t => t.Tanulo.Osztaly)" Title="Csoport" />
-        <TemplateColumn Title="Műveletek" Align="@Microsoft.FluentUI.AspNetCore.Components.Align.End">
+        <TemplateColumn Title="Műveletek" Align="@DataGridCellAlignment.End">
             <FluentButton aria-label="Szerkesztés" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => EditDialog(context))" />
             <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(async() =>await DeleteTanulo(context))" />
         </TemplateColumn>
@@ -95,21 +95,19 @@ else
             toastService.ShowWarning("Nincs kiválasztva tanuló.");
             return;
         }
-        var dialogInstance = await dialogService.ShowDialogAsync(
-        @<div>
+        RenderFragment body = @<div>
             <p>Szeretnéd módosítani a(z) <strong>@selectedTanulo.Tanulo.Name</strong> tanuló pontszámát?</p>
-            <FluentNumberField @bind-Value="selectedTanulo.Tanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
-            <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOption="@(csoportok.FirstOrDefault(c=>c.Id==selectedTanulo.Tanulo.Osztaly))" SelectedOptionChanged="@((e)=>OnSelectedItemsChanged(e,selectedTanulo))" />
+            <FluentNumberInput @bind-Value="selectedTanulo.Tanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
+            <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" Value="@(csoportok.FirstOrDefault(c=>c.Id==selectedTanulo.Tanulo.Osztaly))" ValueChanged="@((Csoport? e)=>OnSelectedItemsChanged(e!,selectedTanulo))" />
 
-        </div>
-        , new DialogParameters
+        </div>;
+        var result = await dialogService.ShowDialogAsync<FragmentDialog>(options =>
         {
-            Title = "Pontszám módosítás",
-            PrimaryAction = "Mentés",
-            SecondaryAction = "Mégse",
+            options.Header.Title = "Pontszám módosítás";
+            options.Footer.PrimaryAction.Label = "Mentés";
+            options.Footer.SecondaryAction.Label = "Mégse";
+            options.Parameters.Add(nameof(FragmentDialog.Body), body);
         });
-
-        var result = await dialogInstance.Result;
         if (!result.Cancelled)
         {
             var response = await tService.UpdateTanuloAsync(selectedTanulo.Tanulo);
@@ -138,17 +136,16 @@ else
             toastService.ShowWarning("Nincs kiválasztva tanuló.");
             return;
         }
-        var dialogInstance = await dialogService.ShowDialogAsync(
-        @<div>
+        RenderFragment body = @<div>
             <p>Biztosan törölni szeretnéd a(z) <strong>@selectedTanulo.Tanulo.Name</strong> tanulót?</p>
-        </div>
-        , new DialogParameters
+        </div>;
+        var result = await dialogService.ShowDialogAsync<FragmentDialog>(options =>
         {
-            Title = "Tanuló törlése",
-            PrimaryAction = "Törlés",
-            SecondaryAction = "Mégse"
+            options.Header.Title = "Tanuló törlése";
+            options.Footer.PrimaryAction.Label = "Törlés";
+            options.Footer.SecondaryAction.Label = "Mégse";
+            options.Parameters.Add(nameof(FragmentDialog.Body), body);
         });
-        var result = await dialogInstance.Result;
         if (!result.Cancelled)
         {
             var response = await tService.DeleteTanuloAsync(selectedTanulo.Tanulo.Id);
@@ -182,17 +179,16 @@ else
         {
             if (item.Tanulo != null)
             {
-                var dialogInstance = await dialogService.ShowDialogAsync(
-                @<div>
+                RenderFragment body = @<div>
                     <p>Biztosan törölni szeretnéd a(z) <strong>@item.Tanulo.Name</strong> tanulót?</p>
-                </div>
-                , new DialogParameters
+                </div>;
+                var result = await dialogService.ShowDialogAsync<FragmentDialog>(options =>
                 {
-                    Title = "Tanuló törlése",
-                    PrimaryAction = "Törlés",
-                    SecondaryAction = "Mégse"
+                    options.Header.Title = "Tanuló törlése";
+                    options.Footer.PrimaryAction.Label = "Törlés";
+                    options.Footer.SecondaryAction.Label = "Mégse";
+                    options.Parameters.Add(nameof(FragmentDialog.Body), body);
                 });
-                var result = await dialogInstance.Result;
                 if (!result.Cancelled)
                 {
                     var response = await tService.DeleteTanuloAsync(item.Tanulo.Id);
@@ -237,21 +233,20 @@ else
             return;
         }
         var newTanulo = new Tanulo() { Name = "Új tanuló", Pont = 20, Osztaly = selectedCsoport.Id ?? string.Empty };
-        var dialogInstance = await dialogService.ShowDialogAsync(
-        @<div>
+        RenderFragment body = @<div>
             <p>Új tanuló hozzáadás</p>
-            <FluentSelect Items="@newMembers" TOption="Microsoft.Graph.Models.EducationUser" OptionText="@(c=>c.DisplayName)" OptionValue="@(c=>c.Id)" SelectedOptionChanged="@((e)=> { newTanulo.Name = newMembers.FirstOrDefault(m => m.Id == e.Id)?.DisplayName ?? ""; newTanulo.Id = e.Id.ToGuidOrNull() ?? Guid.Empty; StateHasChanged(); })" Placeholder="Válasz egy tanulót..." />
-            @*<FluentTextField @bind-Value="newTanulo.Name" Label="Tanuló neve:" Placeholder="Név" />*@
-            <FluentNumberField @bind-Value="newTanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
-            <FluentSelect Items="@csoportok" TOption="Csoport" OptionText="@(c=>c.Name)" OptionValue="@(c=>c.Id)" SelectedOption="@(csoportok.FirstOrDefault(c=>c.Id==newTanulo.Osztaly))" SelectedOptionChanged="@((e)=>newTanulo.Osztaly=e.Id)" />
-        </div>
-        , new DialogParameters
+            <FluentSelect Items="@newMembers" TOption="Microsoft.Graph.Models.EducationUser" TValue="string" OptionText="@(c => c?.DisplayName ?? string.Empty)" OptionValue="@(c => c?.Id)" ValueChanged="@((string? id)=> { newTanulo.Name = newMembers.FirstOrDefault(m => m.Id == id)?.DisplayName ?? ""; newTanulo.Id = id.ToGuidOrNull() ?? Guid.Empty; StateHasChanged(); })" Placeholder="Válasz egy tanulót..." />
+            @*<FluentTextInput @bind-Value="newTanulo.Name" Label="Tanuló neve:" Placeholder="Név" />*@
+            <FluentNumberInput @bind-Value="newTanulo.Pont" Label="Elért pontszám:" Placeholder="Pontszám" />
+            <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" Value="@(csoportok.FirstOrDefault(c=>c.Id==newTanulo.Osztaly))" ValueChanged="@((Csoport? e)=>newTanulo.Osztaly=e!.Id)" />
+        </div>;
+        var result = await dialogService.ShowDialogAsync<FragmentDialog>(options =>
         {
-            Title = "Új tanuló hozzáadás",
-            PrimaryAction = "Mentés",
-            SecondaryAction = "Mégse",
+            options.Header.Title = "Új tanuló hozzáadás";
+            options.Footer.PrimaryAction.Label = "Mentés";
+            options.Footer.SecondaryAction.Label = "Mégse";
+            options.Parameters.Add(nameof(FragmentDialog.Body), body);
         });
-        var result = await dialogInstance.Result;
         if (!result.Cancelled)
         {
             var response = await tService.AddTanuloAsync(newTanulo);

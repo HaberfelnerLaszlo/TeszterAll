@@ -6,35 +6,35 @@
             </h3>
         </FluentStack>
         <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" Color="Color.Primary" />
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" Color="Color.Primary" />
         </FluentStack>
     </FluentStack>
     <FluentGrid>
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
-                <FluentLabel>
+                <FluentText Block="true">
                     Tantárgy: @TestResult.Subject
-                </FluentLabel>
-                <FluentLabel>
+                </FluentText>
+                <FluentText Block="true">
                     Teszt lezárult: @TestResult.EndTime.ToShortDateString()
-                </FluentLabel>
+                </FluentText>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12" sm="6">
+        <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
-                <FluentLabel>
+                <FluentText Block="true">
                     Kapott/Összes pont: @TestResult.Score / @TestResult.Summa
-                </FluentLabel>
-                <FluentLabel>
+                </FluentText>
+                <FluentText Block="true">
                     Tesztre fordított idő: @TestResult.Time
-                </FluentLabel>
-                <FluentLabel>
+                </FluentText>
+                <FluentText Block="true">
                     Próbálkozások száma: @TestResult.UserReplaceNumber / @TestResult.TestReplaceNumber
-                </FluentLabel>
+                </FluentText>
             </FluentStack>
         </FluentGridItem>
-        <FluentGridItem xs="12">
+        <FluentGridItem Xs="12">
             <FluentButton OnClick="@(()=>Open.InvokeAsync(TestResult.TestUserId))">Megtekint</FluentButton>
         </FluentGridItem>
     </FluentGrid>

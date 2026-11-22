@@ -1,27 +1,23 @@
-@* To get access to all Fluent UI System icons, install the Microsoft.FluentUI.AspNetCore.Compoents.Icon package *@
-@* See all the diffeent ways on how to use icons at https://www.fluentui-blazor.net/Icon *@
 @rendermode InteractiveServer
 
 <nav>
-    <FluentNavMenu Width="250" Collapsible="true" Expanded="false" Title="Teszter menü">
-        <FluentNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/home.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent">Kezdõlap</FluentNavLink>
+    <FluentNav Width="250px" aria-label="Teszter menÃ¼">
+        <FluentNavItem Href="/home" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/home.svg")">KezdÅ‘lap</FluentNavItem>
         <AuthorizeView Roles="Teacher">
-            <FluentDivider Style="width: 100%;" Orientation=Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/newtest" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/test_new.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Új">Új teszt</FluentNavLink>
-            <FluentNavLink Href="/active" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/test_open.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Aktív">Aktív teszt</FluentNavLink>
-            <FluentNavLink Href="/closed" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/test_closed.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Befejezett">Befejezett teszt</FluentNavLink>
-            <FluentNavLink Href="/draft" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/test_draft.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Piszkozat">Piszkozat teszt</FluentNavLink>
-            <FluentNavLink Href="/usermanagment">Manage_User</FluentNavLink>
-            @*<FluentNavLink Href="/question" Match="NavLinkMatch.All" Icon="@Icon.FromImageUrl("/images/subject.svg")" IconColor="Color.Accent" Tooltip="Tantárgy">Tantárgyak</FluentNavLink>*@
-            <FluentDivider Style="width: 100%;" Orientation=Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal Role="DividerRole.Separator"></FluentDivider>
+            <FluentDivider Style="width: 100%;" />
+            <FluentNavItem Href="/newtest" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_new.svg")" Tooltip="Ãšj">Ãšj teszt</FluentNavItem>
+            <FluentNavItem Href="/active" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_open.svg")" Tooltip="AktÃ­v">AktÃ­v teszt</FluentNavItem>
+            <FluentNavItem Href="/closed" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_closed.svg")" Tooltip="Befejezett">Befejezett teszt</FluentNavItem>
+            <FluentNavItem Href="/draft" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_draft.svg")" Tooltip="Piszkozat">Piszkozat teszt</FluentNavItem>
+            <FluentNavItem Href="/usermanagment">Manage_User</FluentNavItem>
+            @*<FluentNavItem Href="/question" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/subject.svg")" Tooltip="TantÃ¡rgy">TantÃ¡rgyak</FluentNavItem>*@
+            <FluentDivider Style="width: 100%;" />
         </AuthorizeView>
         <AuthorizeView Roles="Student">
-            <FluentNavLink Href="/studenttests" Icon="@Icon.FromImageUrl("/images/test_open.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Tesztjeim">Tesztjeim</FluentNavLink>
-            <FluentNavLink Href="/student/testsResult" Icon="@Icon.FromImageUrl("/images/test_closed.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Eredmények">Tesztek eredményei</FluentNavLink>
-            <FluentDivider Style="width: 100%;" Orientation=Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/student/math" Icon="@Icon.FromImageUrl("/images/math-gyak.svg")" IconColor="Microsoft.FluentUI.AspNetCore.Components.Color.Accent" Tooltip="Matematika gyakorló program">Matematika gyakorló</FluentNavLink>
+            <FluentNavItem Href="/studenttests" IconRest="@Icon.FromImageUrl("/images/test_open.svg")" Tooltip="Tesztjeim">Tesztjeim</FluentNavItem>
+            <FluentNavItem Href="/student/testsResult" IconRest="@Icon.FromImageUrl("/images/test_closed.svg")" Tooltip="EredmÃ©nyek">Tesztek eredmÃ©nyei</FluentNavItem>
+            <FluentDivider Style="width: 100%;" />
+            <FluentNavItem Href="/student/math" IconRest="@Icon.FromImageUrl("/images/math-gyak.svg")" Tooltip="Matematika gyakorlÃ³ program">Matematika gyakorlÃ³</FluentNavItem>
         </AuthorizeView>
-    </FluentNavMenu>
+    </FluentNav>
 </nav>
-
-
