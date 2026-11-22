@@ -58,6 +58,11 @@ else
                                 <option value="Integer">Egész számok műveletei</option>
                                 <option value="Fraction">Törtek</option>
                                 <option value="Units">Mértékegység-váltás</option>
+                                <option value="Rounding">Kerekítés</option>
+                                <option value="Decimal">Tizedes törtek</option>
+                                <option value="Percent">Százalékszámítás</option>
+                                <option value="Equation">Egyenletek</option>
+                                <option value="Template">Saját szöveges feladat</option>
                             </select>
                         </label>
 
@@ -125,6 +130,93 @@ else
                                 <label class="check"><input type="checkbox" @bind="units.IntegerOnly" /> Csak egész eredmény</label>
                                 <p class="hint">Ha az alsó határ -1 és a felső 10 alatti, a számok 10 hatványai lesznek (1, 10, 100, …).</p>
                                 break;
+
+                            case "Rounding":
+                                <div class="ops" role="group" aria-label="Kerekítés helye">
+                                    Kerekítés:
+                                    @foreach (var (place, label) in RoundingPlaces)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@rounding.Places.Contains(place)" @onchange="e => Toggle(rounding.Places, place, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <div class="grid">
+                                    <label>Számok ettől <input type="number" @bind="rounding.From" /></label>
+                                    <label>eddig <input type="number" @bind="rounding.To" /></label>
+                                </div>
+                                <p class="hint">Tizedre/századra kerekítésnél a számok három tizedesjegyet kapnak.</p>
+                                break;
+
+                            case "Decimal":
+                                <div class="ops" role="group" aria-label="Műveletek">
+                                    Műveletek:
+                                    @foreach (var (op, label) in OpLabels)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@decimalForm.Ops.Contains(op)" @onchange="e => Toggle(decimalForm.Ops, op, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <div class="grid">
+                                    <label>Tagok száma <input type="number" min="2" max="4" @bind="decimalForm.Members" /></label>
+                                    <label>Egész rész legfeljebb <input type="number" min="1" @bind="decimalForm.To" /></label>
+                                    <label>Tizedesjegyek <input type="number" min="1" max="3" @bind="decimalForm.Decimals" /></label>
+                                    <label>Szorzó/osztó legfeljebb <input type="number" min="2" max="100" @bind="decimalForm.MaxFactor" /></label>
+                                </div>
+                                <p class="hint">Szorzásnál és osztásnál a második szám egész; az osztás mindig véges tizedes törtet ad.</p>
+                                break;
+
+                            case "Percent":
+                                <div class="ops" role="group" aria-label="Mit kell kiszámolni">
+                                    Kiszámolandó:
+                                    @foreach (var (mode, label) in PercentModes)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@percent.Modes.Contains(mode)" @onchange="e => Toggle(percent.Modes, mode, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <label>Az alap legfeljebb <input type="number" min="100" @bind="percent.MaxBase" /></label>
+                                break;
+
+                            case "Equation":
+                                <div class="ops" role="group" aria-label="Egyenlettípusok">
+                                    Típusok:
+                                    @foreach (var (form, label) in EquationForms)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@equation.Forms.Contains(form)" @onchange="e => Toggle(equation.Forms, form, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <div class="grid">
+                                    <label>Együtthatók legfeljebb <input type="number" min="2" max="50" @bind="equation.MaxCoefficient" /></label>
+                                    <label>Megoldás ettől <input type="number" @bind="equation.MinSolution" /></label>
+                                    <label>eddig <input type="number" @bind="equation.MaxSolution" /></label>
+                                </div>
+                                break;
+
+                            case "Template":
+                                <label class="wide">
+                                    A feladat szövege – a számok helyére írd: {a}, {b}, …
+                                    <textarea rows="3" maxlength="300" @bind="template.Text"></textarea>
+                                </label>
+                                <table class="vars">
+                                    <thead><tr><th>Változó</th><th>Ettől</th><th>Eddig</th><th>Lépésköz</th><th></th></tr></thead>
+                                    <tbody>
+                                        @foreach (var v in templateVars)
+                                        {
+                                            <tr>
+                                                <td><input class="name" maxlength="1" @bind="v.Name" aria-label="Változó neve" /></td>
+                                                <td><input type="number" @bind="v.From" aria-label="Ettől" /></td>
+                                                <td><input type="number" @bind="v.To" aria-label="Eddig" /></td>
+                                                <td><input type="number" min="1" @bind="v.Step" aria-label="Lépésköz" /></td>
+                                                <td><button class="btn btn-link btn-sm" @onclick="() => templateVars.Remove(v)">Törlés</button></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="AddVariable" disabled="@(templateVars.Count >= 6)">Új változó</button>
+                                <div class="grid">
+                                    <label>Válasz képlete (pl. c - a*b) <input @bind="template.Formula" /></label>
+                                    <label>Feltétel (nem kötelező, pl. c > a*b) <input @bind="template.Condition" /></label>
+                                    <label>A válasz tizedesjegyei <input type="number" min="0" max="3" @bind="template.Decimals" /></label>
+                                </div>
+                                <p class="hint">0 tizedesjegynél csak egész eredményű számokat sorsol. A képletben csak a változók, számok és + - * / ( ) szerepelhetnek.</p>
+                                break;
                         }
                     </fieldset>
                 }
@@ -186,6 +278,54 @@ else
         public bool NaturalFirst { get; set; }
     }
     private sealed class FractionForm { public int Level { get; set; } = 42; }
+    private sealed class RoundingForm
+    {
+        public List<int> Places { get; set; } = [1];
+        public int From { get; set; } = 1;
+        public int To { get; set; } = 10000;
+    }
+    private sealed class DecimalForm
+    {
+        public List<string> Ops { get; set; } = ["+", "-"];
+        public int Members { get; set; } = 2;
+        public int To { get; set; } = 100;
+        public int Decimals { get; set; } = 1;
+        public int MaxFactor { get; set; } = 9;
+    }
+    private sealed class PercentForm
+    {
+        public List<string> Modes { get; set; } = ["value"];
+        public int MaxBase { get; set; } = 1000;
+    }
+    private sealed class EquationForm
+    {
+        public List<string> Forms { get; set; } = ["ax+b=c"];
+        public int MaxCoefficient { get; set; } = 9;
+        public int MinSolution { get; set; } = 1;
+        public int MaxSolution { get; set; } = 20;
+    }
+    private sealed class TemplateVariable
+    {
+        public int From { get; set; } = 1;
+        public int To { get; set; } = 10;
+        public int Step { get; set; } = 1;
+    }
+    private sealed class TemplateForm
+    {
+        public string Text { get; set; } = string.Empty;
+        public Dictionary<string, TemplateVariable> Variables { get; set; } = new();
+        public string Formula { get; set; } = string.Empty;
+        public string Condition { get; set; } = string.Empty;
+        public int Decimals { get; set; }
+    }
+    /// <summary>Szerkeszthető sor a változótáblában (a név is szerkeszthető, ezért nem szótár).</summary>
+    private sealed class VariableRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public int From { get; set; } = 1;
+        public int To { get; set; } = 10;
+        public int Step { get; set; } = 1;
+    }
     private sealed class UnitsForm
     {
         public string Units { get; set; } = "length";
@@ -198,12 +338,21 @@ else
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly (string Op, string Label)[] OpLabels = [("+", "összeadás"), ("-", "kivonás"), ("*", "szorzás"), ("/", "osztás")];
+    private static readonly (int Place, string Label)[] RoundingPlaces = [(1, "tízesre"), (2, "százasra"), (3, "ezresre"), (4, "tízezresre"), (-1, "tizedre"), (-2, "századra")];
+    private static readonly (string Mode, string Label)[] PercentModes = [("value", "százalékérték"), ("base", "alap"), ("percent", "százalékláb")];
+    private static readonly (string Form, string Label)[] EquationForms = [("ax+b=c", "ax + b = c"), ("ax-b=c", "ax − b = c"), ("a(x+b)=c", "a(x + b) = c"), ("ax+b=cx+d", "ax + b = cx + d")];
 
     private List<TopicEditView>? topics;
     private TopicEditView? edit;
     private ArithmeticForm arithmetic = new();
     private FractionForm fraction = new();
     private UnitsForm units = new();
+    private RoundingForm rounding = new();
+    private DecimalForm decimalForm = new();
+    private PercentForm percent = new();
+    private EquationForm equation = new();
+    private TemplateForm template = new();
+    private List<VariableRow> templateVars = new();
     private List<TopicSampleView> samples = new();
     private string filter = string.Empty, error = string.Empty;
     private bool busy;
@@ -234,6 +383,12 @@ else
         arithmetic = new();
         fraction = new();
         units = new();
+        rounding = new();
+        decimalForm = new();
+        percent = new();
+        equation = new();
+        template = new();
+        templateVars = [new() { Name = "a" }, new() { Name = "b" }];
         error = string.Empty;
         if (edit is null || string.IsNullOrWhiteSpace(edit.GeneratorParams)) return;
         try
@@ -244,6 +399,14 @@ else
                 case "Integer": arithmetic = JsonSerializer.Deserialize<ArithmeticForm>(edit.GeneratorParams, Json) ?? new(); break;
                 case "Fraction": fraction = JsonSerializer.Deserialize<FractionForm>(edit.GeneratorParams, Json) ?? new(); break;
                 case "Units": units = JsonSerializer.Deserialize<UnitsForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Rounding": rounding = JsonSerializer.Deserialize<RoundingForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Decimal": decimalForm = JsonSerializer.Deserialize<DecimalForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Percent": percent = JsonSerializer.Deserialize<PercentForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Equation": equation = JsonSerializer.Deserialize<EquationForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Template":
+                    template = JsonSerializer.Deserialize<TemplateForm>(edit.GeneratorParams, Json) ?? new();
+                    templateVars = [.. template.Variables.Select(kv => new VariableRow { Name = kv.Key, From = kv.Value.From, To = kv.Value.To, Step = kv.Value.Step })];
+                    break;
             }
         }
         catch (JsonException)
@@ -259,10 +422,18 @@ else
         samples.Clear();
     }
 
-    private void ToggleOp(string op, bool on)
+    private void ToggleOp(string op, bool on) => Toggle(arithmetic.Ops, op, on);
+
+    private static void Toggle<T>(List<T> list, T item, bool on)
     {
-        if (on && !arithmetic.Ops.Contains(op)) arithmetic.Ops.Add(op);
-        if (!on) arithmetic.Ops.Remove(op);
+        if (on && !list.Contains(item)) list.Add(item);
+        if (!on) list.Remove(item);
+    }
+
+    private void AddVariable()
+    {
+        var free = "abcdefghijklmnopqrstuvwxyz".Select(c => c.ToString()).FirstOrDefault(n => templateVars.All(v => v.Name != n)) ?? "z";
+        templateVars.Add(new() { Name = free });
     }
 
     /// <summary>A szerkesztett mezőkből a generátor paraméterei (JSON).</summary>
@@ -271,6 +442,20 @@ else
         "Natural" or "Integer" => JsonSerializer.Serialize(arithmetic, Json),
         "Fraction" => JsonSerializer.Serialize(fraction, Json),
         "Units" => JsonSerializer.Serialize(units, Json),
+        "Rounding" => JsonSerializer.Serialize(rounding, Json),
+        "Decimal" => JsonSerializer.Serialize(decimalForm, Json),
+        "Percent" => JsonSerializer.Serialize(percent, Json),
+        "Equation" => JsonSerializer.Serialize(equation, Json),
+        "Template" => JsonSerializer.Serialize(new TemplateForm
+        {
+            Text = template.Text,
+            Formula = template.Formula,
+            Condition = template.Condition,
+            Decimals = template.Decimals,
+            // Azonos nevű sorok közül az első számít; a szerver ellenőrzi, hogy a szöveg minden változója meg van-e adva.
+            Variables = templateVars.Where(v => !string.IsNullOrWhiteSpace(v.Name)).GroupBy(v => v.Name.Trim().ToLowerInvariant())
+                .ToDictionary(g => g.Key, g => new TemplateVariable { From = g.First().From, To = g.First().To, Step = Math.Max(1, g.First().Step) }),
+        }, Json),
         _ => string.Empty,
     };
 
