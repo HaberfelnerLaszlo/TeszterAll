@@ -6,7 +6,12 @@
 @inject ClientSignalsTracker signals
 @inject IToastService toastService
 
+<HeadContent>
+    <meta name="description" content="@PracticeNotice.MetaDescription" />
+</HeadContent>
+
 <h3>Időre menő kihívás</h3>
+<PracticeNotice Compact="true" />
 
 @switch (state)
 {

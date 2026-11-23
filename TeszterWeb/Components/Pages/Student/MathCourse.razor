@@ -9,7 +9,12 @@
 @inject IToastService toastService
 @inject ILogger<MathCourse> _logger
 
+<HeadContent>
+    <meta name="description" content="@PracticeNotice.MetaDescription" />
+</HeadContent>
+
 <h3>Kitűzött matematika feladat</h3>
+<PracticeNotice />
 <FluentAnchorButton Href="/student/challenge" Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Class="challengeLink">Időre menő kihívás</FluentAnchorButton>
 @foreach (var cc in classChallenges)
 {
