@@ -104,3 +104,22 @@
 .qview-text {
     padding: var(--spacingVerticalXS) 0;
 }
+
+/* Matek-feladat szöveges tartaléka: ha a TeX-képszolgáltatás nem érhető el, az API a képlet forrását
+   <span class="tex-fallback">-ben küldi. Globális szabály, mert a MarkupString tartalma nem kapja meg a
+   komponens hatókörös (scoped) CSS-attribútumát. */
+.tex-fallback {
+    display: inline-block;
+    margin: 0 5px;
+    padding: 2px 8px;
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    font-size: 0.9em;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+    color: var(--colorNeutralForeground1, #242424);
+    background-color: var(--colorNeutralBackground3, #f5f5f5);
+    border: 1px dashed var(--colorNeutralStroke1, #d1d1d1);
+    border-radius: var(--borderRadiusMedium, 4px);
+}
