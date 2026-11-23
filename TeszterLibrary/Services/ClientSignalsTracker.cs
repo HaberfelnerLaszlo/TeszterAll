@@ -9,7 +9,7 @@ namespace TeszterLibrary.Services
 	/// A böngészőoldali jelfigyelő (wwwroot/JS/clientSignals.js) C# burkolója. Minden hiba csendben elnyelődik: a jelek
 	/// csak kiegészítők, hiányuk sosem akadályozhatja a gyakorlást (pl. megszakadt kapcsolat, előrenderelés, tesztek).
 	/// </summary>
-	public sealed class ClientSignalsTracker(IJSRuntime js, ILogger<ClientSignalsTracker> logger) : IAsyncDisposable
+	public sealed class ClientSignalsTracker(IJSRuntime js, ILogger<ClientSignalsTracker> logger) : IAsyncDisposable, IDisposable
 	{
 		public const string ModulePath = "./_content/TeszterLibrary/JS/clientSignals.js";
 
@@ -46,6 +46,12 @@ namespace TeszterLibrary.Services
 
 		private static bool IsInteropFailure(Exception e) =>
 			e is JSException or JSDisconnectedException or InvalidOperationException or TaskCanceledException or OperationCanceledException;
+
+		/// <summary>
+		/// Szinkron lezárásnál (pl. tesztkörnyezet) a JS-modult nem lehet felszabadítani; a böngésző oldal bezárásakor
+		/// úgyis eltűnik. A DI-konténer így szinkron és aszinkron lezárással is működik.
+		/// </summary>
+		public void Dispose() => _module = null;
 
 		public async ValueTask DisposeAsync()
 		{

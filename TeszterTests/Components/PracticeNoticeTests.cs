@@ -42,6 +42,40 @@ namespace TeszterTests.Components
 		}
 
 		[Fact]
+		public void Understood_button_collapses_the_notice_and_remembers_it()
+		{
+			JSInterop.Mode = JSRuntimeMode.Strict;
+			var module = JSInterop.SetupModule(PracticeNotice.ModulePath);
+			module.Setup<bool>("isDismissed").SetResult(false);
+			var saved = module.SetupVoid("setDismissed", _ => true);
+			saved.SetVoidResult();
+
+			var cut = Render<PracticeNotice>();
+			cut.FindAll("fluent-button").Single(b => b.TextContent.Contains("Megértettem")).Click();
+
+			Assert.Empty(cut.FindAll("aside.practiceNotice"));
+			Assert.Contains("Tájékoztató a gyakorlásról", cut.Find("button.noticeToggle").TextContent);
+			Assert.Equal(true, saved.Invocations.Single().Arguments[0]);
+
+			// Újra megnyitható (az átláthatóság miatt nem tűnik el végleg).
+			cut.Find("button.noticeToggle").Click();
+			Assert.Single(cut.FindAll("aside.practiceNotice"));
+			Assert.Equal(false, saved.Invocations.Last().Arguments[0]);
+		}
+
+		[Fact]
+		public void A_previously_dismissed_notice_starts_collapsed()
+		{
+			JSInterop.Mode = JSRuntimeMode.Strict;
+			var module = JSInterop.SetupModule(PracticeNotice.ModulePath);
+			module.Setup<bool>("isDismissed").SetResult(true);
+
+			var cut = Render<PracticeNotice>();
+			cut.WaitForAssertion(() => Assert.Single(cut.FindAll("button.noticeToggle")));
+			Assert.Empty(cut.FindAll("aside.practiceNotice"));
+		}
+
+		[Fact]
 		public void Privacy_page_lists_what_is_and_is_not_collected()
 		{
 			var cut = Render<PracticePrivacy>();

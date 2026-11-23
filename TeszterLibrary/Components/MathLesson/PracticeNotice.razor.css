@@ -26,3 +26,18 @@
     color: var(--colorNeutralForeground2);
     font-size: .9rem;
 }
+
+.noticeActions {
+    margin-top: 8px;
+}
+
+.noticeToggle {
+    margin: 4px 0 10px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--colorBrandForeground1);
+    font-size: .85rem;
+    cursor: pointer;
+    text-decoration: underline;
+}

@@ -34,7 +34,6 @@
 }
 @if (currentOperation is not null && currentOperation.OperationId != 0)
 {
-    <p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
     <MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction" />
     @if (IsChecked && taskRecive.Score > 0)
     {
