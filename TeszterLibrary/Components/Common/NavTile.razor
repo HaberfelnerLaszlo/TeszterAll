@@ -1,0 +1,18 @@
+@* Kezdőlapi gyors-elérés csempe: ikon + cím + rövid leírás, teljes felületen kattintható link. *@
+<a class="nav-tile" href="@Href">
+    <span class="nav-tile__icon"><FluentIcon Value="@Icon" Color="Color.Primary" /></span>
+    <span class="nav-tile__text">
+        <FluentText Weight="TextWeight.Semibold">@Title</FluentText>
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <FluentText Size="TextSize.Size200" Class="nav-tile__desc">@Description</FluentText>
+        }
+    </span>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Description { get; set; }
+    [Parameter, EditorRequired] public Icon Icon { get; set; } = default!;
+}

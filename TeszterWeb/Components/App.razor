@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -15,7 +15,7 @@
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
-<body>
+<body data-theme="light">   @* Alapértelmezés: világos téma. A fejléc téma-váltója (ThemeToggle) a felhasználó választását localStorage-ban tárolja, és az felülírja ezt az alapértéket. *@
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>

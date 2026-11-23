@@ -1,0 +1,30 @@
+@* Világos/sötét mód váltó. A választást a Fluent UI ThemeService a böngésző localStorage-ában tárolja;
+   ha nincs tárolt választás, a <body data-theme> alapértéke (világos) érvényes. *@
+@inject IThemeService ThemeService
+@inject IJSRuntime JS
+
+<FluentButton Appearance="ButtonAppearance.Subtle"
+              IconStart="@(isDark ? new Icons.Regular.Size20.WeatherSunny() : new Icons.Regular.Size20.WeatherMoon())"
+              Title="@(isDark ? "Világos mód" : "Sötét mód")"
+              aria-label="@(isDark ? "Váltás világos módra" : "Váltás sötét módra")"
+              OnClick="ToggleAsync" />
+
+@code {
+    private bool isDark;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // A Fluent UI sötét módban data-theme="dark"-ot tesz a <body>-ra, világosban leveszi – ez a ténylegesen alkalmazott állapot.
+            isDark = await JS.InvokeAsync<string?>("document.body.getAttribute", "data-theme") == "dark";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleAsync()
+    {
+        await ThemeService.SetThemeAsync(isDark ? ThemeMode.Light : ThemeMode.Dark);
+        isDark = !isDark;
+    }
+}

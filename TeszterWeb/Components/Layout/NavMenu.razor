@@ -1,23 +1,51 @@
 @rendermode InteractiveServer
+@using Microsoft.Identity.Web
 
-<nav>
-    <FluentNav Width="250px" aria-label="Teszter menü">
-        <FluentNavItem Href="/home" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/home.svg")">Kezdőlap</FluentNavItem>
+@* Csoportosított főmenü. A kezdőlap csempéi ugyanezt a szerkezetet követik (Home.razor). *@
+<nav aria-label="Teszter menü">
+    <FluentNav Width="260px" UseIcons="true">
+        <FluentNavItem Href="/home" Match="NavLinkMatch.All" IconRest="@(new Icons.Regular.Size20.Home())" IconActive="@(new Icons.Filled.Size20.Home())">Kezdőlap</FluentNavItem>
+
         <AuthorizeView Roles="Teacher">
-            <FluentDivider Style="width: 100%;" />
-            <FluentNavItem Href="/newtest" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_new.svg")" Tooltip="Új">Új teszt</FluentNavItem>
-            <FluentNavItem Href="/active" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_open.svg")" Tooltip="Aktív">Aktív teszt</FluentNavItem>
-            <FluentNavItem Href="/closed" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_closed.svg")" Tooltip="Befejezett">Befejezett teszt</FluentNavItem>
-            <FluentNavItem Href="/draft" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/test_draft.svg")" Tooltip="Piszkozat">Piszkozat teszt</FluentNavItem>
-            <FluentNavItem Href="/usermanagment">Manage_User</FluentNavItem>
-            @*<FluentNavItem Href="/question" Match="NavLinkMatch.All" IconRest="@Icon.FromImageUrl("/images/subject.svg")" Tooltip="Tantárgy">Tantárgyak</FluentNavItem>*@
-            <FluentDivider Style="width: 100%;" />
+            <FluentNavCategory Title="Tesztek" IconRest="@(new Icons.Regular.Size20.DocumentBulletList())" Expanded="true">
+                <FluentNavItem Href="/newtest_w" IconRest="@(new Icons.Regular.Size20.DocumentAdd())">Új teszt</FluentNavItem>
+                <FluentNavItem Href="/draft" IconRest="@(new Icons.Regular.Size20.DocumentEdit())">Piszkozatok</FluentNavItem>
+                <FluentNavItem Href="/active" IconRest="@(new Icons.Regular.Size20.DocumentQueue())">Aktív tesztek</FluentNavItem>
+                <FluentNavItem Href="/closed" IconRest="@(new Icons.Regular.Size20.DocumentCheckmark())">Befejezett tesztek</FluentNavItem>
+                <FluentNavItem Href="@QuestionHref(context)" IconRest="@(new Icons.Regular.Size20.BookQuestionMark())">Kérdésbank</FluentNavItem>
+                <FluentNavItem Href="/subject" IconRest="@(new Icons.Regular.Size20.Library())">Tantárgyak</FluentNavItem>
+            </FluentNavCategory>
+            <FluentNavCategory Title="Matek gyakorlás" IconRest="@(new Icons.Regular.Size20.BookOpen())">
+                <FluentNavItem Href="/AddClassCourse" IconRest="@(new Icons.Regular.Size20.PeopleTeam())">Osztálynak</FluentNavItem>
+                <FluentNavItem Href="/AddCourse" IconRest="@(new Icons.Regular.Size20.PersonCircle())">Tanulónak</FluentNavItem>
+                <FluentNavItem Href="/teacher/class-lesson" IconRest="@(new Icons.Regular.Size20.PersonBoard())">Órai nézet</FluentNavItem>
+                <FluentNavItem Href="/ClassResult" IconRest="@(new Icons.Regular.Size20.ChartMultiple())">Eredmények</FluentNavItem>
+                <FluentNavItem Href="/TaskList" IconRest="@(new Icons.Regular.Size20.TextBulletListSquareEdit())">Témák szerkesztése</FluentNavItem>
+            </FluentNavCategory>
+            <FluentNavCategory Title="Pontok és feladatok" IconRest="@(new Icons.Regular.Size20.Trophy())">
+                <FluentNavItem Href="/feladat/tanulokpont" IconRest="@(new Icons.Regular.Size20.Trophy())">Tanulók pontjai</FluentNavItem>
+                <FluentNavItem Href="/feladat/upload" IconRest="@(new Icons.Regular.Size20.ArrowUpload())">Feladat feltöltése</FluentNavItem>
+                <FluentNavItem Href="/teacher/add-assignment" IconRest="@(new Icons.Regular.Size20.ClipboardTaskListLtr())">Feladat kiadása</FluentNavItem>
+            </FluentNavCategory>
+            <FluentNavSectionHeader Title="Adminisztráció" />
+            <FluentNavItem Href="/usermanagment" IconRest="@(new Icons.Regular.Size20.PeopleSettings())">Felhasználók</FluentNavItem>
         </AuthorizeView>
+
         <AuthorizeView Roles="Student">
-            <FluentNavItem Href="/studenttests" IconRest="@Icon.FromImageUrl("/images/test_open.svg")" Tooltip="Tesztjeim">Tesztjeim</FluentNavItem>
-            <FluentNavItem Href="/student/testsResult" IconRest="@Icon.FromImageUrl("/images/test_closed.svg")" Tooltip="Eredmények">Tesztek eredményei</FluentNavItem>
-            <FluentDivider Style="width: 100%;" />
-            <FluentNavItem Href="/student/math" IconRest="@Icon.FromImageUrl("/images/math-gyak.svg")" Tooltip="Matematika gyakorló program">Matematika gyakorló</FluentNavItem>
+            <FluentNavSectionHeader Title="Tesztek" />
+            <FluentNavItem Href="/studentTests" IconRest="@(new Icons.Regular.Size20.ClipboardTaskListLtr())">Tesztjeim</FluentNavItem>
+            <FluentNavItem Href="/student/testsResult" IconRest="@(new Icons.Regular.Size20.DataBarVertical())">Eredményeim</FluentNavItem>
+            <FluentNavSectionHeader Title="Gyakorlás" />
+            <FluentNavItem Href="/student/Math" IconRest="@(new Icons.Regular.Size20.BookOpen())">Matematika gyakorló</FluentNavItem>
         </AuthorizeView>
     </FluentNav>
 </nav>
+
+@code {
+    // A kérdésbank a saját kérdéseket mutatja (/Question/{azonosító}); azonosító nélkül az összeset.
+    private static string QuestionHref(AuthenticationState context)
+    {
+        var oid = context.User.GetObjectId();
+        return string.IsNullOrEmpty(oid) ? "/Question" : $"/Question/{oid}";
+    }
+}

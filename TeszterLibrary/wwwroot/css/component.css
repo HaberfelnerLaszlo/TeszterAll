@@ -1,51 +1,46 @@
-﻿.testcard {
+/* TeszterLibrary közös stílusok – csak Fluent design tokenekkel (világos és sötét módban is működik).
+   Globális elem-szelektorokat (button, textarea…) szándékosan nem írunk felül: azok a Fluent vezérlőket rontanák el. */
+
+.testcard {
     width: 45%;
-    background-color: lemonchiffon;
+    background-color: var(--colorNeutralBackground1);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
     position: relative;
-    margin: 5px;
-    padding: 5px;
+    margin: var(--spacingVerticalXS);
+    padding: var(--spacingVerticalS);
 }
-textarea {
-    padding-right: 0px;
-    margin: 10px;
-    text-align: left;
-    font-size: 20px;
-    background: linear-gradient(#f1e4e4 0%, white), var(--bs-gray-200);
-    box-shadow: 3px 2px rgb(75,36,231);
-    max-width: 100%;
-    min-width: 90%;
-    margin-left: 5%;
-}
+
 .container {
-    margin: 10px;
+    margin: var(--spacingVerticalS);
 }
+
 .testsign {
     position: absolute;
-    top: 0px;
+    top: 0;
     left: 75%;
     width: 25%;
 }
+
+/* Válaszlehetőség doboz a teszt- és feladatnézetekben */
 .answer {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    border-radius: 10px;
-    background: rgba(150,239,223,0.31);
-    border-color: rgb(8,42,77);
-    box-shadow: 1px 1px;
-    padding: 10px;
-    line-height: 1;
+    margin: var(--spacingVerticalXS) 0;
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorBrandBackground2);
+    color: var(--colorNeutralForeground1);
+    box-shadow: var(--shadow2);
+    padding: var(--spacingVerticalM) var(--spacingHorizontalM);
+    line-height: var(--lineHeightBase300);
 }
+
 #answers {
     margin-left: 7%;
     margin-right: 7%;
     text-align: left;
 }
-button {
-    margin: 0 10px;
-}
 
 .box {
-    margin-right: 5px;
-    margin-left: 5px;
+    margin-right: var(--spacingHorizontalXS);
+    margin-left: var(--spacingHorizontalXS);
 }
-

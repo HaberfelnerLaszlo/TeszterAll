@@ -1,0 +1,18 @@
+@* Üres lista / nincs adat állapot ikonnal, üzenettel és opcionális akcióval. *@
+<div class="empty-state" role="status">
+    <FluentIcon Value="@(Icon ?? new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.Document())" Color="Color.Disabled" />
+    <FluentText Size="TextSize.Size500" Weight="TextWeight.Semibold">@Title</FluentText>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <FluentText Class="empty-state__msg">@Message</FluentText>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Nincs megjeleníthető adat";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public Icon? Icon { get; set; }
+    /// <summary>Akciógomb(ok), pl. „Új teszt”.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

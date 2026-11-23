@@ -1,0 +1,21 @@
+@* Egységes oldalfejléc: cím (+ böngészőfül címe), opcionális leírás és jobb oldali akciók. *@
+<PageTitle>@Title – Teszter</PageTitle>
+<header class="page-header">
+    <div class="page-header__text">
+        <FluentText As="TextTag.H1" Size="TextSize.Size700" Weight="TextWeight.Semibold">@Title</FluentText>
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <FluentText As="TextTag.Paragraph" Size="TextSize.Size300" Class="page-header__desc">@Description</FluentText>
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="page-header__actions">@Actions</div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}
