@@ -1,31 +1,33 @@
 ﻿@page "/Closed"
 @inject GlobalData data
 @inject NavigationManager navi
+@inject GraphService gService
 @inject TestServices tService
 @inject TestQuestionServices tqService
-@if (noError)
+<PageHeader Title="Befejezett tesztek" Description="Lezárt tesztek, kitöltési adatok és kiértékelés." />
+
+@if (loading)
 {
-    @if (tests is null)
-    {
-        <p>Tesztek betöltése folyamatban...</p>
-        <Waiting />
-    }
-    else
-    {
-        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalAlignment="HorizontalAlignment.Center">
-            @foreach (var item in tests)
-            {
-                <FluentCard Width="48%" Style="min-width:400px">
-                    <ClosedTestCard TestItem="item" Result="TestResult" />
-                </FluentCard>
-            }
-        </FluentStack>
-    }
+    <LoadingState Text="Tesztek betöltése..." />
+}
+else if (!noError)
+{
+    <FluentMessageBar Intent="MessageBarIntent.Error">@errorMessage</FluentMessageBar>
+}
+else if (tests is { Count: > 0 })
+{
+    <div class="card-grid card-grid--wide">
+        @foreach (var item in tests)
+        {
+            <ClosedTestCard TestItem="item" Result="TestResult" />
+        }
+    </div>
 }
 else
 {
-    <FluentText As="TextTag.H4" Size="TextSize.Size500" Weight="TextWeight.Semibold" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Error">@errorMessage</FluentText>
+    <EmptyState Title="Még nincs befejezett teszt" Message="A lezárt tesztek eredményei itt jelennek meg." Icon="@(new Icons.Regular.Size24.DocumentCheckmark())" />
 }
+
 @code {
     List<TestResultToTeacher>? tests = new();
     bool noError = true;
@@ -33,12 +35,25 @@ else
 
     protected override void OnParametersSet()
     {
-        data.Title = "Lezárt tesztek";
+        data.Title = "Befejezett tesztek";
         StateHasChanged();
         base.OnParametersSet();
     }
+    bool loading = true;   // amíg az első betöltés tart, LoadingState látszik
+
     protected override async Task OnInitializedAsync()
     {
+        try { await LoadAsync(); }
+        finally { loading = false; }
+    }
+
+    private async Task LoadAsync()
+    {
+        // Közvetlen betöltéskor/frissítéskor a GlobalData még üres: lekérjük a felhasználót (mint a DraftTest).
+        if (string.IsNullOrEmpty(data.UserId) && await gService.GetMe() is { } me)
+        {
+            data.UserId = me.Id.ToString();
+        }
         if (data.UserGuid is not Guid userGuid)
         {
             noError = false;

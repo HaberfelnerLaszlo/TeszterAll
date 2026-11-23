@@ -1,44 +1,23 @@
-﻿<FluentCard Style="max-width:400px;">
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
-            <h3>
-                @TestResult.Title
-            </h3>
-        </FluentStack>
-        <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestResult.IsPractice)" Color="Color.Primary" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestResult.IsTimer)" Color="Color.Primary" />
-        </FluentStack>
-    </FluentStack>
-    <FluentGrid>
-        <FluentGridItem Xs="12" Sm="6">
-            <FluentStack Orientation="Orientation.Vertical">
-                <FluentText Block="true">
-                    Tantárgy: @TestResult.Subject
-                </FluentText>
-                <FluentText Block="true">
-                    Teszt lezárult: @TestResult.EndTime.ToShortDateString()
-                </FluentText>
-            </FluentStack>
-        </FluentGridItem>
-        <FluentGridItem Xs="12" Sm="6">
-            <FluentStack Orientation="Orientation.Vertical">
-                <FluentText Block="true">
-                    Kapott/Összes pont: @TestResult.Score / @TestResult.Summa
-                </FluentText>
-                <FluentText Block="true">
-                    Tesztre fordított idő: @TestResult.Time
-                </FluentText>
-                <FluentText Block="true">
-                    Próbálkozások száma: @TestResult.UserReplaceNumber / @TestResult.TestReplaceNumber
-                </FluentText>
-            </FluentStack>
-        </FluentGridItem>
-        <FluentGridItem Xs="12">
-            <FluentButton OnClick="@(()=>Open.InvokeAsync(TestResult.TestUserId))">Megtekint</FluentButton>
-        </FluentGridItem>
-    </FluentGrid>
-</FluentCard>
+﻿@* Lezárt teszt eredménye (diák). *@
+@using Ic16 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16
+@using Ic20 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20
+<TestCardShell Title="@TestResult.Title" Subject="@TestResult.Subject">
+    <Flags>
+        <TestFlags IsPractice="TestResult.IsPractice" IsTimer="TestResult.IsTimer" />
+    </Flags>
+    <Details>
+        <TestMeta Label="Lezárult" Value="@TestResult.EndTime.ToString("d")" Icon="@(new Ic16.CalendarCheckmark())" />
+        <TestMeta Label="Pontszám" Value="@($"{TestResult.Score} / {TestResult.Summa}")" Icon="@(new Ic16.Trophy())" />
+        <TestMeta Label="Ráfordított idő" Value="@TestResult.Time.ToTime()" Icon="@(new Ic16.Timer())" />
+        <TestMeta Label="Próbálkozások" Value="@($"{TestResult.UserReplaceNumber} / {TestResult.TestReplaceNumber}")" Icon="@(new Ic16.ArrowRepeatAll())" />
+    </Details>
+    <Progress>
+        <FluentProgressBar Min="0" Max="@Math.Max(TestResult.Summa, 1)" Value="@TestResult.Score" />
+    </Progress>
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Ic20.Eye())" OnClick="@(()=>Open.InvokeAsync(TestResult.TestUserId))">Megtekintés</FluentButton>
+    </Actions>
+</TestCardShell>
 @code {
     [Parameter] public TestResultToStudent TestResult { get; set; }= new TestResultToStudent();
     [Parameter] public EventCallback<int> Open { get; set; }

@@ -194,6 +194,11 @@ namespace TeszterTests.Services
             Services.AddScoped<TestServices>();
             Services.AddScoped<TestQuestionServices>();
             Services.AddScoped(_ => new GlobalData { UserId = "nem-guid" });
+            // A ClosedTest üres UserId esetén a Graph-ból kéri le a felhasználót; itt az azonosító nem üres,
+            // így a GraphService nem hívódik – csak a befecskendezéshez kell (a kérések a stubba mennének).
+            Services.AddScoped(_ => new GraphService(
+                new Microsoft.Graph.GraphServiceClient(new HttpClient(http)),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<GraphService>.Instance));
 
             var cut = Render<ClosedTest>();
 

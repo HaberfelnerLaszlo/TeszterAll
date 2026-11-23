@@ -1,6 +1,6 @@
 @* Üres lista / nincs adat állapot ikonnal, üzenettel és opcionális akcióval. *@
 <div class="empty-state" role="status">
-    <FluentIcon Value="@(Icon ?? new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.Document())" Color="Color.Disabled" />
+    <span class="empty-state__icon"><FluentIcon Value="@(Icon ?? new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.Document())" Color="Color.Disabled" /></span>
     <FluentText Size="TextSize.Size500" Weight="TextWeight.Semibold">@Title</FluentText>
     @if (!string.IsNullOrEmpty(Message))
     {

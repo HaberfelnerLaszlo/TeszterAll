@@ -1,46 +1,34 @@
-﻿@if (TestItem is not null)
+﻿@* Aktív teszt kártyája (tanár). *@
+@using Ic16 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16
+@using Ic20 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20
+@if (TestItem is not null)
 {
-        <FluentStack Orientation="Orientation.Horizontal">
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
-                <h3>
-                    @TestItem.Title
-                </h3>
-            </FluentStack>
-            <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" Color="Color.Primary" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" Color="Color.Primary" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" Color="Color.Primary" />
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" Color="Color.Primary" />
-                <FluentBadge Appearance="BadgeAppearance.Ghost" Color="BadgeColor.Brand" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Replay())" Content="@TestItem.ReplaceNumber.ToString()" />
-            </FluentStack>
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Horizontal">
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
-                <p id="date" class="start_date" style="margin: 5px;">
-                    Kezdés időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.StartTime)</strong>
-                </p>
-                <p id="date" class="end_date" style="margin: 5px;">
-                    Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
-                </p>
-            </FluentStack>
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="300px">
-                <p style="padding: 5px;margin-bottom: 0px;">
-                    Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
-                </p>
-                <p style="padding: 5px;margin-bottom: 0px;">
-                    Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
-                </p>
-                <p style="padding: 5px;margin-bottom: 0px;">
-                    Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time.ToTime())</strong>
-                </p>
-            </FluentStack>
-        </FluentStack>
-        <FluentText As="TextTag.H5" Size="TextSize.Size400" Weight="TextWeight.Semibold">
-            <span title="Teszttel készen van" style="color:green;">@TestItem.Ready</span>/
-            <span title="Nem kezdte el a tesztett" style="color:red;">@TestItem.NotActive</span>/
-            <span title="Összes tesztíró"><b> @TestItem.All</b></span>
-        </FluentText>
-        <FluentButton OnClick="@(() => Result.InvokeAsync(TestItem))">Eredmények</FluentButton>
+    <TestCardShell Title="@TestItem.Title" Subject="@TestItem.Subject">
+        <Flags>
+            <TestFlags IsCheck="TestItem.IsCheck" IsPractice="TestItem.IsPractice" IsTimer="TestItem.IsTimer" Shuffle="TestItem.ShuffleQuestion" Replays="TestItem.ReplaceNumber" />
+        </Flags>
+        <Details>
+            <TestMeta Label="Kezdés" Value="@TestItem.StartTime.ToString("d")" Icon="@(new Ic16.CalendarLtr())" />
+            <TestMeta Label="Lezárás" Value="@TestItem.EndTime.ToString("d")" Icon="@(new Ic16.CalendarCheckmark())" />
+            <TestMeta Label="Pontszám" Value="@($"{TestItem.Summa} pont")" Icon="@(new Ic16.Trophy())" />
+            <TestMeta Label="Időtartam" Value="@TestItem.Time.ToTime()" Icon="@(new Ic16.Timer())" />
+        </Details>
+        <Progress>
+            <div class="test-progress">
+                <div class="test-progress__label">
+                    <span>Kitöltötte: <strong>@TestItem.Ready / @TestItem.All</strong> fő</span>
+                    @if (TestItem.NotActive > 0)
+                    {
+                        <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Warning" Content="@($"{TestItem.NotActive} nem kezdte el")" />
+                    }
+                </div>
+                <FluentProgressBar Min="0" Max="@Math.Max(TestItem.All, 1)" Value="@TestItem.Ready" />
+            </div>
+        </Progress>
+        <Actions>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Ic20.ChartMultiple())" OnClick="@(() => Result.InvokeAsync(TestItem))">Eredmények</FluentButton>
+        </Actions>
+    </TestCardShell>
 }
 
 @code{

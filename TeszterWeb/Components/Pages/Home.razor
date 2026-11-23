@@ -116,6 +116,7 @@
     string FirstName => (user?.GivenName ?? user?.DisplayName?.Split(' ').LastOrDefault() ?? string.Empty).Trim();
     protected override async Task OnInitializedAsync()
     {
+        data.Title = "Kezdőlap";
         try
         {
             user = await GraphServiceClient.Education.Me.GetAsync();

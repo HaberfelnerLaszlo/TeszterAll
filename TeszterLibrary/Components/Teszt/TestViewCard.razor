@@ -1,48 +1,29 @@
-﻿@if (TestItem is not null)
+﻿@* Kitölthető teszt kártyája (diák). *@
+@using Ic16 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16
+@using Ic20 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20
+@if (TestItem is not null)
 {
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
-            <h3>
-                @TestItem.Title
-            </h3>
-        </FluentStack>
-        <FluentStack HorizontalAlignment="HorizontalAlignment.End" VerticalAlignment="VerticalAlignment.Top">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Check())" Title="Ellenőrizhető" hidden="@(!TestItem.IsCheck)" Color="Color.Primary" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Title="Gyakorlás" hidden="@(!TestItem.IsPractice)" Color="Color.Primary" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Title="Időkorlátos" hidden="@(!TestItem.IsTimer)" Color="Color.Primary" />
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" Title="Kérdések kverése" hidden="@(!TestItem.ShuffleQuestion)" Color="Color.Primary" />
-        </FluentStack>
-    </FluentStack>
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
-            <p id="date" class="end_date" style="margin: 5px;">
-                Lezárás időpontja:&nbsp;<wbr><strong>@String.Format("{0:d}", TestItem.EndTime)</strong>
-            </p>
-            <p id="date" class="start_date" style="margin: 5px;">
-                Tesztet elvégezte / maximális ismétlések száma:&nbsp;<wbr><strong>@TestItem.UserReplaceNumber / @TestItem.TestReplaceNumber</strong>
-            </p>
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="300px">
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
-            </p>
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
-            </p>
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time.ToTime())</strong>
-            </p>
-        </FluentStack>
-    </FluentStack>
-    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => Start.InvokeAsync(TestItem))">Teszt indítása</FluentButton>
-    if (TestItem.UserReplaceNumber>0)
-    {
-        <FluentButton BackgroundColor="rgba(0,179,0,0.8)" Color="rgba(255,255,255,1)" OnClick="@(() => Results.InvokeAsync(TestItem.TestUserId.ToString()))" Style="margin:5px;">Eredmények</FluentButton>
-    }
+    <TestCardShell Title="@TestItem.Title" Subject="@TestItem.Subject">
+        <Flags>
+            <TestFlags IsCheck="TestItem.IsCheck" IsPractice="TestItem.IsPractice" IsTimer="TestItem.IsTimer" Shuffle="TestItem.ShuffleQuestion" />
+        </Flags>
+        <Details>
+            <TestMeta Label="Határidő" Value="@TestItem.EndTime.ToString("d")" Icon="@(new Ic16.CalendarCheckmark())" />
+            <TestMeta Label="Kitöltések" Value="@($"{TestItem.UserReplaceNumber} / {TestItem.TestReplaceNumber}")" Icon="@(new Ic16.ArrowRepeatAll())" />
+            <TestMeta Label="Pontszám" Value="@($"{TestItem.Summa} pont")" Icon="@(new Ic16.Trophy())" />
+            <TestMeta Label="Időtartam" Value="@TestItem.Time.ToTime()" Icon="@(new Ic16.Timer())" />
+        </Details>
+        <Actions>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Ic20.Play())" OnClick="@(() => Start.InvokeAsync(TestItem))">Teszt indítása</FluentButton>
+            @if (TestItem.UserReplaceNumber > 0)
+            {
+                <FluentButton Appearance="ButtonAppearance.Default" IconStart="@(new Ic20.DataBarVertical())" OnClick="@(() => Results.InvokeAsync(TestItem.TestUserId.ToString()))">Eredmények</FluentButton>
+            }
+        </Actions>
+    </TestCardShell>
 }
 @code {
     [Parameter] public TestView TestItem { get; set; } = new();
     [Parameter] public EventCallback<TestView> Start { get; set; }
-[Parameter] public EventCallback<string> Results { get; set; }
-
+    [Parameter] public EventCallback<string> Results { get; set; }
 }

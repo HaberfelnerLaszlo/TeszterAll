@@ -4,17 +4,31 @@
 @inject NavigationManager navi
 @inject GlobalData data
 @inject IToastService toastService
-@if (tests is not null && tests.Count > 0)
+<PageHeader Title="Piszkozatok" Description="Elkészült, de még közzé nem tett tesztek. Innen szerkesztheted vagy kiadhatod őket.">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.DocumentAdd())" OnClick="@(() => navi.NavigateTo("newtest_w"))">Új teszt</FluentButton>
+    </Actions>
+</PageHeader>
+
+@if (loading)
 {
-    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+    <LoadingState Text="Piszkozatok betöltése..." />
+}
+else if (tests is { Count: > 0 })
+{
+    <div class="card-grid card-grid--wide">
         @foreach (var item in tests)
         {
             <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="DeleteTest" />
         }
-    </FluentStack>
+    </div>
 }
 else
-{ <FluentText Block="true">@errorMesage</FluentText>}
+{
+    <EmptyState Title="Nincs piszkozat" Message="@(string.IsNullOrEmpty(errorMesage) ? "Készíts új tesztet a varázslóval." : errorMesage)" Icon="@(new Icons.Regular.Size24.DocumentEdit())">
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => navi.NavigateTo("newtest_w"))">Új teszt</FluentButton>
+    </EmptyState>
+}
 
 @code {
     private List<Test>? tests = new();
@@ -23,14 +37,22 @@ else
     string userId = string.Empty, errorMesage = string.Empty;
     protected override void OnParametersSet()
     {
-        data.Title = "Piszkozat tesztek";
+        data.Title = "Piszkozatok";
         StateHasChanged();
         base.OnParametersSet();
     }
 
+    bool loading = true;   // amíg az első betöltés tart, LoadingState látszik
+
     protected override async Task OnInitializedAsync()
     {
-        data.Title = "Piszkozat tesztek";
+        try { await LoadAsync(); }
+        finally { loading = false; }
+    }
+
+    private async Task LoadAsync()
+    {
+        data.Title = "Piszkozatok";
         if (String.IsNullOrEmpty(data.UserId))
         {
             var me = await gService.GetMe();
@@ -51,7 +73,6 @@ else
         if (tests is null)
         {
             errorMesage = tService.ErrorMessage;
-            toastService.ShowInfo(tService.ErrorMessage);
         }
         StateHasChanged();
     }

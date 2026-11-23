@@ -1,33 +1,20 @@
-﻿@if (TestItem is not null)
+﻿@* Piszkozat (még nem közzétett) teszt kártyája (tanár). *@
+@using Ic16 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16
+@using Ic20 = Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20
+@if (TestItem is not null)
 {
-    <FluentStack Orientation="Orientation.Horizontal">
-            <h3>
-                @TestItem.Title
-            </h3>
-    </FluentStack>
-    <FluentStack Orientation="Orientation.Horizontal">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Left">
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Tantárgy:&nbsp<wbr><strong>@TestItem.Subject</strong>
-            </p>
-            <p id="date" class="end_date" style="margin: 10px;">
-                Kérdések száma:&nbsp;<wbr><strong>@TestItem.TestQuestions.Count db</strong>
-            </p>
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Right" Width="200px">
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Pontok:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@TestItem.Summa pont</strong>
-            </p>
-            <p style="padding: 5px;margin-bottom: 0px;">
-                Időtartam:&nbsp;<strong style="padding-right: 5px;padding-left: 5px;">@(TestItem.Time.ToTime())</strong>
-            </p>
-        </FluentStack>
-    </FluentStack>
-    <FluentStack>
-        <FluentButton Appearance="ButtonAppearance.Primary" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.SendCopy())" OnClick="@(() => Publish.InvokeAsync(TestItem))">Teszt közzététele</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Primary" BackgroundColor="green" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.DocumentEdit())" OnClick="@(() => Edit.InvokeAsync(TestItem))">Teszt szerkesztése</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Primary" BackgroundColor="red" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())" OnClick="@(() => Delete.InvokeAsync(TestItem))">Teszt törlése</FluentButton>
-    </FluentStack>
+    <TestCardShell Title="@TestItem.Title" Subject="@TestItem.Subject">
+        <Details>
+            <TestMeta Label="Kérdések" Value="@($"{TestItem.TestQuestions.Count} db")" Icon="@(new Ic16.QuestionCircle())" />
+            <TestMeta Label="Pontszám" Value="@($"{TestItem.Summa} pont")" Icon="@(new Ic16.Trophy())" />
+            <TestMeta Label="Időtartam" Value="@TestItem.Time.ToTime()" Icon="@(new Ic16.Timer())" />
+        </Details>
+        <Actions>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Ic20.Send())" OnClick="@(() => Publish.InvokeAsync(TestItem))">Közzététel</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Default" IconStart="@(new Ic20.Edit())" OnClick="@(() => Edit.InvokeAsync(TestItem))">Szerkesztés</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Ic20.Delete())" Title="Teszt törlése" OnClick="@(() => Delete.InvokeAsync(TestItem))">Törlés</FluentButton>
+        </Actions>
+    </TestCardShell>
 }
 @code {
     [Parameter] public Test TestItem { get; set; } = new();
