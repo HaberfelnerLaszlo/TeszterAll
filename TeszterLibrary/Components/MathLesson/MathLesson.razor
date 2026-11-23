@@ -11,7 +11,7 @@
     {
         if (item.Contains(" = "))
         {
-            <span>@SafeHtml.Markup(item) </span>
+            <span>@SafeHtml.MarkupWithSvg(item) </span>
             @if (Fraction)
             {
                 <div class="fraction">
@@ -29,7 +29,7 @@
         }
         else
         {
-            @SafeHtml.Markup(item)
+            @SafeHtml.MarkupWithSvg(item)
         }
     }
     @if (IsChecked)

@@ -55,6 +55,80 @@ namespace TeszterTests.Services.Html
         }
 
         [Fact]
+        public void Math_sequence_svg_is_kept_by_the_svg_variant_but_not_by_the_default()
+        {
+            const string svg = "<svg width=\"120\" height=\"30\" viewBox=\"0 0 120 30\"><text x=\"0\" y=\"20\" font-size=\"16\">3 km</text>"
+                + "<line x1=\"0\" y1=\"25\" x2=\"40\" y2=\"25\" stroke=\"black\" stroke-width=\"2\"></line></svg>";
+
+            var kept = SafeHtml.SanitizeWithSvg(svg);
+
+            Assert.Contains("<svg", kept);
+            Assert.Contains("3 km", kept);
+            Assert.Contains("<line", kept);
+            Assert.Contains("viewBox", kept, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("3 km", SafeHtml.Sanitize(svg));   // a kérdésszövegek szűrése nem lazult
+        }
+
+        [Fact]
+        public void MathJax_svg_glyph_definitions_and_references_are_kept()
+        {
+            // A MathJax SVG-kimenete: a betűjelek <defs>-ben, a rajz <use xlink:href="#MJX-..."/>-val hivatkozik rájuk.
+            const string svg = "<svg width=\"4.414ex\" height=\"2.176ex\" viewBox=\"0 -791.3 1900.5 936.9\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
+                + "<defs><path id=\"MJX-1-TEX-N-31\" d=\"M213 578L200 573Q186 568 160 563\"></path></defs>"
+                + "<title>1 km</title><g stroke=\"currentColor\" fill=\"currentColor\" transform=\"matrix(1 0 0 -1 0 0)\">"
+                + "<g data-mml-node=\"mn\"><use data-c=\"31\" xlink:href=\"#MJX-1-TEX-N-31\"></use></g></g></svg>";
+
+            var kept = SafeHtml.SanitizeWithSvg(svg);
+
+            Assert.Contains("id=\"tsvg-MJX-1-TEX-N-31\"", kept);
+            Assert.Contains("d=\"M213 578L200 573Q186 568 160 563\"", kept);
+            Assert.Contains("<use", kept);
+            Assert.Contains("href=\"#tsvg-MJX-1-TEX-N-31\"", kept);
+        }
+
+        [Fact]
+        public void MathJax2_svg_glyphs_are_kept_with_prefixed_ids()
+        {
+            // MathJax 2 SVG-kimenete (a valódi adat ilyen): id="E1-MJMAIN-31", <use xlink:href="#E1-MJMAIN-31">.
+            const string svg = "<svg width=\"9.893ex\" height=\"2.176ex\" viewBox=\"0 -791.3 4259.5 936.9\"><title>10000 mm</title>"
+                + "<defs><path stroke-width=\"1\" id=\"E1-MJMAIN-31\" d=\"M213 578L200 573Z\"></path>"
+                + "<path stroke-width=\"1\" id=\"E1-MJMATHI-6D\" d=\"M21 287Q22 293 24 303Z\"></path></defs>"
+                + "<g stroke=\"currentColor\" fill=\"currentColor\" transform=\"matrix(1 0 0 -1 0 0)\">"
+                + "<use xlink:href=\"#E1-MJMAIN-31\"></use><use xlink:href=\"#E1-MJMATHI-6D\" x=\"500\" y=\"0\"></use></g></svg>";
+
+            var kept = SafeHtml.SanitizeWithSvg(svg);
+
+            Assert.Contains("id=\"tsvg-E1-MJMAIN-31\"", kept);
+            Assert.Contains("id=\"tsvg-E1-MJMATHI-6D\"", kept);
+            Assert.Contains("href=\"#tsvg-E1-MJMAIN-31\"", kept);
+            Assert.Contains("href=\"#tsvg-E1-MJMATHI-6D\"", kept);
+        }
+
+        [Fact]
+        public void Ids_outside_svg_are_removed_and_svg_ids_cannot_take_page_names()
+        {
+            Assert.DoesNotContain("id=", SafeHtml.SanitizeWithSvg("<p id=\"getElementById\">x</p>"));
+            Assert.DoesNotContain("id=\"getElementById\"", SafeHtml.SanitizeWithSvg("<svg><text id=\"getElementById\">x</text></svg>"));
+        }
+
+        [Theory]
+        [InlineData("<svg><use xlink:href=\"https://evil.test/x.svg#MJX-1\"></use></svg>", "evil.test")]
+        [InlineData("<svg><use xlink:href=\"javascript:alert(1)\"></use></svg>", "javascript")]
+        [InlineData("<svg><script>alert(1)</script></svg>", "script")]
+        [InlineData("<svg onload=\"alert(1)\"><text>x</text></svg>", "onload")]
+        [InlineData("<svg><a href=\"javascript:alert(1)\"><text>x</text></a></svg>", "javascript")]
+        [InlineData("<svg><foreignObject><img src=x onerror=alert(1)></foreignObject></svg>", "onerror")]
+        [InlineData("<svg><use href=\"https://evil.test/x.svg#a\"></use></svg>", "evil.test")]
+        [InlineData("<svg><image href=\"https://evil.test/x.png\"></image></svg>", "evil.test")]
+        [InlineData("<svg><rect fill=\"url(https://evil.test/x.svg#a)\"></rect></svg>", "evil.test")]
+        [InlineData("<svg><animate attributeName=\"href\" to=\"javascript:alert(1)\"></animate></svg>", "javascript")]
+        [InlineData("<svg><style>@import url(https://evil.test/x.css)</style></svg>", "evil.test")]
+        public void Dangerous_svg_is_removed_by_the_svg_variant(string html, string forbidden)
+        {
+            Assert.DoesNotContain(forbidden, SafeHtml.SanitizeWithSvg(html), StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void Inline_colour_survives_in_normalised_form()
         {
             var result = SafeHtml.Sanitize("<p><span style=\"color: red\">piros</span></p>");
