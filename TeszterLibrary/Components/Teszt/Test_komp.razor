@@ -1,7 +1,7 @@
 ﻿@inject IDialogService DialogService
 <FluentMultiSplitter Orientation="Orientation.Horizontal">
     <FluentMultiSplitterPane Min="20%">
-        <div style="padding: 10px; border: 1px solid #ccc; margin: 10px;">
+        <div class="komp-panel">
             @SafeHtml.Markup(Texts)
         </div>
     </FluentMultiSplitterPane>
@@ -13,7 +13,7 @@
                     {
                         var seq = answer.Sequence;
                         <FluentTab @key="@seq" Header="@($"{seq}. feladat {answer.Score} pont")" Id="@($"tab-{seq}")" Data="@answer">
-                            <div style="padding: 10px; border: 1px solid #ccc;margin: 10px;">
+                            <div class="komp-panel">
                                 @SafeHtml.Markup(answer.Text)
                             </div>
                         <FluentTextInput @bind-Value="answer.AnswerText" Placeholder="Írd ide a válaszod!" Label="Válaszod"/>
@@ -31,20 +31,7 @@
             }
     </FluentMultiSplitterPane>
 </FluentMultiSplitter>
-<div class="container text-center">
-    @if (IsCheck)
-    {
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
-            Ellenőrzés
-        </FluentButton>
-    }
-    @if (Next.HasDelegate)
-    {
-        <FluentButton OnClick="@(() => Next.InvokeAsync(Answers))">
-            Következő
-        </FluentButton>
-    }
-</div>
+<QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Answers)) : default)" />
 
 @code {
 [Parameter]

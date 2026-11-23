@@ -1,5 +1,5 @@
-﻿.feladat {
-    background-color: white;
+.feladat {
+    background-color: var(--colorNeutralBackground1);
     width: fit-content;
     padding: 10px;
     font-size: 3ex;
@@ -14,19 +14,13 @@ i, svg
     flex-direction:column;
 }
 #right{
-    background-color:green;
+    background-color:var(--colorPaletteGreenBackground3);
 }
 #wrong{
-    background-color:red;
+    background-color:var(--colorPaletteRedBackground3);
 }
-.send {
-    color: floralwhite;
-    background-color: green;
-    padding: 8px;
-    border-radius: 20px;
-    width: 120px;
-    font-size: larger;
-    margin: 0 10px;
+::deep .send {
+    margin: var(--spacingVerticalM) var(--spacingHorizontalS);
 }
 .valasz{
     margin: 0 5px;

@@ -1,36 +1,20 @@
-﻿@if (Answers is not null)
+﻿@* Nyílt végű kérdés: egy (vagy több) szöveges válaszmező. *@
+@if (Answers is not null)
 {
-    <div class="container">
-            @foreach (var answer in Answers)
-            {
-                <FluentTextInput Appearance="TextInputAppearance.FilledDarker" Placeholder="@("Válasz helye...")" Value="@answer.Text" ReadOnly="@(!Next.HasDelegate)" ValueChanged="@((e)=>answer.Text=e)" />
+    <div class="answer-list">
+        @foreach (var a in Answers)
+        {
+            var answer = a;
+            <div class="answer-input">
+                <FluentTextInput Placeholder="Írd ide a válaszod..." Value="@answer.Text" ReadOnly="@(!Next.HasDelegate)" ValueChanged="@((string e) => answer.Text = e)" Width="100%" aria-label="Válasz" />
                 @if (IsChecked)
                 {
-                    if (answer.Result)
-                    {
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
-                    }
-                    else
-                    {
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
-                    }
+                    <AnswerResult Correct="answer.Result" />
                 }
-            }
-    </div>
-    <div class="container text-center">
-        @if (IsCheck)
-        {
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => CallCheck.InvokeAsync(Answers))">
-                Ellenőrzés
-            </FluentButton>
-        }
-        @if (Next.HasDelegate)
-        {
-            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(()=>Next.InvokeAsync(Answers))">
-                Következő
-            </FluentButton>
+            </div>
         }
     </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Answers)) : default)" />
 }
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();

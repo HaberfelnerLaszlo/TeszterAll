@@ -1,76 +1,18 @@
-﻿@if (Answers is not null)
+﻿@* Egy- (radio) és többválaszos (checkbox) kérdés: nagy, érintésbarát válaszkártyák. *@
+@if (Answers is not null)
 {
-    @if (Type.Equals("checkbox"))
-    {
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Wrap="true">
-                @foreach (var answer in Answers)
-                {
-                    <FluentCheckbox @bind-Value="@answer.Sign" ReadOnly="IsChecked" Style="justify-content: center;"><span> @answer.Text</span></FluentCheckbox>
-                    @if (IsChecked)
-                    {
-                        if (answer.Result)
-                        {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
-                        }
-                        else
-                        {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
-                        }
-                    }
-                }
-        </FluentStack>}
-        else
+    var multiple = Type.Equals("checkbox");
+    <div class="answer-list" role="@(multiple ? "group" : "radiogroup")">
+        @foreach (var a in Answers)
         {
-<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Wrap="true">
-    @foreach (var a in Answers)
-    {
-        if (a.Sign)
-        {
-            @if (IsChecked)
-            {
-                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;background-color:@bgColor; text-align:center; font-size:2vw">@a.Text</p>
-                @if (a.Result)
-                {
-                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
-                }
-                else
-                {
-                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
-                }
-            }
-            else
-            {
-                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;background-color:@bgColor; text-align:center; font-size:2vw" @onclick="() => selected(a.AnswerId)">@a.Text</p>
-            }
+            var answer = a;
+            // Egyválaszosnál csak a megjelölt válasz eredményét mutatjuk (mint eddig), többválaszosnál mindet.
+            bool? result = IsChecked && (multiple || answer.Sign) ? answer.Result : null;
+            <AnswerOption Multiple="multiple" Selected="answer.Sign" Disabled="IsChecked" Result="result"
+                          OnClick="@(() => Toggle(answer, multiple))">@answer.Text</AnswerOption>
         }
-        else
-        {
-            @if (IsChecked)
-            {
-                <p class="answer" style="min-width:@(maxLenght)px; width:@(width)%;text-align:center; font-size:2vw">@a.Text</p>
-            }
-            else
-            {
-            <p class="answer" style=" min-width:@(maxLenght)px; width:@(width)%;text-align:center; font-size:2vw " @onclick="() => selected(a.AnswerId)">@a.Text</p>
-             }
-        }
-    }
-</FluentStack>
-        }
-<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="margin:10px">
-    @if (IsCheck)
-    {
-        <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
-            Ellenőrzés
-        </FluentButton>
-    }
-    @if (Next.HasDelegate)
-    {
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>Next.InvokeAsync(Answers))">
-            Következő
-        </FluentButton>
-    }
-</FluentStack>
+    </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Answers)) : default)" />
 }
 @code {
     [Parameter] public string Type { get; set; } = "checkbox";
@@ -79,37 +21,18 @@
     [Parameter] public bool IsChecked { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> Next { get; set; }
     [Parameter] public EventCallback<List<AnswerView>> CallCheck { get; set; }
-    private string bgColor = System.Drawing.Color.GreenYellow.Name;
-    int maxLenght = 0, width=0;
-
-    protected override void OnParametersSet()
+    private void Toggle(AnswerView answer, bool multiple)
     {
-        maxLenght = 0;
+        if (IsChecked) return;
+        if (multiple)
+        {
+            answer.Sign = !answer.Sign;
+            return;
+        }
+        // Egyválaszos: csak a kiválasztott marad megjelölve.
         foreach (var item in Answers)
         {
-            if (item.Text.Length > maxLenght)
-            {
-                maxLenght = item.Text.Length;
-            }
-        }
-        maxLenght = maxLenght * 10;
-        width = (100 / Answers.Count)-5;
-        base.OnParametersSet();
-    }
-    private void selected(int ID)
-    {
-        IsChecked = false;
-        if (bgColor != System.Drawing.Color.GreenYellow.Name)
-        {
-            bgColor = System.Drawing.Color.GreenYellow.Name;
-        }
-        foreach (var item in Answers!)
-        {
-            if (item.AnswerId == ID)
-            {
-                item.Sign = true;
-            }
-            else item.Sign = false;
+            item.Sign = item.AnswerId == answer.AnswerId;
         }
     }
 }

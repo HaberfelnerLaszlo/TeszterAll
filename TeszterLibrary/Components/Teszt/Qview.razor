@@ -4,11 +4,11 @@
     <FluentStack Orientation="Orientation.Horizontal">
         <FluentStack><b>@question.Subject <br /> @question.Title</b></FluentStack>
         <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-            <span class="badge text-bg-primary"><b>@question.Time mp</b></span>
+            <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand" Content="@($"{question.Time} mp")" />
             <FluentBadge Content="@($"{question.Score} pont")" />
         </FluentStack>
     </FluentStack>
-    <p class="p-1">@SafeHtml.Markup(question.Text)</p>
+    <div class="qview-text">@SafeHtml.Markup(question.Text)</div>
 </FluentCard>
 
 @code {

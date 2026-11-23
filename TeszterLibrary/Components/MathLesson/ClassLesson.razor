@@ -1,6 +1,6 @@
 ﻿@using TeszterLibrary.ViewModel;
-<form style="min-width:300px;margin:5px auto;">
-    <h3 style="text-align:center">Mértékegység átváltás</h3>
+<form class="lesson-sheet">
+    <FluentText As="TextTag.H2" Size="TextSize.Size600" Weight="TextWeight.Semibold" Class="lesson-sheet__title">Mértékegység átváltás</FluentText>
     <FluentNumberInput Value="size" TValue="int" ValueChanged="(e)=>SizeChange(e)" Placeholder="Betűméret (ex)" Min="1" Max="10" Step="1" Style="width:80px;margin:auto" Label="Betűméret: " />
     @if (assignments.Count > 0)
     {
@@ -36,18 +36,17 @@
     }
     else
     {
-        <p>Az osztálynak még nem adtak mértékegység átváltás feladatot.</p>
+        <FluentMessageBar Intent="MessageBarIntent.Info">Az osztálynak még nem adtak mértékegység-átváltás feladatot.</FluentMessageBar>
     }
 </form>
-<div style="text-align:center">
+<div class="lesson-actions">
     @if (Send.HasDelegate)
     {
-        <button type="submit" class="btn btn-success send" @onclick="()=>Sending()">Ellenőrzés</button>
-
+        <FluentButton Appearance="ButtonAppearance.Primary" Size="ButtonSize.Large" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CheckmarkCircle())" OnClick="()=>Sending()">Ellenőrzés</FluentButton>
     }
     @if (Next.HasDelegate)
     {
-        <button type="submit" class="btn btn-primary next" @onclick="@(()=>Next.InvokeAsync())">Következő</button>
+        <FluentButton Appearance="ButtonAppearance.Default" Size="ButtonSize.Large" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRight())" OnClick="@(()=>Next.InvokeAsync())">Következő</FluentButton>
     }
 </div>
 @code{

@@ -1,42 +1,17 @@
-﻿
+﻿@* Igaz-hamis: minden állítás egy kártya; a megjelölt állítások az igaznak tartottak. *@
 @if (Answers is not null)
 {
-    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Start">
-        @foreach (var answer in Answers)
+    <FluentText Size="TextSize.Size200" Class="answer-hint">Jelöld meg az igaz állításokat.</FluentText>
+    <div class="answer-list" role="group">
+        @foreach (var a in Answers)
         {
-            <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
-
-                <FluentCheckbox Label="@answer.Text" @bind-Value="answer.Sign" />
-                @if (IsChecked)
-                {
-                    if (answer.Result)
-                    {
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
-                    }
-                    else
-                    {
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
-                    }
-                }
-            </FluentStack>
-        }
-    </FluentStack>
-    <div class="container text-center">
-        @if (IsCheck)
-        {
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
-                Ellenőrzés
-            </FluentButton>
-        }
-        @if (Next.HasDelegate)
-        {
-            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(()=>Next.InvokeAsync(Answers))">
-                Következő
-            </FluentButton>
+            var answer = a;
+            <AnswerOption Multiple="true" Selected="answer.Sign" Disabled="IsChecked" Result="@(IsChecked ? answer.Result : null)"
+                          OnClick="@(() => answer.Sign = !answer.Sign)">@answer.Text</AnswerOption>
         }
     </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Answers)) : default)" />
 }
-
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();
     [Parameter] public bool IsCheck { get; set; }

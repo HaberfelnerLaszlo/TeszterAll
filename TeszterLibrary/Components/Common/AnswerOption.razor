@@ -1,0 +1,33 @@
+@* Nagy, érintésbarát válaszlehetőség kártya (egy- és többválaszos kérdésekhez).
+   Kiválasztva brand keretet kap; ellenőrzés után a helyes/hibás eredményt is mutatja. *@
+<button type="button" class="answer-option @StateClass" role="@(Multiple ? "checkbox" : "radio")" aria-checked="@(Selected ? "true" : "false")"
+        disabled="@Disabled" @onclick="OnClick">
+    <span class="answer-option__indicator @(Multiple ? "is-checkbox" : "is-radio")" aria-hidden="true">
+        @if (Selected)
+        {
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size16.Checkmark())" />
+        }
+    </span>
+    <span class="answer-option__text">@ChildContent</span>
+    @if (Result is bool ok)
+    {
+        <AnswerResult Correct="ok" />
+    }
+</button>
+
+@code {
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Ellenőrzés után a válasz eredménye; null, ha még nincs ellenőrizve.</summary>
+    [Parameter] public bool? Result { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string StateClass => (Selected ? "is-selected " : "") + Result switch
+    {
+        true => "is-correct",
+        false => "is-wrong",
+        _ => "",
+    };
+}

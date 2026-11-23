@@ -17,13 +17,13 @@
 
             .time-section span:last-child {
                 font-size: 1rem;
-                color: #666;
+                color: var(--colorNeutralForeground3);
             }
 </style>
 
 @if (!_renderedOnClient)
 {
-    <h5 class="text-center my-3">@_remaining.ToString("hh\\:mm\\:ss")</h5>
+    <FluentText As="TextTag.H5" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="countdown-text">@_remaining.ToString("hh\\:mm\\:ss")</FluentText>
 }
 else
 {
@@ -57,7 +57,7 @@ else
     }
     else
     {
-        <h2 class="text-center text-white my-3">Lejárt az idő.</h2>
+        <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Lejárt az idő." />
     }
 }
 @code {

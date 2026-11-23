@@ -1,4 +1,4 @@
-@page "/teacher/classchallenge"
+﻿@page "/teacher/classchallenge"
 @implements IDisposable
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
@@ -47,7 +47,7 @@
                     <option value="300">5 perc</option>
                 </select>
             </label>
-            <button class="btn btn-primary" disabled="@busy" @onclick="Start">Indítás</button>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Play())" Disabled="@busy" OnClick="Start">Indítás</FluentButton>
         </div>
         <p class="hint">Indítás után a diákoknak 15 másodpercük van csatlakozni a matek feladatoldalon megjelenő sávból. A rangsor a helyes válaszok száma; ezt az oldalt kivetítheted.</p>
     }
@@ -84,11 +84,11 @@ else
         }
         @if (view.State < 2)
         {
-            <button class="btn btn-outline-danger" @onclick="Stop">Leállítás</button>
+            <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Stop())" OnClick="Stop">Leállítás</FluentButton>
         }
         else
         {
-            <button class="btn btn-primary" @onclick="NewRound">Új kihívás</button>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" OnClick="NewRound">Új kihívás</FluentButton>
         }
     </div>
 }

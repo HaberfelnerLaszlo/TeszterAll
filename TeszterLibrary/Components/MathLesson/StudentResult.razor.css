@@ -1,25 +1,89 @@
-﻿.NameTxt {
-    margin-left: 10px;
-    margin-top: 10px;
-    margin-bottom: 5px;
-    font-size: 22px;
-    font-weight: 700
+.result-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalS);
+    max-width: 760px;
 }
 
-.ScoreBadge {
-    display:inline-flex;
-    border-radius: 10px;
-    margin: 5px
+.result-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacingHorizontalM);
+    width: 100%;
+    padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-left: 6px solid var(--colorPaletteGreenBorder2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+    color: var(--colorNeutralForeground1);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--shadow2);
 }
 
-#StudentResult {
-    border-radius: 10px;
-    border-width: 2px;
-    border-style: solid;
-    height: 70px;
-    margin: 5px 10px;
-    background: linear-gradient(90deg,#54d771 25%,#fff 100%);
-    max-width: 650px;
-    min-width: 300px
+    .result-row:hover {
+        box-shadow: var(--shadow8);
+    }
+
+    .result-row:focus-visible {
+        outline: var(--strokeWidthThick) solid var(--colorStrokeFocus2);
+        outline-offset: 2px;
+    }
+
+    /* Osztálylista: nincs feladatsora / még nem kezdte el */
+    .result-row.notStarted {
+        border-left-color: var(--colorNeutralStroke1);
+        background: var(--colorNeutralBackground2);
+    }
+
+    /* Tanuló feladatai: állapot szerinti sáv */
+    .result-row.status-progress {
+        border-left-color: var(--colorBrandStroke1);
+    }
+
+    .result-row.status-done {
+        border-left-color: var(--colorPaletteGreenBorder2);
+    }
+
+    .result-row.status-failed {
+        border-left-color: var(--colorPaletteRedBorder2);
+    }
+
+    .result-row.status-other {
+        border-left-color: var(--colorNeutralStroke1);
+    }
+
+.result-row__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalXXS);
+    min-width: 0;
 }
 
+.result-row__name {
+    font-size: var(--fontSizeBase400);
+    font-weight: var(--fontWeightSemibold);
+}
+
+.result-row__sub,
+.result-row__date {
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+}
+
+.result-row__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacingVerticalXS);
+}
+
+.result-row__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--spacingHorizontalXS);
+}

@@ -1,36 +1,36 @@
-﻿@foreach (var item in studentViews)
-{
-	<div class="row" style="background:linear-gradient(90deg,@Color(item.Status) 25%,#fff 100%);margin:2px" @onclick="()=>Open(item.CompletTaskId)">
-		<div class="col">
-			<span class="float-start d-sm-flex justify-content-sm-start align-items-sm-center NameTxt"
-				  id="Name">@item.TaskName</span>
-		</div>
-		<div class="col-3 col-sm-4">
-			<div class="row d-flex justify-content-end">
-				<span class="badge bg-success float-end d-sm-flex justify-content-sm-end ScoreBadge" id="Complet">Helyes: @item.Right</span>
-				<span class="badge bg-danger d-inline-flex float-end d-sm-flex justify-content-sm-end ScoreBadge" id="Wrong">Hibás: @item.Wrong</span>
-				<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge" id="NoComplet">Átlag idő: @item.AvgTime mp</span>
-			</div>
-			<div class="row d-flex justify-content-end">
-				<span class="activeDate" id="ActiveDate" style="margin: 5px 10px;margin-bottom: 4px;margin-top: 6px;margin-right: 10px;padding-top: 0px;">
-					@StatusText(item.Status)@(item.Date > DateTime.MinValue ? ": " + item.Date.ToString("yyyy.MM.dd HH:mm") : "")
-				</span>
-			</div>
-		</div>
-	</div>
-}
+﻿@* Egy tanuló feladatai: soronként a feladat, állapotsáv és eredmények. *@
+<div class="result-list">
+    @foreach (var item in studentViews)
+    {
+        var row = item;
+        <button type="button" class="result-row status-@StatusKey(row.Status)" @onclick="() => Open(row.CompletTaskId)">
+            <span class="result-row__main">
+                <span class="result-row__name">@row.TaskName</span>
+                <span class="result-row__sub">@StatusText(row.Status)@(row.Date > DateTime.MinValue ? ": " + row.Date.ToString("yyyy.MM.dd HH:mm") : "")</span>
+            </span>
+            <span class="result-row__meta">
+                <span class="result-row__badges">
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Success" Content="@($"Helyes: {row.Right}")" />
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Danger" Content="@($"Hibás: {row.Wrong}")" />
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Informative" Content="@($"Átlag: {row.AvgTime} mp")" />
+                </span>
+            </span>
+        </button>
+    }
+</div>
 @code {
 	[Parameter] public List<ResultStudentView> studentViews { get; set; } = new();
 	[Parameter] public EventCallback<int> Click { get; set; }
 	private async Task Open(int id) => await Click.InvokeAsync(id);
 
 	// Status: 0 folyamatban, 1 teljesítve, 2 visszalépett, 3 félbehagyta. Régen a félbehagyott is zöld (sikeres) volt.
-	private static string Color(byte status) => status switch
+	// Az állapot színét a CSS adja (status-progress / -done / -failed / -other).
+	private static string StatusKey(byte status) => status switch
 	{
-		0 => "#4da6ff",
-		1 => "#00b700",
-		2 => "#ff4d4d",
-		_ => "#b0b0b0",
+		0 => "progress",
+		1 => "done",
+		2 => "failed",
+		_ => "other",
 	};
 	private static string StatusText(byte status) => status switch
 	{

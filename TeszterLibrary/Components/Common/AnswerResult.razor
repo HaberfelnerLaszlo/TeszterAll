@@ -1,0 +1,13 @@
+@* Ellenőrzés utáni jelzés egy válasz mellett: zöld pipa vagy piros X. *@
+@if (Correct)
+{
+    <span class="answer-result answer-result--ok" title="Helyes" aria-label="Helyes"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.CheckmarkCircle())" Color="Color.Success" /></span>
+}
+else
+{
+    <span class="answer-result answer-result--wrong" title="Hibás" aria-label="Hibás"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.DismissCircle())" Color="Color.Error" /></span>
+}
+
+@code {
+    [Parameter] public bool Correct { get; set; }
+}

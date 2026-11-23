@@ -1,0 +1,17 @@
+@* A kérdéstípusok közös gombsora: Ellenőrzés (ha a teszt engedi) és Következő. *@
+<div class="question-actions">
+    @if (ShowCheck)
+    {
+        <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CheckmarkCircle())" OnClick="OnCheck">Ellenőrzés</FluentButton>
+    }
+    @if (OnNext.HasDelegate)
+    {
+        <FluentButton Appearance="ButtonAppearance.Primary" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRight())" OnClick="OnNext">Következő</FluentButton>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowCheck { get; set; }
+    [Parameter] public EventCallback OnCheck { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+}

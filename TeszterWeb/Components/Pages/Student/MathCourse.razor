@@ -9,13 +9,13 @@
 @inject ILogger<MathCourse> _logger
 
 <h3>Kitűzött matematika feladat</h3>
-<a class="btn btn-outline-primary challengeLink" href="/student/challenge">Időre menő kihívás</a>
+<FluentAnchorButton Href="/student/challenge" Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Class="challengeLink">Időre menő kihívás</FluentAnchorButton>
 @foreach (var cc in classChallenges)
 {
     <div class="classChallengeBanner" role="status">
         <span><strong>Osztály-kihívás</strong> a(z) @cc.ClassName csoportban: @cc.TopicName
             @(cc.State == 0 ? $"– indul {cc.SecondsToStart} mp múlva" : "– már tart")</span>
-        <a class="btn btn-warning btn-sm" href="/student/classchallenge/@cc.Id">@(cc.Joined ? "Vissza a kihíváshoz" : "Csatlakozom")</a>
+        <FluentAnchorButton Href="@($"/student/classchallenge/{cc.Id}")" Appearance="ButtonAppearance.Primary">@(cc.Joined ? "Vissza a kihíváshoz" : "Csatlakozom")</FluentAnchorButton>
     </div>
 }
 <div class="gameRow">

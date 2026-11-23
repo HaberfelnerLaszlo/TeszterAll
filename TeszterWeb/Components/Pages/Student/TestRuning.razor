@@ -12,36 +12,58 @@
     }
     else if (testEnd)
     {
-        <h3>Nagyszerű!</h3><h4> Sikerült megoldanod a tesztet!</h4>
-        <FluentButton OnClick="ResultView">Eredmény megtekintése</FluentButton>
+        <div class="test-screen">
+            <FluentCard>
+                <div class="test-screen__body">
+                    <FluentIcon Value="@(new Icons.Filled.Size24.CheckmarkCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Success" Class="test-screen__icon" />
+                    <FluentText As="TextTag.H1" Size="TextSize.Size700" Weight="TextWeight.Semibold">Nagyszerű!</FluentText>
+                    <FluentText Size="TextSize.Size400">Sikerült megoldanod a tesztet.</FluentText>
+                    <div class="test-screen__actions">
+                        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.DataBarVertical())" OnClick="ResultView">Eredmény megtekintése</FluentButton>
+                        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(() => navi.NavigateTo("/home"))">Vissza a kezdőlapra</FluentButton>
+                    </div>
+                </div>
+            </FluentCard>
+        </div>
     }
     else
     {
-        <h4>A @test.Title teszt megírása következik.</h4> <hr/>
-       <h6>
-            @if (test.IsTimer)
-            {
-                <span>A tesztet <b> @test.Time.ToTime() </b> alatt kell megírnod. </span>
-            }
-            @if (test.IsPractice)
-            {
-                <span> A teszt gyakorlásra szolgál.</span>
-            }
-            @if (test.IsCheck)
-            {
-                <span> A teszt kitöltése közben a kérdések helyessége lekérdezhető.</span>
-            }
-        </h6>
-        <hr />
-<FluentButton Appearance="ButtonAppearance.Primary" Color="yellow" OnClick="StartTest">A teszt elkezdése</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(() => navi.NavigateTo("/home"))">Vissza a főoldalra</FluentButton>
+        <div class="test-screen">
+            <FluentCard>
+                <div class="test-screen__body">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardTaskListLtr())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Primary" Class="test-screen__icon" />
+                    <FluentText Size="TextSize.Size300" Class="test-screen__kicker">A következő teszt</FluentText>
+                    <FluentText As="TextTag.H1" Size="TextSize.Size700" Weight="TextWeight.Semibold">@test.Title</FluentText>
+                    <ul class="test-screen__facts">
+                        @if (test.IsTimer)
+                        {
+                            <li><FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Primary" /> Időkorlátos: <strong>@test.Time.ToTime()</strong> áll rendelkezésedre.</li>
+                        }
+                        @if (test.IsPractice)
+                        {
+                            <li><FluentIcon Value="@(new Icons.Regular.Size20.CalligraphyPenQuestionMark())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Primary" /> Gyakorló teszt.</li>
+                        }
+                        @if (test.IsCheck)
+                        {
+                            <li><FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Primary" /> Kitöltés közben ellenőrizheted a válaszaidat.</li>
+                        }
+                    </ul>
+                    <div class="test-screen__actions">
+                        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Play())" OnClick="StartTest">A teszt elkezdése</FluentButton>
+                        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(() => navi.NavigateTo("/home"))">Vissza a kezdőlapra</FluentButton>
+                    </div>
+                </div>
+            </FluentCard>
+        </div>
     }
-
 }
 else
 {
-    <h5>@errorMessage</h5>
+    <div class="test-screen">
+        <FluentMessageBar Intent="MessageBarIntent.Error">@errorMessage</FluentMessageBar>
+    </div>
 }
+
 @code {
     [Parameter] public int Id { get; set; } //TestUserId
     bool noError = false, testStart = false, testEnd = false;
