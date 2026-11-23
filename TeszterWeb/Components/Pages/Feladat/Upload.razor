@@ -1,7 +1,8 @@
 ﻿@page "/feladat/upload"
 @inject TeszterLibrary.Services.Feladat.FeladatApiService FeladatService
 @inject IToastService toastService
-<h3>Feltöltés</h3>
+@inject GlobalData data
+<PageHeader Title="Feladat feltöltése" Description="Tölts fel egy feladatfájlt; a feldolgozás eredményéről értesítést kapsz." />
 <FluentInputFile @ref="@myFileByBuffer"
                  AnchorId="MyUploadBuffer"
                  DragDropZoneVisible="false"
@@ -11,12 +12,17 @@
                  OnFileUploaded="@OnCompleted" />
 
 
-<FluentButton Appearance="ButtonAppearance.Primary" Id="MyUploadBuffer">
-    File feltöltése
-</FluentButton>
+<FluentCard>
+    <div class="upload-box">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowUpload())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Primary" />
+        <FluentText>Válaszd ki a feltöltendő fájlt.</FluentText>
+        <FluentButton Appearance="ButtonAppearance.Primary" Id="MyUploadBuffer">Fájl kiválasztása</FluentButton>
+    </div>
+</FluentCard>
 
 @code {
     FluentInputFile? myFileByBuffer = default!;
+    protected override void OnInitialized() => data.Title = "Feladat feltöltése";
     async Task OnCompleted(FluentInputFileEventArgs file)
     {
         if (file.Stream is null)

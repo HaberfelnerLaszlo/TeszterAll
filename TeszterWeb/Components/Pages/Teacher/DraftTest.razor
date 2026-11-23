@@ -10,6 +10,11 @@
     </Actions>
 </PageHeader>
 
+<Modal Show="@(pendingDelete is not null)" AcceptButtom="Törlés" CancelButtom="Mégsem" Accept="ConfirmDelete" Cancel="@(() => pendingDelete = null)">
+    <HeaderContent>Teszt törlése</HeaderContent>
+    <BodyContent>Biztosan törlöd a(z) „@pendingDelete?.Title” piszkozatot? A művelet nem vonható vissza.</BodyContent>
+</Modal>
+
 @if (loading)
 {
     <LoadingState Text="Piszkozatok betöltése..." />
@@ -19,7 +24,7 @@ else if (tests is { Count: > 0 })
     <div class="card-grid card-grid--wide">
         @foreach (var item in tests)
         {
-            <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="DeleteTest" />
+            <NoPublishTestCard TestItem="item" Publish="PublishTest" Edit="EditTest" Delete="AskDelete" />
         }
     </div>
 }
@@ -86,6 +91,20 @@ else
     {
         navi.NavigateTo($"newtest_w/{test.Id}");
     }
+    private Test? pendingDelete;
+
+    // A törlés megerősítést kér (a kártya Törlés gombja csak megnyitja a párbeszédablakot).
+    private void AskDelete(Test test) => pendingDelete = test;
+
+    private async Task ConfirmDelete()
+    {
+        if (pendingDelete is Test test)
+        {
+            pendingDelete = null;
+            await DeleteTest(test);
+        }
+    }
+
     private async Task DeleteTest(Test test)
     {
         if (await tService.DeleteTestAsync(test.Id))

@@ -1,30 +1,33 @@
-﻿@if (Show)
+﻿@* Egyszerű modális párbeszédablak Fluent kinézettel (a korábbi Bootstrap-osztályok nélkül, amelyek
+   Bootstrap hiányában nem működtek). Az API változatlan: HeaderContent, BodyContent, Accept/Cancel, Show. *@
+@if (Show)
 {
-    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">  
-        <div class="modal-dialog" role="document">  
-            <div class="modal-content">  
-                @if (HeaderContent is not null)
-                {
-                    <div class="modal-header">
-                        @HeaderContent
-                    </div>  
-                }
-                <div class="modal-body" style="max-height:70vh; overflow-y:auto">  
-                    @BodyContent
-                </div>  
-                <div class="modal-buttom">
-                    @if (AcceptButtom is not null)
-                    {
-                        <button class="btn btn-primary" @onclick="@(()=>Accept.InvokeAsync())">@AcceptButtom</button>
-                    }
+    <div class="modal-backdrop" @onclick="OnBackdropClick">
+        <div class="modal-surface" role="dialog" aria-modal="true" aria-labelledby="@headerId" @onclick:stopPropagation="true" @onkeydown="OnKeyDown" tabindex="-1">
+            @if (HeaderContent is not null)
+            {
+                <div class="modal-surface__header" id="@headerId">
+                    @HeaderContent
+                </div>
+            }
+            <div class="modal-surface__body">
+                @BodyContent
+            </div>
+            @if (AcceptButtom is not null || CancelButtom is not null)
+            {
+                <div class="modal-surface__actions">
                     @if (CancelButtom is not null)
                     {
-                       <button class="btn btn-secondary" @onclick="@(()=>Cancel.InvokeAsync())">@CancelButtom</button>
+                        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(() => Cancel.InvokeAsync())">@CancelButtom</FluentButton>
+                    }
+                    @if (AcceptButtom is not null)
+                    {
+                        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => Accept.InvokeAsync())">@AcceptButtom</FluentButton>
                     }
                 </div>
-            </div>
+            }
         </div>
-    </div>  
+    </div>
 }
 
 @code {
@@ -35,4 +38,11 @@
     [Parameter] public string? AcceptButtom { get; set; }
     [Parameter] public string? CancelButtom { get; set; }
     [Parameter] public bool Show { get; set; }
+
+    private readonly string headerId = $"modal-{Guid.NewGuid():N}";
+
+    // Escape és a háttérre kattintás = Mégsem (ha van Mégsem gomb).
+    private Task OnKeyDown(KeyboardEventArgs e) => e.Key == "Escape" ? OnBackdropClick() : Task.CompletedTask;
+
+    private Task OnBackdropClick() => CancelButtom is not null ? Cancel.InvokeAsync() : Task.CompletedTask;
 }

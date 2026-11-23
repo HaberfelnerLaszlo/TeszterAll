@@ -1,99 +1,164 @@
-﻿.hint {
-    color: #666;
-    font-size: .9rem;
+﻿/* Témák szerkesztése – csak Fluent design tokenekkel (világos és sötét módban is).
+   A generátor-mezők natív input/select elemek (sok, eltérő típusú kötés); a kinézetük a Fluent beviteli mezőkhöz igazodik. */
+
+.hint {
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+    margin: var(--spacingVerticalXS) 0;
 }
 
 .layout {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--spacingHorizontalL);
     align-items: flex-start;
 }
 
+/* ===== Bal oldali témalista ===== */
 .list {
     flex: 0 1 340px;
+    width: 100%;
     max-height: 75vh;
     overflow-y: auto;
-    border: 1px solid #d0d7de;
-    border-radius: 10px;
-    padding: 8px;
-    background: #fff;
     box-sizing: border-box;
-    width: 100%;
+    padding: var(--spacingVerticalS);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+    box-shadow: var(--shadow2);
 }
 
-.filter {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 4px 8px;
-    margin-bottom: 6px;
-    border: 1px solid #c8c8c8;
-    border-radius: 6px;
-}
+    .list ::deep .filter {
+        width: 100%;
+        margin-bottom: var(--spacingVerticalS);
+    }
 
 .group {
-    font-weight: 700;
-    margin: 8px 0 2px 0;
-    color: #444;
+    margin: var(--spacingVerticalM) 0 var(--spacingVerticalXXS);
+    padding: 0 var(--spacingHorizontalS);
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+    font-weight: var(--fontWeightSemibold);
+    text-transform: uppercase;
+    letter-spacing: .02em;
 }
 
 .item {
-    display: block;
+    display: flex;
+    gap: var(--spacingHorizontalS);
     width: 100%;
-    text-align: left;
+    padding: var(--spacingVerticalXS) var(--spacingHorizontalS);
     border: none;
+    border-radius: var(--borderRadiusMedium);
     background: none;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: .9rem;
+    color: var(--colorNeutralForeground1);
+    font: inherit;
+    font-size: var(--fontSizeBase300);
+    text-align: left;
+    cursor: pointer;
 }
 
-.item:hover {
-    background: #f1f3f5;
-}
+    .item:hover {
+        background: var(--colorSubtleBackgroundHover);
+    }
 
-.item.selected {
-    background: #e7f1ff;
-    font-weight: 600;
-}
+    .item:focus-visible {
+        outline: var(--strokeWidthThick) solid var(--colorStrokeFocus2);
+        outline-offset: -2px;
+    }
 
-.item .id {
-    display: inline-block;
-    min-width: 2.2em;
-    color: #888;
-}
+    .item.selected {
+        background: var(--colorBrandBackground2);
+        color: var(--colorBrandForeground2);
+        font-weight: var(--fontWeightSemibold);
+    }
 
+    .item .id {
+        min-width: 2.2em;
+        color: var(--colorNeutralForeground3);
+        font-variant-numeric: tabular-nums;
+    }
+
+/* ===== Szerkesztő ===== */
 .editor {
     flex: 1 1 420px;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalM);
+    padding: var(--spacingVerticalL) var(--spacingHorizontalL);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+    box-shadow: var(--shadow2);
 }
 
 .grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 16px;
-    margin: 6px 0;
+    gap: var(--spacingVerticalS) var(--spacingHorizontalL);
 }
 
 .editor label {
     display: flex;
     flex-direction: column;
-    font-size: .9rem;
-    gap: 3px;
+    gap: var(--spacingVerticalXXS);
+    color: var(--colorNeutralForeground2);
+    font-size: var(--fontSizeBase200);
 }
 
-.editor label.check {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-}
+    .editor label.check {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spacingHorizontalXS);
+        color: var(--colorNeutralForeground1);
+        font-size: var(--fontSizeBase300);
+    }
 
+    .editor label.wide {
+        width: 100%;
+    }
+
+/* Natív mezők Fluent-szerű kinézettel */
 .editor input:not([type=checkbox]),
-.editor select {
-    padding: 4px 6px;
-    border: 1px solid #c8c8c8;
-    border-radius: 6px;
+.editor select,
+.editor textarea {
     min-width: 0;
+    min-height: 32px;
+    box-sizing: border-box;
+    padding: 0 var(--spacingHorizontalS);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke1);
+    border-bottom-color: var(--colorNeutralStrokeAccessible);
+    border-radius: var(--borderRadiusMedium);
+    background: var(--colorNeutralBackground1);
+    color: var(--colorNeutralForeground1);
+    font: inherit;
+    font-size: var(--fontSizeBase300);
+}
+
+.editor textarea {
+    width: 100%;
+    padding: var(--spacingVerticalS) var(--spacingHorizontalS);
+}
+
+    .editor input:not([type=checkbox]):hover,
+    .editor select:hover,
+    .editor textarea:hover {
+        border-color: var(--colorNeutralStroke1Hover);
+        border-bottom-color: var(--colorNeutralStrokeAccessibleHover);
+    }
+
+    .editor input:not([type=checkbox]):focus,
+    .editor select:focus,
+    .editor textarea:focus {
+        outline: none;
+        border-bottom: var(--strokeWidthThick) solid var(--colorCompoundBrandStroke);
+    }
+
+.editor input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--colorCompoundBrandBackground);
 }
 
 .grid input[type=number] {
@@ -103,92 +168,85 @@
 .ops {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 14px;
+    gap: var(--spacingVerticalXS) var(--spacingHorizontalL);
     align-items: center;
-    margin: 6px 0;
+    color: var(--colorNeutralForeground2);
 }
 
 fieldset {
-    border: 1px solid #d0d7de;
-    border-radius: 10px;
-    padding: 8px 12px 12px 12px;
-    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalS);
+    margin: 0;
+    padding: var(--spacingVerticalS) var(--spacingHorizontalL) var(--spacingVerticalL);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
 }
 
 legend {
-    font-size: 1rem;
-    font-weight: 700;
     width: auto;
-    padding: 0 6px;
     margin: 0;
+    padding: 0 var(--spacingHorizontalXS);
+    color: var(--colorNeutralForeground1);
+    font-size: var(--fontSizeBase400);
+    font-weight: var(--fontWeightSemibold);
 }
 
 .buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 8px 0;
+    gap: var(--spacingHorizontalS);
+    padding-top: var(--spacingVerticalS);
+    border-top: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
 }
 
-.error {
-    color: #b00000;
-    font-weight: 600;
-}
-
+/* ===== Mintafeladatok ===== */
 .samples {
-    border: 1px solid #d0d7de;
-    border-radius: 10px;
-    padding: 8px 12px;
-    background: #fbfbfd;
+    padding: var(--spacingVerticalS) var(--spacingHorizontalM);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground2);
 }
 
 .samplesTitle {
-    font-weight: 700;
+    font-weight: var(--fontWeightSemibold);
 }
 
 .samples ul {
-    margin: 4px 0 0 0;
+    margin: var(--spacingVerticalXS) 0 0;
     padding-left: 1.2em;
 }
 
 .samples .text {
-    font-family: Consolas, monospace;
+    font-family: var(--fontFamilyMonospace);
 }
 
 .samples .answer {
-    color: #00a000;
-    font-weight: 600;
+    color: var(--colorPaletteGreenForeground1);
+    font-weight: var(--fontWeightSemibold);
 }
 
-.editor label.wide {
-    width: 100%;
-}
-
-.editor textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 6px 8px;
-    border: 1px solid #c8c8c8;
-    border-radius: 6px;
-    font: inherit;
-}
-
+/* ===== Saját szöveges feladat változói ===== */
 .vars {
     border-collapse: collapse;
-    margin: 8px 0;
-    font-size: .9rem;
+    font-size: var(--fontSizeBase200);
 }
 
-.vars th,
-.vars td {
-    padding: 2px 6px;
-    text-align: left;
-}
+    .vars th {
+        color: var(--colorNeutralForeground3);
+        font-weight: var(--fontWeightSemibold);
+    }
 
-.vars input {
-    width: 7em;
-}
+    .vars th,
+    .vars td {
+        padding: var(--spacingVerticalXXS) var(--spacingHorizontalXS);
+        text-align: left;
+    }
 
-.vars input.name {
-    width: 3em;
-}
+    .vars input {
+        width: 7em;
+    }
+
+        .vars input.name {
+            width: 3em;
+        }

@@ -62,7 +62,7 @@
 
                 </FluentStack>
                 </FluentStack>
-                <FluentValidationSummary style="color:darkred" />
+                <FluentValidationSummary />
             </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Kérdések"
@@ -110,7 +110,7 @@
                         </FluentStack>
                     </FluentGridItem>
                 </FluentGrid>
-                <FluentValidationSummary style="color:darkred" />
+                <FluentValidationSummary />
             </WizardEditForm>
         </FluentWizardStep>
         <FluentWizardStep Label="Publikálás"
@@ -119,7 +119,7 @@
             @if (newTest.HasSection)
             {
                 <FluentStack>
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Szekció</th>

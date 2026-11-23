@@ -10,15 +10,15 @@
 
 @page "/feladat/tanulokpont"
 
-<h3>Tanulok pontjai</h3>
+<PageHeader Title="Tanulók pontjai" Description="Csoportonként a tanulók pontszámai; innen szerkesztheted, törölheted vagy felveheted őket." />
 @if (tanulokByCsoport == null)
 {
-    <p><em>Betöltés...</em></p>
+    <LoadingState Text="Tanulók betöltése..." />
 }
 else if (tanulokByCsoport.Count() == 0)
 {
-    <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" ValueChanged="@((Csoport? c) => SelectedCsoport(c!))" />
-    <p>Nincs tanuló az adatbázisban.</p>
+    <FluentSelect Items="@csoportok" TOption="Csoport" TValue="Csoport" Label="Csoport" OptionText="@(c => c?.Name ?? string.Empty)" ValueChanged="@((Csoport? c) => SelectedCsoport(c!))" />
+    <EmptyState Title="Nincs tanuló" Message="Ebben a csoportban még nincs tanuló az adatbázisban." Icon="@(new Icons.Regular.Size24.PeopleTeam())" />
 }
 else
 {
@@ -65,6 +65,7 @@ else
     }
     protected override async Task OnInitializedAsync()
     {
+        data.Title = "Tanulók pontjai";
         tanulok = await tService.GetTanulokAsync();
         if (tanulok == null)
         {

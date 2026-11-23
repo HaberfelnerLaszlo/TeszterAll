@@ -1,15 +1,15 @@
 ﻿<Modal AcceptButtom="Igen" Accept="DeleteQ" CancelButtom="Nem" Cancel="CloseModal" Show=showDelete>
 	<HeaderContent>
-		<p>Kérdés törlésére figyelmeztetés!</p>
+		<p>Kérdés törlése</p>
 	</HeaderContent>
 	<BodyContent>
-		<h4>A következő kérdés törlésre kerül!</h4>
-		<p>@TempQuestion.Text</p>
+		<p>Biztosan törlöd ezt a kérdést? A művelet nem vonható vissza.</p>
+		<p class="question-preview">@TempQuestion.Text</p>
 	</BodyContent>
 </Modal>
 @if (Questions is null)
 {
-	<Waiting/>
+	<LoadingState Text="Kérdések betöltése..." />
 }
 else{
 <div hidden="@(!newOrEdit)">
@@ -19,7 +19,7 @@ else{
         </FluentAccordionItem>
     </FluentAccordion>
     <TestQuestions UserId=@(UserId.ToGuidOrNull() ?? Guid.Empty) questions="Questions" Delete="DeleteQuestion" Update="Update" AddTest="AddTestQ"></TestQuestions>
-    <button class="btn btn-outline-primary" @onclick="@(()=>NewQuestion())" type="button">Új kérdés</button>
+    <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Add())" OnClick="@(()=>NewQuestion())">Új kérdés</FluentButton>
 	<UploadQuestion UserId="@UserId"/>
     </div>
 }
@@ -38,10 +38,11 @@ else{
 @* </div> *@
 @if (TestQuestion.Count>0)
 {
-	<div class="fixed-bottom newtest-message">
-		<span>A tesztben @TestQuestion.Count db kérdés van.</span>
-		<button class="btn" @onclick=@(()=>CreateTest.InvokeAsync(TestQuestion))>Teszt létrehozása</button>
-		<button class="btn" @onclick=@(()=>TestQuestion.Clear())>Mégsem</button>
+	<div class="test-basket" role="status">
+		<FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.DocumentBulletList())" />
+		<span>A tesztben <strong>@TestQuestion.Count</strong> kérdés van.</span>
+		<FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CreateTest.InvokeAsync(TestQuestion))">Teszt létrehozása</FluentButton>
+		<FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(()=>TestQuestion.Clear())">Mégsem</FluentButton>
 	</div>
 }
 

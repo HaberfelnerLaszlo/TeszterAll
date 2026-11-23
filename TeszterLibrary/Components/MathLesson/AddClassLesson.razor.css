@@ -1,4 +1,63 @@
-﻿.number {
-    border: 0px;
-    border-radius: 5px;
+﻿.lesson-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalM);
+}
+
+.lesson-matrix__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalS);
+}
+
+/* Keskeny képernyőn a táblázat vízszintesen görgethető, az első oszlop rögzített. */
+.lesson-matrix__scroll {
+    overflow-x: auto;
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+}
+
+.lesson-matrix__table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+    .lesson-matrix__table th,
+    .lesson-matrix__table td {
+        padding: var(--spacingVerticalXS) var(--spacingHorizontalS);
+        border-bottom: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+        text-align: center;
+    }
+
+    .lesson-matrix__table thead th {
+        position: sticky;
+        top: 0;
+        background: var(--colorNeutralBackground3);
+        color: var(--colorNeutralForeground2);
+        font-weight: var(--fontWeightSemibold);
+        white-space: nowrap;
+    }
+
+    .lesson-matrix__table tbody th {
+        position: sticky;
+        left: 0;
+        background: var(--colorNeutralBackground1);
+        text-align: left;
+        font-weight: var(--fontWeightRegular);
+        min-width: 220px;
+    }
+
+    .lesson-matrix__table tbody tr:hover th,
+    .lesson-matrix__table tbody tr:hover td {
+        background: var(--colorNeutralBackground1Hover);
+    }
+
+    .lesson-matrix__table td.has-value {
+        background: var(--colorPaletteGreenBackground1);
+    }
+
+.lesson-matrix__actions {
+    display: flex;
+    justify-content: flex-end;
 }
