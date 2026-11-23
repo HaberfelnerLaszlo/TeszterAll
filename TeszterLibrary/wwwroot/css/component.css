@@ -44,3 +44,63 @@
     margin-right: var(--spacingHorizontalXS);
     margin-left: var(--spacingHorizontalXS);
 }
+
+/* ===== Tesztkitöltés: közös kérdés-elrendezés ===== */
+.answer-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalS);
+    width: 100%;
+    max-width: 720px;
+    margin: var(--spacingVerticalM) auto 0;
+    text-align: left;
+}
+
+.answer-hint {
+    display: block;
+    color: var(--colorNeutralForeground3);
+    text-align: center;
+}
+
+.answer-input {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalS);
+}
+
+/* Kiegészítős szöveg: a hiányzó szavak beviteli mezői a szövegben ülnek */
+.comp-text {
+    max-width: 720px;
+    margin: 0 auto;
+    font-size: var(--fontSizeBase400);
+    line-height: 2.6;
+    text-align: left;
+}
+
+.comp-gap {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacingHorizontalXS);
+    margin: 0 var(--spacingHorizontalXS);
+    vertical-align: middle;
+}
+
+.komp-panel {
+    margin: var(--spacingVerticalS);
+    padding: var(--spacingVerticalM) var(--spacingHorizontalM);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusMedium);
+    background: var(--colorNeutralBackground1);
+    text-align: left;
+}
+
+.countdown-text {
+    display: block;
+    margin: var(--spacingVerticalM) 0;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.qview-text {
+    padding: var(--spacingVerticalXS) 0;
+}

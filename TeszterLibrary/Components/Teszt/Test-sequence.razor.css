@@ -1,31 +1,27 @@
-﻿.box{
-    margin-right: 5px;
-    margin-left: 5px;
-}
-.inserting {
-    border-top: 1px solid black;
-    margin-top: 5px;
-}
-ul {
-    padding-inline-start: 10px;
-    margin-right: 7%;
-}
-.nyilak {
-    border: 1px dotted yellow;
-    margin-right: 2%;
+.seq-row {
     display: flex;
-    flex-direction: column;
-}
-.szoveg {
-    color: darkblue;
-    display: inherit;
     align-items: center;
+    gap: var(--spacingHorizontalS);
 }
-.up {
-    color: #fb00ff;
-    font-size: 1.3rem;
+
+    .seq-row ::deep .seq-row__zone {
+        flex: 1 1 auto;
+    }
+
+.seq-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalM);
+    min-height: 52px;
+    padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+    border: var(--strokeWidthThick) solid var(--colorNeutralStroke1);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+    color: var(--colorNeutralForeground1);
+    font-size: var(--fontSizeBase400);
+    cursor: grab;
 }
-.down {
-    color: #00c1af;
-    font-size: 1.3rem;
-}
+
+    .seq-item:hover {
+        border-color: var(--colorBrandStroke1);
+    }

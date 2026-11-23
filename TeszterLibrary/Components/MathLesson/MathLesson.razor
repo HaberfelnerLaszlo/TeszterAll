@@ -45,7 +45,7 @@
     }
 </form>
 </div>
-<button class="btn btn-success send" disabled="@(sending || IsChecked)" @onclick="@(()=>Sending())">Küldés</button>
+<FluentButton Appearance="ButtonAppearance.Primary" Size="ButtonSize.Large" Class="send" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Send())" Disabled="@(sending || IsChecked)" Loading="sending" OnClick="@(()=>Sending())">Küldés</FluentButton>
 
 @code
 {

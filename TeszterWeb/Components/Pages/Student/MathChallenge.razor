@@ -1,4 +1,4 @@
-@page "/student/challenge"
+﻿@page "/student/challenge"
 @implements IDisposable
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
@@ -17,7 +17,7 @@
         @if (topics.Count == 0)
         {
             <p>Kihívást a már teljesített témáidból indíthatsz. Teljesíts egy leckét, és gyere vissza!</p>
-            <a class="btn btn-outline-primary" href="/student/math">Vissza a feladatokhoz</a>
+            <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowLeft())">Vissza a feladatokhoz</FluentAnchorButton>
         }
         else
         {
@@ -26,7 +26,7 @@
                 @foreach (var t in topics)
                 {
                     <li>
-                        <button class="btn btn-primary topicBtn" disabled="@starting" @onclick="() => Begin(t)">@t.Name</button>
+                        <FluentButton Appearance="ButtonAppearance.Primary" Class="topicBtn" Disabled="@starting" OnClick="() => Begin(t)">@t.Name</FluentButton>
                         <span class="best">@(t.Best > 0 ? $"Rekordod: {t.Best}" : "Még nem próbáltad")</span>
                     </li>
                 }
@@ -49,7 +49,7 @@
         {
             <MathLesson Assignment="current" Send="@Answer" IsChecked="false" IsFraction="current.IsFraction" />
         }
-        <button class="btn btn-link giveUp" @onclick="End">Befejezem</button>
+        <FluentButton Appearance="ButtonAppearance.Subtle" Class="giveUp" OnClick="End">Befejezem</FluentButton>
         break;
 
     case State.Done:
@@ -67,9 +67,9 @@
                 <p class="big">@result.Correct helyes válasz</p>
                 <p>Hibás: @result.Wrong · Szerzett XP: @result.Xp · Rekordod ebben a témában: @result.Best</p>
             }
-            <button class="btn btn-primary" @onclick="() => Begin(topic!)" disabled="@(topic is null || starting)">Újra</button>
-            <button class="btn btn-outline-primary" @onclick="BackToTopics">Másik téma</button>
-            <a class="btn btn-link" href="/student/math">Vissza a feladatokhoz</a>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowRepeatAll())" OnClick="() => Begin(topic!)" Disabled="@(topic is null || starting)">Újra</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="BackToTopics">Másik téma</FluentButton>
+            <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Subtle">Vissza a feladatokhoz</FluentAnchorButton>
         </div>
         break;
 }

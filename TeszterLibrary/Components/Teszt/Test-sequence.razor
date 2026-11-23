@@ -3,37 +3,27 @@
 {
     <FluentDragContainer TItem="string"
                          OnDropEnd="@(e => HandleDropEnd(e.Source.Id,e.Target.Id))">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentText Size="TextSize.Size200" Class="answer-hint">Húzd a válaszokat a helyes sorrendbe.</FluentText>
+        <div class="answer-list">
             @foreach (var item in Items.OrderBy(i => i.Sequence))
             {
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-                    <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="true" Droppable="true">
-                        <div class="answer" style="width: @(maxLenght+20)px; text-align: center; font-size: 2vw;">
-                            @item.Text
+                <div class="seq-row">
+                    <FluentDropZone Id="@item.AnswerId.ToString()" Draggable="true" Droppable="true" Class="seq-row__zone">
+                        <div class="seq-item">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ReOrderDotsVertical())" Color="Color.Neutral" />
+                            <span>@item.Text</span>
                         </div>
                     </FluentDropZone>
                     @if (IsChecked)
                     {
-                        <span hidden="@item.Result"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" /></span>
-                        <span style="color:green" hidden="@(!item.Result)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" /></span>
+                        <AnswerResult Correct="item.Result" />
                     }
-                </FluentStack>
+                </div>
             }
-        </FluentStack>
+        </div>
     </FluentDragContainer>
 
-    <div class="container text-center" style="margin:10px">
-        @if (IsCheck)
-        {
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Items))">
-                Ellenőrzés
-            </FluentButton>
-        }
-        @if (Next.HasDelegate)
-        {
-            <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(()=>Next.InvokeAsync(Items))">Következő</FluentButton>
-        }
-    </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Items))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Items)) : default)" />
 }
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();

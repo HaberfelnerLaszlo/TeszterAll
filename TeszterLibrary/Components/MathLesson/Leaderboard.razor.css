@@ -1,9 +1,9 @@
 .leaderboard {
-    border: 1px solid #d0d7de;
+    border: 1px solid var(--colorNeutralStroke2);
     border-radius: 10px;
     padding: 10px 14px;
     margin: 0 0 14px 0;
-    background: #fff;
+    background: var(--colorNeutralBackground1);
     max-width: 420px;
     flex: 1 1 300px;
     box-sizing: border-box;
@@ -24,21 +24,21 @@
 
 .lbClass {
     font-size: .9rem;
-    color: #555;
+    color: var(--colorNeutralForeground3);
 }
 
 .lbSelect {
     font-size: .9rem;
     padding: 2px 6px;
     border-radius: 6px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid var(--colorNeutralStroke2);
     max-width: 100%;
 }
 
 .lbMine {
     margin: 6px 0 4px 0;
     font-size: .9rem;
-    color: #0d6efd;
+    color: var(--colorBrandForeground1);
     font-weight: 600;
 }
 
@@ -57,14 +57,14 @@
 }
 
 .lbRow.me {
-    background: #e7f1ff;
+    background: var(--colorBrandBackground2);
     font-weight: 700;
 }
 
 .lbRank {
     width: 2.5em;
     text-align: right;
-    color: #555;
+    color: var(--colorNeutralForeground3);
 }
 
 .lbName {
@@ -76,17 +76,17 @@
 
 .lbXp {
     font-variant-numeric: tabular-nums;
-    color: #6b5200;
+    color: var(--colorPaletteDarkOrangeForeground2);
 }
 
 .lbGap {
     text-align: center;
-    color: #9aa0a6;
+    color: var(--colorNeutralForeground3);
     line-height: 1;
 }
 
 .lbInfo {
     font-size: .75rem;
-    color: #777;
+    color: var(--colorNeutralForeground3);
     margin: 4px 0 0 0;
 }

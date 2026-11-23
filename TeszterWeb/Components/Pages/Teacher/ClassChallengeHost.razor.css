@@ -17,11 +17,11 @@
     min-width: 180px;
     padding: 4px 6px;
     border-radius: 6px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid var(--colorNeutralStroke2);
 }
 
 .hint {
-    color: #666;
+    color: var(--colorNeutralForeground3);
     font-size: .9rem;
 }
 
@@ -44,12 +44,12 @@
 
 .topic {
     font-size: 1.3rem;
-    color: #555;
+    color: var(--colorNeutralForeground3);
 }
 
 .participants {
     font-size: 1.1rem;
-    color: #0d6efd;
+    color: var(--colorBrandForeground1);
 }
 
 .clock {
@@ -60,7 +60,7 @@
 }
 
 .clock.hurry {
-    color: #d00000;
+    color: var(--colorPaletteRedForeground1);
 }
 
 .standings {
@@ -75,13 +75,13 @@
     gap: 14px;
     font-size: 1.5rem;
     padding: 4px 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--colorNeutralStroke2);
 }
 
 .standings .rank {
     width: 2.5em;
     text-align: right;
-    color: #555;
+    color: var(--colorNeutralForeground3);
 }
 
 .standings .name {
@@ -90,10 +90,10 @@
 
 .standings .correct {
     font-weight: 800;
-    color: #00a000;
+    color: var(--colorPaletteGreenForeground1);
     font-variant-numeric: tabular-nums;
 }
 
-.podium.p1 { background: #fff4c2; }
-.podium.p2 { background: #eef1f4; }
-.podium.p3 { background: #f6e3d3; }
+.podium.p1 { background: var(--colorPaletteMarigoldBackground1); }
+.podium.p2 { background: var(--colorNeutralBackground3); }
+.podium.p3 { background: var(--colorPaletteMarigoldBackground1); }

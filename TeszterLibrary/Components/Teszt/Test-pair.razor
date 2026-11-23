@@ -56,16 +56,7 @@
     </FluentDragContainer> 
     <div class="container">
     </div>*@
-    <div class="container text-center">
-        @if (IsCheck)
-        {
-            <FluentButton OnClick="@((async)=> CallCheck.InvokeAsync(Answers))">Ellenőrzés</FluentButton>
-        }
-        @if (Next.HasDelegate)
-        {
-            <FluentButton OnClick="@((async)=> Send())">Következő</FluentButton>
-        }
-    </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, Send) : default)" />
 }
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();

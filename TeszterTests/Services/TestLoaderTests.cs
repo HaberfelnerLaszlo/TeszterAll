@@ -185,9 +185,10 @@ namespace TeszterTests.Services
 
             var cut = Render<TestRuning>(p => p.Add(c => c.Id, 41));
 
-            cut.WaitForAssertion(() => Assert.Contains("A Törtek teszt megírása következik.", cut.Markup));
+            cut.WaitForAssertion(() => Assert.Contains("A teszt elkezdése", cut.Markup));
+            Assert.Contains("Törtek", cut.Markup);
             Assert.Contains("1 p : 30 mp", cut.Markup);                       // régen: időzítő nélkül indult
-            Assert.Contains("helyessége lekérdezhető", cut.Markup);
+            Assert.Contains("ellenőrizheted a válaszaidat", cut.Markup);
         }
 
         [Fact]

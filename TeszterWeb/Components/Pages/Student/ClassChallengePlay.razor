@@ -1,4 +1,4 @@
-@page "/student/classchallenge/{Id:int}"
+﻿@page "/student/classchallenge/{Id:int}"
 @implements IDisposable
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
@@ -10,7 +10,7 @@
 @if (failed)
 {
     <p>Ehhez a kihíváshoz most nem tudsz csatlakozni (lehet, hogy már véget ért).</p>
-    <a class="btn btn-outline-primary" href="/student/math">Vissza a feladatokhoz</a>
+    <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowLeft())">Vissza a feladatokhoz</FluentAnchorButton>
 }
 else if (view is null || run is null)
 {
@@ -51,7 +51,7 @@ else
                     {
                         <p>Hibás: @result.Wrong · Szerzett XP: @result.Xp</p>
                     }
-                    <a class="btn btn-primary" href="/student/math">Vissza a feladatokhoz</a>
+                    <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Primary">Vissza a feladatokhoz</FluentAnchorButton>
                 </div>
             }
         </div>

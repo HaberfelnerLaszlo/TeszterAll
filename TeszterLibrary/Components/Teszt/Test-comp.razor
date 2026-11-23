@@ -1,6 +1,6 @@
 ﻿@if (Answers is not null)
 {
-    <div class="container">
+    <div class="comp-text">
         @if (texts is not null)
         {
             @foreach (string t in texts)
@@ -9,38 +9,20 @@
                 if (t.Length > 0 && t.All(char.IsAsciiDigit) && t.ToIntOrNull() is int position && position >= 1 && position <= Answers.Count)
                 {
                     int Number = position - 1;
-                    <FluentTextInput Appearance="TextInputAppearance.FilledDarker" Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" />
-                    @if (IsChecked)
-                    {
-                        if (Answers[Number].Result)
+                    <span class="comp-gap">
+                        <FluentTextInput Placeholder="@(t+". válasz")" @bind-Value="@Answers[Number].Text" Width="140px" aria-label="@(t+". hiányzó szó")" />
+                        @if (IsChecked)
                         {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())" Color="Color.Primary" />
+                            <AnswerResult Correct="Answers[Number].Result" />
                         }
-                        else
-                        {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Dismiss())" Color="@Color.Error" />
-                        }
-                    }
+                    </span>
                 }
                 else
                 { <span>@t</span>}
             }
         }
     </div>
-    <div class="container text-center">
-        @if (IsCheck)
-        {
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(()=>CallCheck.InvokeAsync(Answers))">
-                Ellenőrzés
-            </FluentButton>
-        }
-        @if (Next.HasDelegate)
-        {
-            <FluentButton OnClick="@(()=>Next.InvokeAsync(Answers))">
-                    Következő
-            </FluentButton>
-        }
-    </div>
+    <QuestionActions ShowCheck="IsCheck" OnCheck="@(() => CallCheck.InvokeAsync(Answers))" OnNext="@(Next.HasDelegate ? EventCallback.Factory.Create(this, () => Next.InvokeAsync(Answers)) : default)" />
 }
 @code {
     [Parameter] public List<AnswerView> Answers { get; set; } = new();

@@ -10,28 +10,32 @@
 @inject IToastService toastService
 @inject ILogger<PublicTest> _logger
 <EditForm Model="@Teszt" OnValidSubmit="Publish">
-    <div class="form-group">
-        <FluentTextInput @bind-Value=@Teszt.Title Label="Teszt címe:" />
-    </div>
-    <hr />
-    <div class="form-group">
-        <label for="StartTime">Teszt kezdete: </label>
-        <input type="datetime-local" id="StartTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.StartTime" />
-        <label for="EndTime">Teszt zárása: </label>
-        <input type="datetime-local" id="EndTime" format-value="{0:yyyy.MM.dd hh:mm}" @bind-value="@Teszt.EndTime" />
-    </div>
-    <hr />
-    <div class="form-group">
+    <section class="publish-section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size400" Weight="TextWeight.Semibold">Alapadatok</FluentText>
+        <FluentTextInput @bind-Value=@Teszt.Title Label="Teszt címe" Width="100%" />
+        <div class="publish-dates">
+            <label class="native-field">
+                <span>Teszt kezdete</span>
+                <input type="datetime-local" id="StartTime" @bind-value="@Teszt.StartTime" />
+            </label>
+            <label class="native-field">
+                <span>Teszt zárása</span>
+                <input type="datetime-local" id="EndTime" @bind-value="@Teszt.EndTime" />
+            </label>
+        </div>
+    </section>
+    <section class="publish-section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size400" Weight="TextWeight.Semibold">Beállítások</FluentText>
         <FluentCheckbox @bind-Value="Teszt.IsPractice" Label="Gyakorló teszt?" />
         <FluentCheckbox @bind-Value="Teszt.IsCheck" Label="Tanuló ellenőrizheti?" />
         <FluentCheckbox @bind-Value="Teszt.IsTimer" Label="Válasz időre megy?" />
         <FluentSwitch @bind-Value="@Teszt.ShuffleQuestion" Style="margin-bottom: 20px" Label="Kérdések keverése" />
-        <FluentNumberInput @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" />
-    </div>
+        <FluentNumberInput @bind-Value="Teszt.ReplaceNumber" Label="Hányszor ismételhető?" Width="120px" />
+    </section>
     @if (Teszt.HasSection)
     {
         <FluentStack>
-            <table>
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>Szekció</th>
@@ -57,18 +61,14 @@
             </table>
         </FluentStack>
     }
-    <hr />
-    <InputSelect class="m-1 m-lg-2" TValue="string" Value="SelectGroupId" ValueExpression="@(()=>SelectGroupId)" ValueChanged="SelectGroup">
-        <option value="">Válasz csoportot...</option>
-        @foreach (var item in Groups?? new())
-        {
-            <option value="@item.Id">@item.DisplayName</option>
-        }
-    </InputSelect>
-    <hr />
+    <section class="publish-section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size400" Weight="TextWeight.Semibold">Kik írják?</FluentText>
+        <FluentSelect TOption="EducationClass" TValue="string" Items="@(Groups ?? new())" Label="Csoport" Width="280px"
+                      OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)"
+                      Value="@SelectGroupId" ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válassz csoportot..." />
     @if (Members.Count > 0 || TestMembers.Count > 0)
     {
-        <div class="row">
+        <div>
             <DragDropToList TItem="EducationUser" SourceList="Members" TargetList="TestMembers" Context="list" SourceLabel="Csoport tagjai" TargetLabel="Tesztet ír">
                 <SourceContent>@list.DisplayName</SourceContent>
                 <TargetContent>@list.DisplayName</TargetContent>
@@ -76,8 +76,11 @@
         </div>
 
     }
-    <FluentSwitch Value="AssigmentCreated" Label="Teams feladat létrehozása"/>
-    <FluentButton Type="ButtonType.Submit">Közzététel</FluentButton>
+    </section>
+    <div class="publish-actions">
+        <FluentSwitch Value="AssigmentCreated" Label="Teams feladat létrehozása"/>
+        <FluentButton Type="ButtonType.Submit" Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Send())">Közzététel</FluentButton>
+    </div>
 </EditForm>
 
 @code {

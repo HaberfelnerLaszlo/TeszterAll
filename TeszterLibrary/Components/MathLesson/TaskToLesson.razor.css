@@ -1,6 +1,6 @@
-﻿.col{
+.col{
     max-width:40%;
-    background-color:lightblue;
+    background-color:var(--colorBrandBackground2);
 }
 .sablon {
     width:50px;
@@ -10,7 +10,7 @@
     overflow-y: scroll;
     list-style-type: none;
     padding: 0;
-    border: 1px solid green;
+    border: 1px solid var(--colorPaletteGreenBorder2);
 }
 /*add this to avoid flickering*/
 .plk-dd-inprogess > * {
@@ -33,19 +33,19 @@
 }
 
 .plk-dd-dragged-over {
-    background-color: lightgray;
+    background-color: var(--colorNeutralBackground3);
     opacity: 0.6;
     animation: blinker 1s linear infinite;
 }
 
     .plk-dd-dragged-over > div {
-        background-color: lightgray;
+        background-color: var(--colorNeutralBackground3);
         opacity: 0.6;
         animation: blinker 1s linear infinite;
     }
 
 .plk-dd-dragged-over-denied {
-    background-color: red;
+    background-color: var(--colorPaletteRedBackground3);
     opacity: 0.6;
     animation: blinker 1s linear infinite;
 }
@@ -76,23 +76,23 @@
 }
 
 .plk-flex .plk-dd-dragged-over {
-    background-color: lightgray;
+    background-color: var(--colorNeutralBackground3);
     opacity: 0.6;
     animation: blinker 1s linear infinite;
 }
 
     .plk-flex .plk-dd-dragged-over > div {
-        background-color: lightgray;
+        background-color: var(--colorNeutralBackground3);
         opacity: 0.9;
         animation: blinker 1s linear infinite;
     }
 
 .plk-flex .plk-dd-in-transit {
-    background-color: orangered;
+    background-color: var(--colorPaletteRedBackground3);
 }
 
     .plk-flex .plk-dd-in-transit > div {
-        background-color: orangered;
+        background-color: var(--colorPaletteRedBackground3);
     }
 
 .plk-dd-noselect {

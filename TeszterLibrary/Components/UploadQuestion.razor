@@ -14,7 +14,10 @@
     </BodyContent>
 </Modal>
 
-<button class="btn btn-primary" @onclick="Change" hidden="@IsUpload">Kérdések feltöltése </button>
+@if (!IsUpload)
+{
+    <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowUpload())" OnClick="Change">Kérdések feltöltése</FluentButton>
+}
 <InputFile id="fileInput" OnChange="UploadFiles" single hidden="@(!IsUpload)" />
 
 @code {

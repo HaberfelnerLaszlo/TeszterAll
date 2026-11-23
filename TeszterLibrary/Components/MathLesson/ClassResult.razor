@@ -1,39 +1,41 @@
-﻿@foreach (var item in classViews)
-{
-	<div class="container row @RowClass(item)" id="StudentResult" @onclick="()=>Open(item.StudentId)">
-		<div class="col">
-			<span class="float-start d-sm-flex justify-content-sm-start align-items-sm-center NameTxt">@item.StudentName</span>
-			<div class="CurrentTxt">
-				@if (item.Total == 0)
-				{
-					<span>Nincs kiadott feladatsora</span>
-				}
-				else if (item.Position == 0)
-				{
-					<span>Minden leckét teljesített (@item.Total)</span>
-				}
-				else
-				{
-					<span>@item.Position. / @item.Total: @item.CurrentLesson @(item.InProgress ? "– épp oldja" : "")</span>
-				}
-			</div>
-		</div>
-		<div class="col-3">
-			<div class="row d-flex justify-content-end">
-				<span class="badge bg-success float-end d-sm-flex justify-content-sm-end ScoreBadge">Befejezve: @item.Complet</span>
-				<span class="badge bg-danger d-inline-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Visszalépések: @item.Back</span>
-				<span class="badge bg-info text-end d-flex float-end d-sm-flex justify-content-sm-end ScoreBadge">Hátralévők: @item.NoComplet</span>
-				@if (item.Abandoned > 0)
-				{
-					<span class="badge bg-secondary float-end d-sm-flex justify-content-sm-end ScoreBadge">Félbehagyva: @item.Abandoned</span>
-				}
-			</div>
-			<div class="row d-flex justify-content-end">
-				<span class="activeDate">@ActiveText(item)</span>
-			</div>
-		</div>
-	</div>
-}
+﻿@* Osztály eredménylista: tanulónként egy kattintható sor, bal oldalt állapotsávval. *@
+<div class="result-list">
+    @foreach (var item in classViews)
+    {
+        var row = item;
+        <button type="button" class="result-row @RowClass(row)" @onclick="() => Open(row.StudentId)">
+            <span class="result-row__main">
+                <span class="result-row__name">@row.StudentName</span>
+                <span class="result-row__sub">
+                    @if (row.Total == 0)
+                    {
+                        <span>Nincs kiadott feladatsora</span>
+                    }
+                    else if (row.Position == 0)
+                    {
+                        <span>Minden leckét teljesített (@row.Total)</span>
+                    }
+                    else
+                    {
+                        <span>@row.Position. / @row.Total: @row.CurrentLesson @(row.InProgress ? "– épp oldja" : "")</span>
+                    }
+                </span>
+            </span>
+            <span class="result-row__meta">
+                <span class="result-row__badges">
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Success" Content="@($"Befejezve: {row.Complet}")" />
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Danger" Content="@($"Visszalépés: {row.Back}")" />
+                    <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Informative" Content="@($"Hátra: {row.NoComplet}")" />
+                    @if (row.Abandoned > 0)
+                    {
+                        <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Subtle" Content="@($"Félbehagyva: {row.Abandoned}")" />
+                    }
+                </span>
+                <span class="result-row__date">@ActiveText(row)</span>
+            </span>
+        </button>
+    }
+</div>
 @code {
 	[Parameter] public List<ResultClassView> classViews { get; set; } = new();
 	[Parameter] public EventCallback<Guid> Click { get; set; }

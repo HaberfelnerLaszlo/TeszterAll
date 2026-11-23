@@ -18,14 +18,14 @@
     gap: 10px;
 }
 
-.topicBtn {
+::deep .topicBtn {
     min-width: 220px;
     text-align: left;
 }
 
 .best {
     font-size: .9rem;
-    color: #6b5200;
+    color: var(--colorPaletteDarkOrangeForeground2);
 }
 
 .hud {
@@ -44,17 +44,17 @@
 }
 
 .timer.hurry {
-    color: #d00000;
+    color: var(--colorPaletteRedForeground1);
 }
 
 .score {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #00a000;
+    color: var(--colorPaletteGreenForeground1);
 }
 
 .topicName {
-    color: #555;
+    color: var(--colorNeutralForeground3);
 }
 
 .flash {
@@ -64,11 +64,11 @@
 }
 
 .flash.ok {
-    color: #00a000;
+    color: var(--colorPaletteGreenForeground1);
 }
 
 .flash.bad {
-    color: #d00000;
+    color: var(--colorPaletteRedForeground1);
 }
 
 @keyframes pop {
@@ -76,7 +76,7 @@
     to { transform: scale(1); opacity: 1; }
 }
 
-.giveUp {
+::deep .giveUp {
     margin-top: 10px;
 }
 
@@ -89,10 +89,11 @@
 .result .record {
     font-size: 1.4rem;
     font-weight: 800;
-    color: #a14a00;
+    color: var(--colorPaletteDarkOrangeForeground2);
     margin: 0;
 }
 
-.result .btn {
+.result ::deep fluent-button,
+.result ::deep fluent-anchor-button {
     margin: 8px 8px 0 0;
 }
