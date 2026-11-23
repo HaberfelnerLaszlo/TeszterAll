@@ -187,6 +187,15 @@ namespace TeszterTests.Services.Html
         }
 
         [Fact]
+        public void Tex_fallback_keeps_its_class_for_styling()
+        {
+            // Ha a képszolgáltatás nem érhető el, az API a képlet forrását ebben a span-ben küldi (component.css: .tex-fallback).
+            var html = SafeHtml.Sanitize("<span class=\"tex-fallback\">\\frac{1}{2} + 3 &lt; 4</span> Ł = Ł");
+
+            Assert.Equal("<span class=\"tex-fallback\">\\frac{1}{2} + 3 &lt; 4</span> Ł = Ł", html);
+        }
+
+        [Fact]
         public void A_question_card_renders_the_cleaned_text()
         {
             using var ctx = new BunitContext();
