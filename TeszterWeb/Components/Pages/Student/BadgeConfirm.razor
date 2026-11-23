@@ -3,6 +3,7 @@
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
 @inject MathService mService
+@inject ClientSignalsTracker signals
 
 @* Jelvény-megerősítés: néhány rövid feladat, bőséges időkerettel. A szövegek pozitívak; a csalásról nem esik szó. *@
 
@@ -63,6 +64,11 @@
     private string message = string.Empty;
     private System.Threading.Timer? ticker;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await signals.StartAsync();   // kliensjelek (csak számok, tartalom soha)
+    }
+
     /// <summary>A futás csak most indul (a szerver órája ettől méri az időkeretet), hogy a bevezető olvasása ne fogyassza.</summary>
     private async Task Go()
     {
@@ -78,6 +84,7 @@
                 return;
             }
             start = view;
+            await signals.TakeAsync();   // nullázás: az első feladattól számít
         }
         finally
         {
@@ -101,7 +108,7 @@
     private async Task Answer(OperationView operation)
     {
         if (start is null || state != State.Running) return;
-        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = start.Run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = start.Run.RunId, OperationId = operation.OperationId, Result = operation.Result, ClientSignals = await signals.TakeAsync() });
         if (view?.Expired == true)
         {
             await End();

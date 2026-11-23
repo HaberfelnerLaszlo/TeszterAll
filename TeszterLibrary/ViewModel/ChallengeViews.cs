@@ -27,6 +27,8 @@
 		public int RunId { get; set; }
 		public int OperationId { get; set; }
 		public string Result { get; set; } = string.Empty;
+		/// <summary>A böngésző jelei (csak számok/logikai értékek; hiányozhat).</summary>
+		public ClientSignals? ClientSignals { get; set; }
 	}
 
 	/// <summary>A válasz kiértékelése és az állás.</summary>
