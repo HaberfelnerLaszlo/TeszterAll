@@ -63,6 +63,9 @@ else
                                 <option value="Percent">Százalékszámítás</option>
                                 <option value="Equation">Egyenletek</option>
                                 <option value="Template">Saját szöveges feladat</option>
+                                <option value="TimeUnits">Időmértékegységek</option>
+                                <option value="Proportion">Arányosság</option>
+                                <option value="Divisibility">Oszthatóság (lnko, lkkt, maradék)</option>
                             </select>
                         </label>
 
@@ -217,6 +220,60 @@ else
                                 </div>
                                 <p class="hint">0 tizedesjegynél csak egész eredményű számokat sorsol. A képletben csak a változók, számok és + - * / ( ) szerepelhetnek.</p>
                                 break;
+
+                            case "TimeUnits":
+                                <div class="ops" role="group" aria-label="Időmértékegységek">
+                                    Egységek:
+                                    @foreach (var (unit, label) in TimeUnitLabels)
+                                    {
+                                        <label class="check"><input type="checkbox" checked="@timeUnits.Units.Contains(unit)" @onchange="e => Toggle(timeUnits.Units, unit, (bool)e.Value!)" /> @label</label>
+                                    }
+                                </div>
+                                <div class="ops" role="group" aria-label="Átváltás iránya">
+                                    Irány:
+                                    <label class="check"><input type="checkbox" checked="@timeUnits.Directions.Contains("down")" @onchange="@(e => Toggle(timeUnits.Directions, "down", (bool)e.Value!))" /> kisebb egységre (3 óra = ? perc)</label>
+                                    <label class="check"><input type="checkbox" checked="@timeUnits.Directions.Contains("up")" @onchange="@(e => Toggle(timeUnits.Directions, "up", (bool)e.Value!))" /> nagyobb egységre (180 perc = ? óra)</label>
+                                </div>
+                                <div class="grid">
+                                    <label>
+                                        Mennyiség részei
+                                        <select @bind="timeUnits.Parts">
+                                            <option value="1">egy (3 óra)</option>
+                                            <option value="2">kettő (2 óra 15 perc)</option>
+                                        </select>
+                                    </label>
+                                    <label>A nagyobb egység legfeljebb <input type="number" min="1" max="100" @bind="timeUnits.Max" /></label>
+                                </div>
+                                break;
+
+                            case "Proportion":
+                                <div class="ops" role="group" aria-label="Arányosság fajtája">
+                                    Fajta:
+                                    <label class="check"><input type="checkbox" checked="@proportion.Kinds.Contains("direct")" @onchange="@(e => Toggle(proportion.Kinds, "direct", (bool)e.Value!))" /> egyenes</label>
+                                    <label class="check"><input type="checkbox" checked="@proportion.Kinds.Contains("inverse")" @onchange="@(e => Toggle(proportion.Kinds, "inverse", (bool)e.Value!))" /> fordított</label>
+                                </div>
+                                <label>A mennyiségek legfeljebb <input type="number" min="4" max="100" @bind="proportion.Max" /></label>
+                                <p class="hint">A szövegek beépítettek (vásárlás, út, munkások, csapok, sebesség); egyedi szöveghez használd a saját szöveges feladatot.</p>
+                                break;
+
+                            case "Divisibility":
+                                <div class="ops" role="group" aria-label="Feladat fajtája">
+                                    Fajta:
+                                    <label class="check"><input type="checkbox" checked="@divisibility.Modes.Contains("gcd")" @onchange="@(e => Toggle(divisibility.Modes, "gcd", (bool)e.Value!))" /> legnagyobb közös osztó</label>
+                                    <label class="check"><input type="checkbox" checked="@divisibility.Modes.Contains("lcm")" @onchange="@(e => Toggle(divisibility.Modes, "lcm", (bool)e.Value!))" /> legkisebb közös többszörös</label>
+                                    <label class="check"><input type="checkbox" checked="@divisibility.Modes.Contains("remainder")" @onchange="@(e => Toggle(divisibility.Modes, "remainder", (bool)e.Value!))" /> maradékos osztás</label>
+                                </div>
+                                <div class="grid">
+                                    <label>A számok legfeljebb <input type="number" min="12" max="10000" @bind="divisibility.Max" /></label>
+                                    <label>
+                                        Számok (lnko/lkkt)
+                                        <select @bind="divisibility.Count">
+                                            <option value="2">kettő</option>
+                                            <option value="3">három</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                break;
                         }
                     </fieldset>
                 }
@@ -318,6 +375,24 @@ else
         public string Condition { get; set; } = string.Empty;
         public int Decimals { get; set; }
     }
+    private sealed class TimeUnitsForm
+    {
+        public List<string> Units { get; set; } = ["ora", "perc"];
+        public List<string> Directions { get; set; } = ["down"];
+        public int Parts { get; set; } = 1;
+        public int Max { get; set; } = 10;
+    }
+    private sealed class ProportionForm
+    {
+        public List<string> Kinds { get; set; } = ["direct"];
+        public int Max { get; set; } = 12;
+    }
+    private sealed class DivisibilityForm
+    {
+        public List<string> Modes { get; set; } = ["gcd"];
+        public int Max { get; set; } = 100;
+        public int Count { get; set; } = 2;
+    }
     /// <summary>Szerkeszthető sor a változótáblában (a név is szerkeszthető, ezért nem szótár).</summary>
     private sealed class VariableRow
     {
@@ -340,6 +415,7 @@ else
     private static readonly (string Op, string Label)[] OpLabels = [("+", "összeadás"), ("-", "kivonás"), ("*", "szorzás"), ("/", "osztás")];
     private static readonly (int Place, string Label)[] RoundingPlaces = [(1, "tízesre"), (2, "százasra"), (3, "ezresre"), (4, "tízezresre"), (-1, "tizedre"), (-2, "századra")];
     private static readonly (string Mode, string Label)[] PercentModes = [("value", "százalékérték"), ("base", "alap"), ("percent", "százalékláb")];
+    private static readonly (string Unit, string Label)[] TimeUnitLabels = [("nap", "nap"), ("ora", "óra"), ("perc", "perc"), ("mp", "másodperc")];
     private static readonly (string Form, string Label)[] EquationForms = [("ax+b=c", "ax + b = c"), ("ax-b=c", "ax − b = c"), ("a(x+b)=c", "a(x + b) = c"), ("ax+b=cx+d", "ax + b = cx + d")];
 
     private List<TopicEditView>? topics;
@@ -353,6 +429,9 @@ else
     private EquationForm equation = new();
     private TemplateForm template = new();
     private List<VariableRow> templateVars = new();
+    private TimeUnitsForm timeUnits = new();
+    private ProportionForm proportion = new();
+    private DivisibilityForm divisibility = new();
     private List<TopicSampleView> samples = new();
     private string filter = string.Empty, error = string.Empty;
     private bool busy;
@@ -389,6 +468,9 @@ else
         equation = new();
         template = new();
         templateVars = [new() { Name = "a" }, new() { Name = "b" }];
+        timeUnits = new();
+        proportion = new();
+        divisibility = new();
         error = string.Empty;
         if (edit is null || string.IsNullOrWhiteSpace(edit.GeneratorParams)) return;
         try
@@ -403,6 +485,9 @@ else
                 case "Decimal": decimalForm = JsonSerializer.Deserialize<DecimalForm>(edit.GeneratorParams, Json) ?? new(); break;
                 case "Percent": percent = JsonSerializer.Deserialize<PercentForm>(edit.GeneratorParams, Json) ?? new(); break;
                 case "Equation": equation = JsonSerializer.Deserialize<EquationForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "TimeUnits": timeUnits = JsonSerializer.Deserialize<TimeUnitsForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Proportion": proportion = JsonSerializer.Deserialize<ProportionForm>(edit.GeneratorParams, Json) ?? new(); break;
+                case "Divisibility": divisibility = JsonSerializer.Deserialize<DivisibilityForm>(edit.GeneratorParams, Json) ?? new(); break;
                 case "Template":
                     template = JsonSerializer.Deserialize<TemplateForm>(edit.GeneratorParams, Json) ?? new();
                     templateVars = [.. template.Variables.Select(kv => new VariableRow { Name = kv.Key, From = kv.Value.From, To = kv.Value.To, Step = kv.Value.Step })];
@@ -446,6 +531,9 @@ else
         "Decimal" => JsonSerializer.Serialize(decimalForm, Json),
         "Percent" => JsonSerializer.Serialize(percent, Json),
         "Equation" => JsonSerializer.Serialize(equation, Json),
+        "TimeUnits" => JsonSerializer.Serialize(timeUnits, Json),
+        "Proportion" => JsonSerializer.Serialize(proportion, Json),
+        "Divisibility" => JsonSerializer.Serialize(divisibility, Json),
         "Template" => JsonSerializer.Serialize(new TemplateForm
         {
             Text = template.Text,
