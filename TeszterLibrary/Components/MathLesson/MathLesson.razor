@@ -6,7 +6,10 @@
 	{
 		<h3 id="error">@errorMessage</h3><hr />
 	}
-<form>
+@* Enterre a böngésző az egymezős űrlapot natívan elküldené (oldal-újratöltés → új feladat): ezt letiltjuk, a küldést a
+   keydown-kezelő (Leutes) végzi. A mezők minden leütésre frissülnek (oninput), így Enterkor már a beírt érték megy el;
+   régen csak change-re frissültek, és az Enter hamarabb ért a szerverre, mint a beírt válasz. *@
+<form @onsubmit:preventDefault="true">
     @foreach (var item in s)
     {
         if (item.Contains(" = "))
@@ -15,16 +18,16 @@
             @if (Fraction)
             {
                 <div class="fraction">
-                    <input class="valasz" type="number" @bind-value="@szamlalo" autofocus @onkeydown="(e)=>Leutes(e)" />
+                    <input class="valasz" type="number" @bind-value="@szamlalo" @bind-value:event="oninput" autofocus @onkeydown="(e)=>Leutes(e)" />
                     <svg height="5" width="100">
                         <line x1="0" y1="0" x2="100" y2="0" style="stroke:rgb(0,0,0);stroke-width:3" />
                     </svg>
-                    <input class="valasz" type="number" @bind-value="@nevezo" @onkeydown="(e)=>Leutes(e)" />
+                    <input class="valasz" type="number" @bind-value="@nevezo" @bind-value:event="oninput" @onkeydown="(e)=>Leutes(e)" />
                 </div>
             }
             else
             {
-                <input class="valasz" type="text" @bind-value="@Assignment.Result" autofocus @onkeydown="(e)=>Leutes(e)" />
+                <input class="valasz" type="text" @bind-value="@Assignment.Result" @bind-value:event="oninput" autofocus @onkeydown="(e)=>Leutes(e)" />
             }
         }
         else
