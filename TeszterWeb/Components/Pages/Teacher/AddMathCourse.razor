@@ -6,28 +6,26 @@
 @inject EduUserServices uService
 @inject IToastService ToastService
 @inject ILogger<AddMathCourse> _logger
-<h3>AddMathCourse</h3>
-<a class="btn btn-outline-primary mb-2" href="/TaskList">Témák szerkesztése</a>
-<EditForm Model="Groups">
-    <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
-        <option disabled selected>Válasz csoportot...</option>
-        @foreach (var item in Groups)
-        {
-            <option value="@item.Id">@item.DisplayName</option>
-        }
-    </InputSelect>
-</EditForm>
-<hr />
+<PageHeader Title="Matek gyakorlás tanulónak" Description="Válassz csoportot, húzd át a tanulókat a jobb oldali listába, majd állítsd össze a feladatsorukat.">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.TextBulletListSquareEdit())" OnClick="@(() => NavigationManager.NavigateTo("/TaskList"))">Témák szerkesztése</FluentButton>
+    </Actions>
+</PageHeader>
+<FluentCard Class="section">
+    <FluentSelect TOption="Microsoft.Graph.Models.EducationClass" TValue="string" Items="Groups" Label="Csoport"
+                  OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)"
+                  ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válassz csoportot..." Width="280px" />
+</FluentCard>
 @if (Members.Count > 0 || TestMembers.Count > 0)
 {
     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
         <FluentGridItem Xs="12" Sm="4">
-            <h5>Csoport tagjai</h5>
+            <FluentText As="TextTag.H2" Size="TextSize.Size400" Weight="TextWeight.Semibold" Class="section__title">Csoport tagjai</FluentText>
             <FluentSortableList Id="shared1" Class="darker" Group="sharedLists" OnUpdate="@SortListOne" OnRemove="@ListOneRemove" Items="@Members" Context="member">
                 <ItemTemplate>
                     @if (member.HasLesson)
                     {
-                        <div style="color:darkblue; font-weight:bold; background-color:green">&#10003; @member.DisplayName</div>
+                        <FluentBadge Appearance="BadgeAppearance.Tint" Color="BadgeColor.Success" IconStart="@(new Icons.Regular.Size16.Checkmark())" Content="@member.DisplayName" Title="Van feladatsora" />
                         <FluentButton Id="myPopover" OnClick="()=>ViewLesson(member.Id)">  <FluentIcon Value="@(new Icons.Color.Size28.SearchSparkle())" /></FluentButton>
                         <FluentPopover Style="width: 300px;" AnchorId="myPopover" @bind-Opened="visible">
                             <FluentText Weight="TextWeight.Semibold" Block="true">A feladatok listája: </FluentText>
@@ -42,8 +40,7 @@
                     }
                     else
                     {
-                        <span style="color:red; font-weight:bold;">&#10007; </span>
-                        @member.DisplayName
+                        <FluentBadge Appearance="BadgeAppearance.Outline" Color="BadgeColor.Subtle" IconStart="@(new Icons.Regular.Size16.Dismiss())" Content="@member.DisplayName" Title="Nincs feladatsora" />
                     }
                 </ItemTemplate>
             </FluentSortableList>
@@ -56,7 +53,7 @@
             </FluentStack>
         </FluentGridItem>
         <FluentGridItem Xs="12" Sm="4">
-            <h5>Feladatsort kap</h5>
+            <FluentText As="TextTag.H2" Size="TextSize.Size400" Weight="TextWeight.Semibold" Class="section__title">Feladatsort kap</FluentText>
             <FluentSortableList Id="shared2" Group="sharedLists" OnUpdate="@SortListTwo" OnRemove="@ListTwoRemove" Items="@TestMembers" Context="testmember">
                 <ItemTemplate>@testmember.DisplayName</ItemTemplate>
             </FluentSortableList>
@@ -71,7 +68,7 @@
 else if (TestMembers.Any())
 {
     <FluentCheckbox @bind-Value="AllTestMember">Minden tanulónak ugyan az a feladatsor</FluentCheckbox>
-    <button class="btn btn-success text-center" @onclick="AddLessons">Feladatlisták meghatározása</button>
+    <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.ClipboardTaskListLtr())" OnClick="AddLessons">Feladatlisták meghatározása</FluentButton>
 }
 
 @code {
@@ -86,6 +83,8 @@ else if (TestMembers.Any())
     private bool BtnDidabled = false, IsCompletMember = false, AllTestMember = false, visible = false;
     private Guid StudentId, ClassId;
     //TODO ReplaceNumber maximalizálása!
+    protected override void OnInitialized() => data.Title = "Matek gyakorlás tanulónak";
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

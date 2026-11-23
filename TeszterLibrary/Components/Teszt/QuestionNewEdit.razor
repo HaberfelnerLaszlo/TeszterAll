@@ -5,25 +5,25 @@
 @inject IJSRuntime js
 @inject IToastService toastService
 
-<div class="row m-3">
+<div class="question-editor">
     <Modal Accept="CloseModal" AcceptButtom="Rendben" Show="errorMessage!=string.Empty">
         <HeaderContent>
             <p>Figyelmeztetés!</p>
         </HeaderContent>
         <BodyContent>
-            <h4>@errorMessage</h4>
+            <FluentText>@errorMessage</FluentText>
         </BodyContent>
     </Modal>
     <FluentGrid>
         <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
                 @*A kérdés általános adatai*@
-                <div class="col bg-light m-2 justify-content-start">
-                    <div class="p-3 mb-3 bg-primary text-white text-center">@(New? "Új kérdés":"Kérdés módosítása")</div>
+                <div class="editor-section">
+                    <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="editor-section__title">@(New? "Új kérdés":"Kérdés módosítása")</FluentText>
                     <EditForm Model="@newQuestion">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
-                        <div style="margin:10px 0px">
+                        <div class="field">
                             <FluentSelect Id="qType" TOption="string" TValue="string" Value="@newQuestion.QType.ToString()" ValueChanged="@((string? t) => qTypeChanged(t ?? string.Empty))" Disabled=!New Placeholder="Válassza ki a kérdés fajtáját.." Label="Kérdés típusa:">
                                 <FluentOption TValue="string" Value="@("SC")">Felelet választás</FluentOption>
                                 <FluentOption TValue="string" Value="@("MC")">Több válaszos</FluentOption>
@@ -47,28 +47,25 @@
                                         <p>Új tantárgy felvétele</p>
                                     </HeaderContent>
                                     <BodyContent>
-                                        <label for="Name">Tantárgy neve: </label>
-                                        <input type="text" id="Name" @bind-value="subjectName" />
+                                        <FluentTextInput @bind-Value="subjectName" Label="Tantárgy neve" Width="100%" />
                                     </BodyContent>
                                 </Modal>
-                                <FluentButton Appearance="ButtonAppearance.Primary" @onclick="()=>showModal=true">Új tantárgy</FluentButton>
-                                <div style="margin:10px 0px">
-                                    <label for="title">Kérdés címe / témaköre</label>
-                                    <input type="text" id="title" class="form-control" @bind-value="@newQuestion.Title" required />
+                                <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Add())" OnClick="@(()=>showModal=true)">Új tantárgy</FluentButton>
+                                <div class="field">
+                                    <FluentTextInput Id="title" @bind-Value="@newQuestion.Title" Label="Kérdés címe / témaköre" Required="true" Width="100%" />
                                 </div>
-                                <div style="margin:10px 0px">
-                                    <label for="subtitle">Kérdés alcím</label>
-                                    <input type="text" id="subtitle" class="form-control" @bind-value="@newQuestion.Subtitle" />
+                                <div class="field">
+                                    <FluentTextInput Id="subtitle" @bind-Value="@newQuestion.Subtitle" Label="Kérdés alcím" Width="100%" />
                                 </div>
-                                <div style="margin:10px 0px">
+                                <div class="field">
                                     <FluentTextArea Id="qText" @bind-Value="@newQuestion.Text" Style="width:100%" />
                                     <TeszterLibrary.Components.RichTextEditorWithImage @ref="textEditor" Context="@newQuestion.Text" />
                                     <div hidden="@(newQuestion.QType!=QuestionType.Comp)">
-                                        <p>Kiegészitendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</p>
+                                        <FluentText Size="TextSize.Size200" Class="hint">Kiegészítendő kérdés esetén {szám} jelöléssel lehet megadni a kiegészítés helyét.</FluentText>
                                         <FluentButton @onclick="Insert">{@k} beszúrása</FluentButton>
                                     </div>
                                 </div>
-                                <div style="margin:10px 0px">
+                                <div class="field">
                                     <FluentGrid>
                                         <FluentGridItem Xs="12" Sm="6">
                                             <FluentNumberInput Name="score" @bind-Value="@newQuestion.Score" Label="Pontszám" />
@@ -79,10 +76,10 @@
                                     </FluentGrid>
                                 </div>
                                 <div>
-                                    <div class="input-group">
-                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MinGrade" style="width:100px; margin:0px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyam" />
-                                        <span> -  </span>
-                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MaxGrade" style="width:100px; margin:0px" min="1" max="12" />
+                                    <div class="grade-range">
+                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MinGrade" Width="100px" @oninput="minGradeChange" min="1" max="12" Label="Évfolyamtól" />
+                                        <span class="grade-range__dash">–</span>
+                                        <FluentNumberInput Name="grade" @bind-Value="@newQuestion.MaxGrade" Width="100px" min="1" max="12" Label="Évfolyamig" />
                                     </div>
                                 </div>
                             </div>
@@ -93,8 +90,8 @@
         </FluentGridItem>
         <FluentGridItem Xs="12" Sm="6">
             <FluentStack Orientation="Orientation.Vertical">
-                <div class="col bg-light m-2 justify-content-start" hidden="@hiddenForm">
-                    <div class="p-3 mb-3 bg-primary text-white text-center">Válaszok</div>
+                <div class="editor-section answers" hidden="@hiddenForm">
+                    <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="editor-section__title">Válaszok</FluentText>
                     @switch (newQuestion.QType)
                     {
                         case QuestionType.SC:
@@ -109,7 +106,7 @@
                             break;
                         case QuestionType.TF:
                             {
-                                <p class="bg-info text-center">Az eldöntendő állításokat írja le.</p>
+                                <FluentMessageBar Intent="MessageBarIntent.Info">Írd le az eldöntendő állításokat, és jelöld, melyik igaz.</FluentMessageBar>
                                 @foreach (var item in newAnswers)
                                 {
                                     <NewAnswer newAnswer="item" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
@@ -126,7 +123,7 @@
                             break;
                         case QuestionType.Seq:
                             {
-                                <p class="bg-info text-center">A válaszokat a helyes sorrendbe állítsa be.</p>
+                                <FluentMessageBar Intent="MessageBarIntent.Info">Húzással állítsd a válaszokat a helyes sorrendbe.</FluentMessageBar>
                                 <Dropzone Items="newAnswers" TItem="Answer" OnItemDrop="drop">
                                     <NewAnswer newAnswer="@context" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
                                 </Dropzone>
@@ -138,17 +135,14 @@
                             newAnswers[1].Right = false;
                             for (int i = 0; i < newAnswers.Count; i = i + 2)
                             {
-                                <label>@(i/2+1). pár:</label>
-                                <div class="row">
-                                    <div class="col">
-                                        <NewAnswer newAnswer="newAnswers[i]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                var pairIndex = i;
+                                <div class="pair">
+                                    <span class="pair__label">@(pairIndex/2+1). pár</span>
+                                    <div class="pair__items">
+                                        <NewAnswer newAnswer="newAnswers[pairIndex]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
+                                        <NewAnswer newAnswer="newAnswers[pairIndex+1]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
                                     </div>
-                                    <div class="col">
-                                        <NewAnswer newAnswer="newAnswers[i+1]" questionType="newQuestion.QType" DeleteAnswer="@deleteAnswer"></NewAnswer>
-                                    </div>
-                                    <div class="col-1">
-                                        <button class="btn btn-danger" @onclick="()=>deletePairAnswers(i)"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Delete())" Color="Color.Error" /></button>
-                                    </div>
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())" Title="Pár törlése" aria-label="Pár törlése" OnClick="()=>deletePairAnswers(pairIndex)" />
                                 </div>
                             }
                             break;
@@ -156,15 +150,14 @@
                             break;
                     }
 
-                    <button class="m-3" @onclick="AddAnswer" type="button"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Add())" Color="Color.Info" /></button>
+                    <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Add())" OnClick="AddAnswer">@(newQuestion.QType == QuestionType.Pair ? "Új pár" : "Új válasz")</FluentButton>
                 </div>
             </FluentStack>
         </FluentGridItem>
     </FluentGrid>
-    <div class="text-center p-3 mb-3" hidden="@hiddenForm">
-        <button type="submit" class="btn btn-info" @onclick="SaveQuestion">Kérdés mentése</button>
-        @*<button class="btn btn-info" @onclick="SaveNewQuestion">Kérdés mentése + új</button>*@
-        <button class="btn" @onclick="@(async ()=>await Cancel.InvokeAsync())" type="button">Mégsem</button>
+    <div class="editor-actions" hidden="@hiddenForm">
+        <FluentButton Appearance="ButtonAppearance.Default" OnClick="@(async ()=>await Cancel.InvokeAsync())">Mégsem</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Save())" OnClick="SaveQuestion">Kérdés mentése</FluentButton>
     </div>
 </div>
 @code {

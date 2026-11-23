@@ -2,48 +2,43 @@
 @using Microsoft.Identity.Web
 @inject EduUserServices userServices
 @inject IToastService toastService
+@inject GlobalData data
 @attribute [Authorize(Roles = "Teacher")]
-<PageTitle>Felhasználók</PageTitle>
-<h3>UserManagment</h3>
-@if (users is not null && users.Count > 0)
+<PageHeader Title="Felhasználók" Description="Az alkalmazásba már belépett tanárok és diákok." />
+@if (loading)
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Név</th>
-                <th>Szerepkör</th>
-                <th>Műveletek</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in users)
-            {
-                <tr>
-                    <td>@user.DisplayName</td>
-                    <td>@user.Role</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <LoadingState Text="Felhasználók betöltése..." />
+}
+else if (users is { Count: > 0 })
+{
+    <FluentCard>
+        <FluentDataGrid Items="@users.AsQueryable()" ShowHover="true">
+            <PropertyColumn Property="@(u => u.DisplayName)" Title="Név" Sortable="true" />
+            <TemplateColumn Title="Szerepkör" Sortable="true" SortBy="@(GridSort<EduUser>.ByAscending(u => u.Role))">
+                <FluentBadge Appearance="BadgeAppearance.Tint" Color="@(context.Role == "Teacher" ? BadgeColor.Brand : BadgeColor.Informative)"
+                             Content="@(context.Role == "Teacher" ? "Tanár" : context.Role == "Student" ? "Diák" : context.Role)" />
+            </TemplateColumn>
+        </FluentDataGrid>
+    </FluentCard>
 }
 else
 {
-    <h5>Adatok betöltése...</h5>
-    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
-        <FluentSpinner />
-    </FluentStack>
+    <EmptyState Title="Nincs felhasználó" Message="@(string.IsNullOrEmpty(userServices.ErrorMessage) ? "Még senki nem lépett be az alkalmazásba." : userServices.ErrorMessage)" Icon="@(new Icons.Regular.Size24.PeopleSettings())" />
 }
 
 @code {
     List<EduUser>? users;
+    bool loading = true;
     protected override async Task OnInitializedAsync()
     {
-        users = await userServices.GetAllEduUsers();
-        if (users is null || users.Count == 0)
+        data.Title = "Felhasználók";
+        try
         {
-            toastService.ShowError("Nincs felhasználó");
-            if (!string.IsNullOrEmpty(userServices.ErrorMessage)) toastService.ShowError(userServices.ErrorMessage);
+            users = await userServices.GetAllEduUsers();
         }
-        await base.OnInitializedAsync();
+        finally
+        {
+            loading = false;
+        }
     }
 }

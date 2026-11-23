@@ -7,25 +7,39 @@
 @inject GroupsService gService
 @inject IToastService ToastService
 @inject ILogger<AddMathClassCourse> _logger
-<h3>Osztály feladatainak beállítása</h3>
-@if (Groups is null || Groups.Count == 0)
+<PageHeader Title="Matek gyakorlás osztálynak" Description="Válassz osztályt, majd add meg, melyik témakörből és mértékegységből hány feladatot kapjanak a tanulók." />
+
+@if (loading)
 {
-    <p>Nincsenek osztályaid!</p>
-    <FluentButton OnClick="@(() => NavigationManager.NavigateTo("/home"))">Vissza a főoldalra</FluentButton>
-    return;
+    <LoadingState Text="Osztályok betöltése..." />
 }
-<EditForm Model="Groups">
-    <InputSelect class="m-1 m-lg-2" TValue="string" ValueChanged="SelectGroup" ValueExpression="()=>SelectGroupId">
-        <option disabled selected>Válasz csoportot...</option>
-        @foreach (var item in Groups)
-        {
-            <option value="@item.Id">@item.DisplayName</option>
-        }
-    </InputSelect>
-</EditForm>
-<hr />
-<AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass"></AddClassLesson>
-<FluentButton OnClick="AddGroupDb">Felvétel adatbázisba</FluentButton>
+else if (Groups is null || Groups.Count == 0)
+{
+    <EmptyState Title="Nincsenek osztályaid" Message="Csak a Teamsben hozzád rendelt osztályoknak adhatsz ki feladatot." Icon="@(new Icons.Regular.Size24.PeopleTeam())">
+        <FluentButton OnClick="@(() => NavigationManager.NavigateTo("/home"))">Vissza a kezdőlapra</FluentButton>
+    </EmptyState>
+}
+else
+{
+    <FluentCard Class="section">
+        <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Wrap="true">
+            <FluentSelect TOption="Microsoft.Graph.Models.EducationClass" TValue="string" Items="Groups" Label="Osztály"
+                          OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)"
+                          ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válassz osztályt..." Width="280px" />
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.DatabaseArrowUp())" OnClick="AddGroupDb" Disabled="@(ClassId == Guid.Empty)"
+                          Title="Az osztály felvétele/frissítése az adatbázisban">Osztály felvétele</FluentButton>
+        </FluentStack>
+    </FluentCard>
+
+    @if (ClassId == Guid.Empty)
+    {
+        <EmptyState Title="Válassz osztályt" Message="Az osztály kiválasztása után itt állíthatod be a feladatokat." Icon="@(new Icons.Regular.Size24.PeopleTeam())" />
+    }
+    else
+    {
+        <AddClassLesson ClassId="ClassId" Lessons="Lessons" SaveTask="SaveClass" />
+    }
+}
 
 @code {
     private List<Microsoft.Graph.Models.EducationClass>? Groups = new List<Microsoft.Graph.Models.EducationClass>();
@@ -33,6 +47,9 @@
     private string SelectGroupId = string.Empty;
     private bool BtnDidabled = false, IsCompletMember = false, IsClass = false;
     private Guid ClassId;
+    private bool loading = true;
+    protected override void OnInitialized() => data.Title = "Matek gyakorlás osztálynak";
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -57,8 +74,9 @@
             Groups = await graphService.GetClasses(data.UserId!); //Az osztályok lekérése
             if (Groups is null || Groups.Count == 0)
             {
-                ToastService.ShowError("Nincsenek osztályaid!");
-                _logger.LogError("Nincsenek osztályaid!");
+                _logger.LogWarning("Nincsenek osztályai a tanárnak.");
+                loading = false;
+                StateHasChanged();
                 return;
             }
             // Egymás után (nem ForEach(async ...)-kal, ami async void volt, és párhuzamosan írt az adatbázisba).
@@ -69,6 +87,7 @@
                     await gService.EnsureGroupAsync(new Group(groupId, g.DisplayName ?? string.Empty, g.Description));
                 }
             }
+            loading = false;
             StateHasChanged();
         }
     }
@@ -76,6 +95,7 @@
     {
         if (id.ToGuidOrNull() is Guid classId)
         {
+            SelectGroupId = id;
             ClassId = classId;
             Lessons.Clear();
             Lessons = await mService.GetClassLessons(ClassId);

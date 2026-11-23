@@ -1,0 +1,21 @@
+.answer-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalS);
+    padding: var(--spacingVerticalXS) var(--spacingHorizontalS);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusMedium);
+    background: var(--colorNeutralBackground1);
+}
+
+    .answer-row ::deep .answer-row__text {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+.answer-row__prefix {
+    min-width: 2.5em;
+    color: var(--colorNeutralForeground3);
+    font-weight: var(--fontWeightSemibold);
+    font-variant-numeric: tabular-nums;
+}

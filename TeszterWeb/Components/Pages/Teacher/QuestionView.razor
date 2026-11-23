@@ -6,6 +6,7 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IToastService toastService 
+<PageHeader Title="Kérdésbank" Description="Saját kérdéseid: szűrés, szerkesztés, új kérdés, és tesztkészítés a kiválasztottakból." />
 <ListQuestions Questions="questions" Refresh="RefreshQuestions" Delete="DeleteQ" New="SaveNew" Updete="Update" SaveSubject="SaveSubject" UserId="@UserId" Subjects="Subjects" CreateTest="CreateTest">
 
 </ListQuestions>
@@ -17,7 +18,7 @@
 	private List<Subject?> Subjects = new();
 	protected override async Task OnInitializedAsync()
 	{
-		data.Title = "Kérdések";
+		data.Title = "Kérdésbank";
 		await RefreshQuestions();
 		Subjects = await sService.GetSubjects() ?? new List<Subject?>();
 		isLoading = false;

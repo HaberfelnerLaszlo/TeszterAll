@@ -6,10 +6,17 @@
 @inject PageHistoryState PageHistoryState
 @inject IToastService toastService
 @inject ILogger<ClassResultView> _logger
-<h4>Csoport eredményeinek áttekintése</h4>
-<a class="btn btn-outline-primary mb-2" href="/teacher/classchallenge">Osztály-kihívás indítása</a>
-<FluentSelect TOption="Microsoft.Graph.Models.EducationClass" TValue="string" Items="Groups" OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)" ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válasz csoportot..."></FluentSelect>
-<FluentButton Appearance="ButtonAppearance.Outline" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
+<PageHeader Title="Matek gyakorlás eredményei" Description="Válassz csoportot a tanulók haladásának áttekintéséhez.">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Trophy())" OnClick="@(() => NavigationManager.NavigateTo("/teacher/classchallenge"))">Osztály-kihívás indítása</FluentButton>
+    </Actions>
+</PageHeader>
+<FluentCard Class="section">
+    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Wrap="true">
+        <FluentSelect TOption="Microsoft.Graph.Models.EducationClass" TValue="string" Items="Groups" Label="Csoport" Width="280px" OptionText="@(i => i?.DisplayName ?? string.Empty)" OptionValue="@(i => i?.Id)" ValueChanged="@((string? id) => SelectGroup(id ?? string.Empty))" Placeholder="Válassz csoportot..."></FluentSelect>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.ChartMultiple())" OnClick="ViewResult" Disabled="ResultMembers.Count==0">Eredmények megtekintése</FluentButton>
+    </FluentStack>
+</FluentCard>
 
 @if (Members.Count > 0 || ResultMembers.Count > 0)
 {
@@ -52,6 +59,8 @@
     private Student lastdropped { get; set; }
     private bool BtnDidabled = false;
     private List<ResultClassView> resultClassViews = new();
+    protected override void OnInitialized() => data.Title = "Matek gyakorlás eredményei";
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

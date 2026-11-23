@@ -1,102 +1,23 @@
-﻿
-<EditForm Model="@newAnswer">
-    @switch (questionType)
+﻿@* Egy válasz szerkesztő sora a kérdésszerkesztőben. A kérdés típusától függ, van-e helyes/igaz jelölő,
+   sorszám-előtag és törlés gomb. Az Answer objektumot közvetlenül szerkeszti (a szülő ugyanazt a példányt látja). *@
+<div class="answer-row">
+    @if (Prefix is not null)
     {
-        case QuestionType.SC:
-        case QuestionType.MC:
-            {
-                <div class="mt-2" style="border: 2px solid blue">
-                    <table class="table-bordered" width="100%">
-                        <thead>
-                            <tr>
-                                <th>Válasz</th>
-                                <th>Helyes?</th>
-                                <th>Törlés</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                            <tr>
-                                <td>
-                                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%" />
-                                </td>
-                                <td align="center">
-                                    <input type="checkbox" id="Right" @bind-value="newAnswer.Right" onchanged="OnAnswerChanged" checked="@newAnswer.Right" />
-                                </td>
-                                <td>
-                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Delete())" Color="Color.Error"/></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
-            break;
-        case QuestionType.TF:
-            {
-                <div class="mt-2" style="border: 2px solid blue">
-                    <table class="table-bordered" width="100%">
-                        <thead>
-                            <tr>
-                                <th>Állítások</th>
-                                <th>Igaz?</th>
-                                <th>Törlés</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                            <tr>
-                                <td>
-                                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%"/>
-                                </td>
-                                <td align="center">
-                                    <input type="checkbox" id="Right" @bind-value="newAnswer.Right" onchanged="OnAnswerChanged" checked="@newAnswer.Right" />
-                                </td>
-                                <td>
-                                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
-            break;
-        case QuestionType.Open://Todo: formázni a szöveget.
-            {
-                <div class="mt-2" style="border: 2px solid blue">
-
-                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:100%" />
-
-                    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
-                </div>
-            }
-            break;
-        case QuestionType.Seq:
-            {
-                <div class="mt-2" style="border: 2px solid blue">
-                    <label for="Text">@newAnswer.Sequence. válasz: </label>
-                    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:85%"/>
-                </div>
-            }
-            break;
-        case QuestionType.Pair:
-            {
-                <input type="text" class="form-inline" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:85%"/>
-            }
-            break;
-        case QuestionType.Comp:
-            {
-<div class="mt-2" style="border: 2px solid blue">
-    <label for="Text">@newAnswer.Sequence. helyre: </label>
-    <input type="text" id="Text" @bind-value="newAnswer.Text" oninput="OnAnswerChanged" multiple="true" style="width:75%"/>
-    <button class="btn btn-danger" @onclick="OnDeleteAnswer"><i class="oi oi-trash"></i></button>
-</div>
-            }
-            break;
-        default:
-            break;
+        <span class="answer-row__prefix">@Prefix</span>
     }
-</EditForm>
+    <FluentTextInput @bind-Value="newAnswer.Text" @bind-Value:after="NotifyChanged" Class="answer-row__text" Width="100%"
+                     Placeholder="@Placeholder" aria-label="@Placeholder" />
+    @if (CheckLabel is not null)
+    {
+        <FluentCheckbox @bind-Value="newAnswer.Right" @bind-Value:after="NotifyChanged" Label="@CheckLabel" />
+    }
+    @if (CanDelete)
+    {
+        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Delete())"
+                      Title="Válasz törlése" aria-label="Válasz törlése" OnClick="OnDeleteAnswer" />
+    }
+</div>
+
 @code {
     [Parameter]
     public Answer newAnswer { get; set; } = new();
@@ -107,13 +28,33 @@
     [Parameter]
     public EventCallback<Answer> DeleteAnswer { get; set; }
 
-    private Task OnAnswerChanged(ChangeEventArgs e)
+    private string? Prefix => questionType switch
     {
-        return newAnswerChanged.InvokeAsync(newAnswer);
-    }
-    private Task OnDeleteAnswer()
-    {
-        return DeleteAnswer.InvokeAsync(newAnswer);
-    }
+        QuestionType.Seq => $"{newAnswer.Sequence}.",
+        QuestionType.Comp => $"{{{newAnswer.Sequence}}}",
+        _ => null,
+    };
 
+    private string Placeholder => questionType switch
+    {
+        QuestionType.TF => "Állítás",
+        QuestionType.Open => "Elfogadható válasz",
+        QuestionType.Comp => "A helyre kerülő szó",
+        QuestionType.Pair => "A pár egyik eleme",
+        _ => "Válasz",
+    };
+
+    private string? CheckLabel => questionType switch
+    {
+        QuestionType.SC or QuestionType.MC => "Helyes",
+        QuestionType.TF => "Igaz",
+        _ => null,
+    };
+
+    // Sorbarendezésnél és párosításnál a törlést a szülő kezeli (sorrend/pár), ezért ott nincs gomb – mint eddig.
+    private bool CanDelete => questionType is not (QuestionType.Seq or QuestionType.Pair);
+
+    private Task NotifyChanged() => newAnswerChanged.InvokeAsync(newAnswer);
+
+    private Task OnDeleteAnswer() => DeleteAnswer.InvokeAsync(newAnswer);
 }

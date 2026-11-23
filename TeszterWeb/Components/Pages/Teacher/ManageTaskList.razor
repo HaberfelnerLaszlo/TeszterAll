@@ -4,19 +4,23 @@
 @using TeszterLibrary.ViewModel
 @inject MathService mService
 @inject IToastService toastService
+@inject GlobalData data
 
-<h3>Témák szerkesztése</h3>
-<p class="hint">Itt állíthatod be, milyen feladatokat generáljon a program egy témában, és létrehozhatsz új témát egy meglévő másolásával. Mentés előtt az előnézettel nézd meg a mintafeladatokat. A módosítás minden csoportra érvényes, és csak az ezután kiadott feladatokra hat.</p>
+<PageHeader Title="Témák szerkesztése" Description="Itt állíthatod be, milyen feladatokat generáljon a program egy témában, és létrehozhatsz új témát egy meglévő másolásával. Mentés előtt az előnézettel nézd meg a mintafeladatokat. A módosítás minden csoportra érvényes, és csak az ezután kiadott feladatokra hat." />
 
 @if (topics is null)
 {
-    <p>Betöltés...</p>
+    <LoadingState Text="Témák betöltése..." />
 }
 else
 {
     <div class="layout">
         <div class="list">
-            <input class="filter" placeholder="Keresés..." @bind="filter" @bind:event="oninput" aria-label="Témák szűrése" />
+            <FluentTextInput @bind-Value="filter" Immediate="true" Placeholder="Keresés..." aria-label="Témák szűrése" Class="filter" StartTemplate="@searchIcon" />
+            @if (!Filtered().Any())
+            {
+                <p class="hint">@(topics.Count == 0 ? "Nem sikerült betölteni a témákat, vagy még nincs egy sem." : "Nincs a keresésnek megfelelő téma.")</p>
+            }
             @foreach (var group in Filtered().GroupBy(t => t.Topic))
             {
                 <div class="group">@group.Key</div>
@@ -32,11 +36,11 @@ else
         <div class="editor">
             @if (edit is null)
             {
-                <p class="hint">Válassz egy témát a listából.</p>
+                <EmptyState Title="Válassz egy témát" Message="A bal oldali listából választhatsz, vagy keress rá a nevére." Icon="@(new Icons.Regular.Size24.TextBulletListSquareEdit())" />
             }
             else
             {
-                <h4>@(edit.Id == 0 ? "Új téma" : $"{edit.Id}. téma")</h4>
+                <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold">@(edit.Id == 0 ? "Új téma" : $"{edit.Id}. téma")</FluentText>
                 <div class="grid">
                     <label>Leírás <input @bind="edit.Description" maxlength="255" /></label>
                     <label>Név <input @bind="edit.Name" maxlength="100" /></label>
@@ -45,7 +49,7 @@ else
 
                 @if (IsPractice)
                 {
-                    <p class="hint">A gyakorló teszt a tanuló korábbi témáiból válogat, ezért nincs saját generátora.</p>
+                    <FluentMessageBar Intent="MessageBarIntent.Info">A gyakorló teszt a tanuló korábbi témáiból válogat, ezért nincs saját generátora.</FluentMessageBar>
                 }
                 else
                 {
@@ -207,12 +211,12 @@ else
                                                 <td><input type="number" @bind="v.From" aria-label="Ettől" /></td>
                                                 <td><input type="number" @bind="v.To" aria-label="Eddig" /></td>
                                                 <td><input type="number" min="1" @bind="v.Step" aria-label="Lépésköz" /></td>
-                                                <td><button class="btn btn-link btn-sm" @onclick="() => templateVars.Remove(v)">Törlés</button></td>
+                                                <td><FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Delete())" Title="Változó törlése" OnClick="() => templateVars.Remove(v)" /></td>
                                             </tr>
                                         }
                                     </tbody>
                                 </table>
-                                <button class="btn btn-outline-secondary btn-sm" @onclick="AddVariable" disabled="@(templateVars.Count >= 6)">Új változó</button>
+                                <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size16.Add())" OnClick="AddVariable" Disabled="@(templateVars.Count >= 6)">Új változó</FluentButton>
                                 <div class="grid">
                                     <label>Válasz képlete (pl. c - a*b) <input @bind="template.Formula" /></label>
                                     <label>Feltétel (nem kötelező, pl. c > a*b) <input @bind="template.Condition" /></label>
@@ -292,18 +296,18 @@ else
                 <div class="buttons">
                     @if (!IsPractice)
                     {
-                        <button class="btn btn-outline-primary" disabled="@busy" @onclick="Preview">Előnézet</button>
+                        <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.Eye())" Disabled="@busy" OnClick="Preview">Előnézet</FluentButton>
                     }
-                    <button class="btn btn-primary" disabled="@busy" @onclick="Save">Mentés</button>
+                    <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Save())" Disabled="@busy" OnClick="Save">Mentés</FluentButton>
                     @if (edit.Id != 0 && !IsPractice)
                     {
-                        <button class="btn btn-outline-secondary" disabled="@busy" @onclick="CopyAsNew">Másolás új témaként</button>
+                        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Copy())" Disabled="@busy" OnClick="CopyAsNew">Másolás új témaként</FluentButton>
                     }
                 </div>
 
                 @if (!string.IsNullOrEmpty(error))
                 {
-                    <p class="error" role="alert">@error</p>
+                    <FluentMessageBar Intent="MessageBarIntent.Error">@error</FluentMessageBar>
                 }
                 @if (samples.Count > 0)
                 {
@@ -438,7 +442,13 @@ else
 
     private bool IsPractice => edit is { Id: > 0 and < 3 };
 
-    protected override async Task OnInitializedAsync() => topics = await mService.GetTopics() ?? new();
+    private readonly RenderFragment searchIcon = @<FluentIcon Value="@(new Icons.Regular.Size16.Search())" />;
+
+    protected override async Task OnInitializedAsync()
+    {
+        data.Title = "Témák szerkesztése";
+        topics = await mService.GetTopics() ?? new();
+    }
 
     private IEnumerable<TopicEditView> Filtered() => (topics ?? new()).Where(t =>
         string.IsNullOrWhiteSpace(filter)
