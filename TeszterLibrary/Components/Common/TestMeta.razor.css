@@ -1,0 +1,14 @@
+.test-meta dt {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalXS);
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+    line-height: var(--lineHeightBase200);
+}
+
+.test-meta dd {
+    margin: var(--spacingVerticalXXS) 0 0;
+    font-weight: var(--fontWeightSemibold);
+    color: var(--colorNeutralForeground1);
+}

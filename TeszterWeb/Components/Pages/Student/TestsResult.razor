@@ -8,27 +8,42 @@
 @inject Microsoft.Graph.GraphServiceClient GraphServiceClient
 @inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 
-<h3>Lezárt tesztek</h3>
-@if (noError)
+<PageHeader Title="Eredményeim" Description="A már lezárult tesztjeid és az elért pontszámaid." />
+
+@if (loading)
 {
-    <FluentStack Orientation=" Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true">
-        @foreach (var test in tests??new())
+    <LoadingState Text="Eredmények betöltése..." />
+}
+else if (noError && tests is { Count: > 0 })
+{
+    <div class="card-grid card-grid--wide">
+        @foreach (var test in tests)
         {
             <TestResultToStudentCard TestResult="test" Open="OpenResult" />
         }
-    </FluentStack>
+    </div>
 }
 else
 {
-    <p>@errorMessage</p>
+    <EmptyState Title="Még nincs eredményed" Message="@(string.IsNullOrEmpty(errorMessage) ? "A lezárt tesztek eredményei itt jelennek meg." : errorMessage)" Icon="@(new Icons.Regular.Size24.DataBarVertical())" />
 }
+
 @code {
     List<TestResultToStudent>? tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
 
-    protected async override Task OnInitializedAsync()
+    bool loading = true;   // amíg az első betöltés tart, LoadingState látszik
+
+    protected override async Task OnInitializedAsync()
     {
+        try { await LoadAsync(); }
+        finally { loading = false; }
+    }
+
+    private async Task LoadAsync()
+    {
+        data.Title = "Eredményeim";
         if (string.IsNullOrEmpty(data.UserId))
         {
             try

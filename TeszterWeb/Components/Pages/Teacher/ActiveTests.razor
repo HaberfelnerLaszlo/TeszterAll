@@ -8,27 +8,32 @@
 @inject ILogger<ActiveTests> _logger
 @inject IToastService toastService
 
-@if (tests != null && tests.Count > 0)
+<PageHeader Title="Aktív tesztek" Description="A diákok által éppen kitölthető tesztek és a kitöltések állása.">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.DocumentAdd())" OnClick="@(() => navi.NavigateTo("newtest_w"))">Új teszt</FluentButton>
+    </Actions>
+</PageHeader>
+
+@if (loading)
 {
-    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true">
+    <LoadingState Text="Tesztek betöltése..." />
+}
+else if (tests is { Count: > 0 })
+{
+    <div class="card-grid card-grid--wide">
         @foreach (var item in tests)
         {
-            <FluentCard Width="450px">
-                <TestCard TestItem="item" Result="@ViewResult" />
-            </FluentCard>
+            <TestCard TestItem="item" Result="@ViewResult" />
         }
-    </FluentStack>
-}
-else if (noError)
-{
-    <div>
-        <p>Tesztek betöltése...</p>
     </div>
 }
 else
 {
-    <p>@errorMessage</p>
+    <EmptyState Title="Nincs aktív teszt" Message="@(string.IsNullOrEmpty(errorMessage) ? "Tegyél közzé egy tesztet a piszkozatok közül, vagy készíts újat." : errorMessage)" Icon="@(new Icons.Regular.Size24.DocumentQueue())">
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => navi.NavigateTo("draft"))">Piszkozatok</FluentButton>
+    </EmptyState>
 }
+
 @code {
     private List<ActiveTestView> tests = new();
     bool noError = true;
@@ -40,7 +45,15 @@ else
         base.OnParametersSet();
     }
 
+    bool loading = true;   // amíg az első betöltés tart, LoadingState látszik
+
     protected override async Task OnInitializedAsync()
+    {
+        try { await LoadAsync(); }
+        finally { loading = false; }
+    }
+
+    private async Task LoadAsync()
     {
         data.Title = "Aktív tesztek";
         if (String.IsNullOrEmpty(data.UserId))
@@ -60,7 +73,6 @@ else
         {
             noError = false;
             errorMessage = tService.ErrorMessage;
-            toastService.ShowInfo(errorMessage);
         }
         StateHasChanged();
     }

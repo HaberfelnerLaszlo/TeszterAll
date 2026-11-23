@@ -13,3 +13,9 @@
 ::deep .empty-state__msg {
     color: var(--colorNeutralForeground3);
 }
+
+/* Az ikont egységes méretre nagyítjuk, mert nem minden ikon létezik 48-as méretben. */
+.empty-state__icon ::deep svg {
+    width: 48px !important;
+    height: 48px !important;
+}

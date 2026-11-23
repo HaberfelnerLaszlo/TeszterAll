@@ -8,34 +8,42 @@
 @inject TestUserServices tuService
 @inject IToastService toastService
 
-<h5 hidden="@noError">@errorMessage</h5>
-@if (tests != null && tests.Any())
+<PageHeader Title="Tesztjeim" Description="A számodra kiadott, még kitölthető tesztek." />
+
+@if (loading)
 {
-    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Horizontal" Wrap="true" HorizontalGap="20" VerticalGap="20">
+    <LoadingState Text="Tesztek betöltése..." />
+}
+else if (tests is { Count: > 0 })
+{
+    <div class="card-grid card-grid--wide">
         @foreach (var item in tests)
         {
-            <FluentCard Width="450px">
-                <TestViewCard TestItem="@item" Start="@TestStart" Results="@TestResults" />
-            </FluentCard>
+            <TestViewCard TestItem="@item" Start="@TestStart" Results="@TestResults" />
         }
-    </FluentStack>
+    </div>
 }
 else
 {
-    <FluentOverlay @bind-Visible=@noError
-                   Opacity="40"
-                   >
-        <FluentSpinner />
-    </FluentOverlay>
+    <EmptyState Title="Nincs kitölthető teszted" Message="@(string.IsNullOrEmpty(errorMessage) ? "Ha a tanárod kiad egy tesztet, itt fogod látni." : errorMessage)" Icon="@(new Icons.Regular.Size24.ClipboardTaskListLtr())" />
 }
+
 @code {
     private List<TestView>? tests = new();
     bool noError = true;
     string errorMessage = string.Empty;
 
+    bool loading = true;   // amíg az első betöltés tart, LoadingState látszik
+
     protected override async Task OnInitializedAsync()
     {
-        data.Title = "Tesztek";
+        try { await LoadAsync(); }
+        finally { loading = false; }
+    }
+
+    private async Task LoadAsync()
+    {
+        data.Title = "Tesztjeim";
         if (String.IsNullOrEmpty(data.UserId))
         {
             var user = await GraphServiceClient.Me.GetAsync();

@@ -1,0 +1,34 @@
+@* A teszt beállításait jelző ikonok; csak a bekapcsoltak jelennek meg, rámutatva a magyarázat látszik. *@
+<div class="test-flags">
+    @if (IsCheck)
+    {
+        <span class="test-flags__item" title="Ellenőrizhető"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Checkmark())" Color="Color.Primary" Title="Ellenőrizhető" /></span>
+    }
+    @if (IsPractice)
+    {
+        <span class="test-flags__item" title="Gyakorlás"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.CalligraphyPenQuestionMark())" Color="Color.Primary" Title="Gyakorlás" /></span>
+    }
+    @if (IsTimer)
+    {
+        <span class="test-flags__item" title="Időkorlátos"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Color="Color.Primary" Title="Időkorlátos" /></span>
+    }
+    @if (Shuffle)
+    {
+        <span class="test-flags__item" title="Kérdések keverése"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ArrowShuffle())" Color="Color.Primary" Title="Kérdések keverése" /></span>
+    }
+    @if (Replays is int r)
+    {
+        <span class="test-flags__item" title="Megengedett kitöltések száma">
+            <FluentBadge Appearance="BadgeAppearance.Ghost" Color="BadgeColor.Brand" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowRepeatAll())" Content="@r.ToString()" />
+        </span>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsCheck { get; set; }
+    [Parameter] public bool IsPractice { get; set; }
+    [Parameter] public bool IsTimer { get; set; }
+    [Parameter] public bool Shuffle { get; set; }
+    /// <summary>Megengedett kitöltések száma; null esetén nem jelenik meg.</summary>
+    [Parameter] public int? Replays { get; set; }
+}

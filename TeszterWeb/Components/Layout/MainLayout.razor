@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
 @inject IToastService toastService
 @inject TeszterApiService apiService
 @inject GlobalData data
@@ -59,11 +60,17 @@
             // Show the message in a toast notification
             toastService?.ShowError(e.Message);
     }
-    // private void Dispose()
-    // {
-    //     if (apiService != null)
-    //     {
-    //         apiService.OnMessageReceived -= OnMessageReceived;
-    //     }
-    // }
+    // A fejléc címe kövesse az oldalak által beállított GlobalData.Title-t.
+    protected override void OnInitialized() => data.TitleChanged += OnTitleChanged;
+
+    private void OnTitleChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        data.TitleChanged -= OnTitleChanged;
+        if (apiService != null)
+        {
+            apiService.OnMessageReceived -= OnMessageReceived;
+        }
+    }
 }

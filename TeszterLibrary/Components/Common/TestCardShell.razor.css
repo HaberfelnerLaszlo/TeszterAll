@@ -1,0 +1,43 @@
+::deep .test-card {
+    height: 100%;
+}
+
+.test-card__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalM);
+    height: 100%;
+}
+
+.test-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacingHorizontalS);
+}
+
+.test-card__title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacingVerticalXS);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.test-card__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacingVerticalS) var(--spacingHorizontalL);
+    margin: 0;
+}
+
+/* Az akciók a kártya aljára kerülnek, így egy sorban lévő kártyák gombjai egy vonalban vannak. */
+.test-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacingHorizontalS);
+    margin-top: auto;
+    padding-top: var(--spacingVerticalS);
+    border-top: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+}

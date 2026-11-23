@@ -1,0 +1,19 @@
+@* Egy adat a tesztkártyán: ikon + címke fölül, érték alatta. *@
+<div class="test-meta">
+    <dt>
+        @if (Icon is not null)
+        {
+            <FluentIcon Value="@Icon" Color="Color.Neutral" />
+        }
+        @Label
+    </dt>
+    <dd>@(ChildContent ?? (RenderFragment)(b => b.AddContent(0, Value)))</dd>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public Icon? Icon { get; set; }
+    /// <summary>Összetett érték (pl. formázott szöveg); ha meg van adva, a <see cref="Value"/> helyett jelenik meg.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
