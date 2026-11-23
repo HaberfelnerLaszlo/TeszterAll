@@ -1,0 +1,40 @@
+.nav-tile {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacingHorizontalM);
+    padding: var(--spacingVerticalL) var(--spacingHorizontalL);
+    border: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusLarge);
+    background: var(--colorNeutralBackground1);
+    color: var(--colorNeutralForeground1);
+    text-decoration: none;
+    box-shadow: var(--shadow2);
+    transition: box-shadow var(--durationFast) var(--curveEasyEase), border-color var(--durationFast) var(--curveEasyEase);
+}
+
+    .nav-tile:hover {
+        box-shadow: var(--shadow8);
+        border-color: var(--colorBrandStroke1);
+    }
+
+    .nav-tile:focus-visible {
+        outline: var(--strokeWidthThick) solid var(--colorStrokeFocus2);
+        outline-offset: 2px;
+    }
+
+.nav-tile__icon {
+    display: inline-flex;
+    padding: var(--spacingVerticalS);
+    border-radius: var(--borderRadiusMedium);
+    background: var(--colorBrandBackground2);
+}
+
+.nav-tile__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalXXS);
+}
+
+::deep .nav-tile__desc {
+    color: var(--colorNeutralForeground3);
+}

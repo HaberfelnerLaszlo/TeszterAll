@@ -1,0 +1,23 @@
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacingHorizontalM);
+    margin: var(--spacingVerticalL) 0 var(--spacingVerticalXL);
+}
+
+.page-header__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacingVerticalXS);
+}
+
+::deep .page-header__desc {
+    color: var(--colorNeutralForeground3);
+}
+
+.page-header__actions {
+    display: flex;
+    gap: var(--spacingHorizontalS);
+}

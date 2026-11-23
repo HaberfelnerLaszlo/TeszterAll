@@ -1,0 +1,12 @@
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacingVerticalM);
+    padding: var(--spacingVerticalXXXL) 0;
+}
+
+::deep .loading-state__text {
+    color: var(--colorNeutralForeground3);
+}

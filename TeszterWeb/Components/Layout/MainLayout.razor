@@ -1,38 +1,44 @@
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 @inject IToastService toastService
 @inject TeszterApiService apiService
 @inject GlobalData data
 <FluentLayout>
     <FluentLayoutItem Area="LayoutArea.Header">
-        @* v5: 768px alatt a navigáció rejtett, a hamburger gomb nyitja meg *@
-        <FluentLayoutHamburger />
-        @data.Title
-        <FluentSpacer />
-        <LoginDisplay />
+        <div class="app-header">
+            @* v5: 768px alatt a navigáció rejtett, a hamburger gomb nyitja meg *@
+            <FluentLayoutHamburger PanelHeader="Teszter" />
+            <a class="app-brand" href="/home">
+                <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCheckmark())" />
+                <span>Teszter</span>
+            </a>
+            @if (!string.IsNullOrEmpty(data.Title))
+            {
+                <span class="app-header__title">· @data.Title</span>
+            }
+            <FluentSpacer />
+            <span class="app-header__action"><ThemeToggle /></span>
+            <LoginDisplay />
+        </div>
     </FluentLayoutItem>
-    <FluentLayoutItem Area="LayoutArea.Navigation" Width="250px">
+    <FluentLayoutItem Area="LayoutArea.Navigation" Width="260px">
         <NavMenu />
     </FluentLayoutItem>
     <FluentLayoutItem Area="LayoutArea.Content">
-        <div class="content">
+        <main class="content">
             @Body
-        </div>
+        </main>
     </FluentLayoutItem>
     <FluentLayoutItem Area="LayoutArea.Footer">
-        <div id="version">
-            <span>
-                Verzió: 0.9.0
-            </span>
-            <FluentTooltip Anchor="version">
-                2026.11.22
-            </FluentTooltip>
+        <div class="app-footer">
+            <span id="version">Verzió 0.9.0</span>
+            <FluentTooltip Anchor="version">2026.11.22</FluentTooltip>
         </div>
     </FluentLayoutItem>
 </FluentLayout>
 <FluentProviders />
 <div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
+    Váratlan hiba történt.
+    <a href="" class="reload">Újratöltés</a>
     <a class="dismiss">🗙</a>
 </div>
 @code{

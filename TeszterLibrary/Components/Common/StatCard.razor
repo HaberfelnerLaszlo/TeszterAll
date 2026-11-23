@@ -1,0 +1,24 @@
+@* Összesítő csempe: nagy szám + címke + ikon. *@
+<FluentCard Class="stat-card">
+    <div class="stat-card__body">
+        @if (Icon is not null)
+        {
+            <span class="stat-card__icon"><FluentIcon Value="@Icon" Color="Color.Primary" /></span>
+        }
+        <div class="stat-card__text">
+            <FluentText Size="TextSize.Size800" Weight="TextWeight.Bold">@Value</FluentText>
+            <FluentText Class="stat-card__label">@Label</FluentText>
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <FluentText Size="TextSize.Size200" Class="stat-card__label">@Hint</FluentText>
+            }
+        </div>
+    </div>
+</FluentCard>
+
+@code {
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public Icon? Icon { get; set; }
+}

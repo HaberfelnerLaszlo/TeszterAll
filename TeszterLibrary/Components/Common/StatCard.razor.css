@@ -1,0 +1,21 @@
+.stat-card__body {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalL);
+}
+
+.stat-card__icon {
+    display: inline-flex;
+    padding: var(--spacingVerticalM);
+    border-radius: var(--borderRadiusCircular);
+    background: var(--colorBrandBackground2);
+}
+
+.stat-card__text {
+    display: flex;
+    flex-direction: column;
+}
+
+::deep .stat-card__label {
+    color: var(--colorNeutralForeground3);
+}

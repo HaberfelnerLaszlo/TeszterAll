@@ -10,77 +10,110 @@
 @inject IToastService ToastService
 @inject ILogger<Home> logger
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
-<PageTitle>Kezdőlap</PageTitle>
-
 <AuthorizeView Roles="Teacher">
-    <FluentGrid Style="margin:10px 0px">
-        <NavLink class="nav-doboz" href="newtest_w">Új teszt készítése</NavLink>
-        <NavLink class="nav-doboz" href="draft">Nem aktívált tesztek</NavLink>
-        <NavLink class="nav-doboz" href="active">Aktív tesztek</NavLink>
-        <NavLink class="nav-doboz" href="closed">Befejezett tesztek</NavLink>
-        <NavLink class="nav-doboz" href="counter">Archivált tesztek</NavLink>
-        <NavLink class="nav-doboz" href="subject">Tantárgyak</NavLink>
-        <NavLink class="nav-doboz" href=@qHref>Kérdések</NavLink>
-        <NavLink class="nav-doboz" href="addclasscourse">Matek gyakorlás osztálynak</NavLink>
-        <NavLink class="nav-doboz" href="addcourse">Matek gyakorlás tanulónak</NavLink>
-        <NavLink class="nav-doboz" href="classResult">Matek gyakorlás eredményei</NavLink>
-        <NavLink class="nav-doboz" href="teacher/class-lesson">Órai nézet</NavLink>
-        <NavLink class="nav-doboz" href="feladat/tanulokpont">Tanulók pontjai</NavLink>
-        <NavLink class="nav-doboz" href="teacher/add-assignment">Feladat próba</NavLink>
-    </FluentGrid>
+    <PageHeader Title="@(string.IsNullOrEmpty(FirstName) ? "Üdv!" : $"Üdv, {FirstName}!")" Description="Válaszd ki, mivel szeretnél foglalkozni." />
+
+    <section class="section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="section__title">Tesztek</FluentText>
+        <div class="card-grid">
+            <NavTile Href="newtest_w" Title="Új teszt" Description="Teszt összeállítása varázslóval" Icon="@(new Icons.Regular.Size24.DocumentAdd())" />
+            <NavTile Href="draft" Title="Piszkozatok" Description="Még nem aktivált tesztek" Icon="@(new Icons.Regular.Size24.DocumentEdit())" />
+            <NavTile Href="active" Title="Aktív tesztek" Description="Folyamatban lévő tesztek, eredmények" Icon="@(new Icons.Regular.Size24.DocumentQueue())" />
+            <NavTile Href="closed" Title="Befejezett tesztek" Description="Lezárt tesztek és kiértékelésük" Icon="@(new Icons.Regular.Size24.DocumentCheckmark())" />
+            <NavTile Href="@qHref" Title="Kérdésbank" Description="Saját kérdések szerkesztése" Icon="@(new Icons.Regular.Size24.BookQuestionMark())" />
+            <NavTile Href="subject" Title="Tantárgyak" Description="Tantárgyak és témakörök" Icon="@(new Icons.Regular.Size24.Library())" />
+        </div>
+    </section>
+
+    <section class="section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="section__title">Matek gyakorlás</FluentText>
+        <div class="card-grid">
+            <NavTile Href="AddClassCourse" Title="Osztálynak" Description="Gyakorló feladatok kiadása egy osztálynak" Icon="@(new Icons.Regular.Size24.PeopleTeam())" />
+            <NavTile Href="AddCourse" Title="Tanulónak" Description="Egyéni gyakorlás egy tanulónak" Icon="@(new Icons.Regular.Size24.PersonCircle())" />
+            <NavTile Href="teacher/class-lesson" Title="Órai nézet" Description="Közös órai gyakorlás vezetése" Icon="@(new Icons.Regular.Size24.PersonBoard())" />
+            <NavTile Href="ClassResult" Title="Eredmények" Description="Osztályok és tanulók haladása" Icon="@(new Icons.Regular.Size24.ChartMultiple())" />
+            <NavTile Href="TaskList" Title="Témák szerkesztése" Description="Feladatgenerátor beállításai" Icon="@(new Icons.Regular.Size24.TextBulletListSquareEdit())" />
+        </div>
+    </section>
+
+    <section class="section">
+        <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="section__title">Pontok és feladatok</FluentText>
+        <div class="card-grid">
+            <NavTile Href="feladat/tanulokpont" Title="Tanulók pontjai" Description="Pontszámok áttekintése és módosítása" Icon="@(new Icons.Regular.Size24.Trophy())" />
+            <NavTile Href="teacher/add-assignment" Title="Feladat kiadása" Description="Új feladat kiosztása" Icon="@(new Icons.Regular.Size24.ClipboardTaskListLtr())" />
+        </div>
+    </section>
 </AuthorizeView>
+
 <AuthorizeView Roles="Student">
+    <PageHeader Title="@(string.IsNullOrEmpty(FirstName) ? "Szia!" : $"Szia, {FirstName}!")" Description="Itt látod a pontjaidat és a feladataidat." />
+
     @if (tanuloData is not null)
     {
-        <FluentCard MinimalStyle="false">
-            <FluentText As="TextTag.H1" Size="TextSize.Size800" Weight="TextWeight.Semibold">Aktuális pontszámod: @tanuloData.PontSzam</FluentText>
-            <FluentText As="TextTag.H2" Size="TextSize.Size700" Weight="TextWeight.Semibold">Az osztályod átlaga: @tanuloData.Atlag.ToString("F2")</FluentText>
-            <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Az osztályban @tanuloData.Min és @tanuloData.Max pontok között vannak a társaid.</FluentText>
-            @if (tanuloData.Max == tanuloData.PontSzam)
-            {
-                <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Gratulálok! Te vagy a legjobb! </FluentText>
-            }
-            else if (tanuloData.PontSzam >= 0.9 * tanuloData.Max)
-            { <FluentText As="TextTag.H3" Size="TextSize.Size600" Weight="TextWeight.Semibold">Gratulálok! A legjobbak között vagy! </FluentText>
-            }
-        </FluentCard>
-        @if (datas is not null || datas?.Count > 0)
+        @if (tanuloData.Max == tanuloData.PontSzam)
         {
-            <ApexChart TItem="PontData" Title="Az utolsó 20 pont" Height="300" Width="600" XAxisType="XAxisType.Datetime">
-                <ApexPointSeries TItem="PontData"
-                                 Items="datas"
-                                 Name="Pontszámok"
-                                 SeriesType="SeriesType.Line"
-                                 XValue="@(e => e.Datum)"
-                                 YAggregate="@(e => e.Sum(e=>e.Pontszam))" />
-            </ApexChart>
+            <FluentMessageBar Intent="MessageBarIntent.Success" Title="Gratulálok!" Class="section">Te vagy a legjobb az osztályban!</FluentMessageBar>
         }
-        <FluentText As="TextTag.H4" Size="TextSize.Size500" Weight="TextWeight.Semibold" Style="margin: 10px">Az utolsó pontjaid (maximum 20 darab): </FluentText>
-        <FluentCard Appearance="CardAppearance.Subtle">
-            <FluentDataGrid Items="@pontok" AutoItemsPerPage="true">
-                <PropertyColumn Property="@(p=>p.Datum)" Title="Dátum" />
-                <PropertyColumn Property="@(p=>p.PontTipus)" Title="Pont fajtája" Tooltip="true" HeaderTooltip="Lecke,Pótlás,Szorgalmi,Szaktanári,Gyakorló,-50,-100,Kvíz,Javítás,Mértékváltás, " />
-                <PropertyColumn Property="@(p=>p.PontSzam)" Title="Pontszám" />
-            </FluentDataGrid>
-        </FluentCard>
+        else if (tanuloData.PontSzam >= 0.9 * tanuloData.Max)
+        {
+            <FluentMessageBar Intent="MessageBarIntent.Success" Title="Gratulálok!" Class="section">A legjobbak között vagy!</FluentMessageBar>
+        }
+
+        <section class="section card-grid">
+            <StatCard Value="@tanuloData.PontSzam.ToString()" Label="Aktuális pontszámod" Icon="@(new Icons.Regular.Size24.Trophy())" />
+            <StatCard Value="@tanuloData.Atlag.ToString("F2")" Label="Az osztályod átlaga" Icon="@(new Icons.Regular.Size24.PeopleTeam())" />
+            <StatCard Value="@($"{tanuloData.Min} – {tanuloData.Max}")" Label="Az osztály pontjai" Hint="legkevesebb – legtöbb" Icon="@(new Icons.Regular.Size24.DataBarVertical())" />
+        </section>
+
+        <section class="section">
+            <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="section__title">Gyors elérés</FluentText>
+            <div class="card-grid">
+                <NavTile Href="studentTests" Title="Tesztjeim" Description="Kitöltendő tesztek" Icon="@(new Icons.Regular.Size24.ClipboardTaskListLtr())" />
+                <NavTile Href="student/testsResult" Title="Eredményeim" Description="Megírt tesztek eredményei" Icon="@(new Icons.Regular.Size24.DataBarVertical())" />
+                <NavTile Href="student/Math" Title="Matematika gyakorló" Description="Gyakorló feladatok" Icon="@(new Icons.Regular.Size24.BookOpen())" />
+            </div>
+        </section>
+
+        @if (datas.Count > 0)
+        {
+            <section class="section">
+                <FluentCard>
+                    <ApexChart TItem="PontData" Title="Az utolsó 20 pont alakulása" Height="300" Width="@("100%")" XAxisType="XAxisType.Datetime">
+                        <ApexPointSeries TItem="PontData"
+                                         Items="datas"
+                                         Name="Pontszámok"
+                                         SeriesType="SeriesType.Line"
+                                         XValue="@(e => e.Datum)"
+                                         YAggregate="@(e => e.Sum(e=>e.Pontszam))" />
+                    </ApexChart>
+                </FluentCard>
+            </section>
+        }
+
+        <section class="section">
+            <FluentText As="TextTag.H2" Size="TextSize.Size500" Weight="TextWeight.Semibold" Class="section__title">Az utolsó pontjaid (legfeljebb 20)</FluentText>
+            <FluentCard>
+                <FluentDataGrid Items="@pontok" AutoItemsPerPage="true">
+                    <PropertyColumn Property="@(p=>p.Datum)" Title="Dátum" />
+                    <PropertyColumn Property="@(p=>p.PontTipus)" Title="Pont fajtája" Tooltip="true" HeaderTooltip="Lecke,Pótlás,Szorgalmi,Szaktanári,Gyakorló,-50,-100,Kvíz,Javítás,Mértékváltás, " />
+                    <PropertyColumn Property="@(p=>p.PontSzam)" Title="Pontszám" />
+                </FluentDataGrid>
+            </FluentCard>
+        </section>
     }
     else
     {
-        <FluentText As="TextTag.H4" Size="TextSize.Size500" Weight="TextWeight.Semibold" Style="margin: 10px">Nem elérhetők a pontjaid. </FluentText>
+        <EmptyState Title="Nem elérhetők a pontjaid" Message="Próbáld újra később, vagy szólj a tanárodnak." Icon="@(new Icons.Regular.Size48.Trophy())" />
     }
-    <nav class="d-flex flex-row w-100">
-        <NavLink class="nav-doboz nav-link" href="studenttests">Tesztjeim</NavLink>
-        <NavLink class="nav-doboz nav-link" href="student/testsResult">Tesztek eredményei</NavLink>
-        <NavLink class="nav-doboz nav-link" href="student/math">Matematika gyakorló</NavLink>
-    </nav>
-
 </AuthorizeView>
 @code{
     EducationUser? user;
     TanuloData? tanuloData = new();
     List<PontData> datas = new();
     IQueryable<Pont>? pontok;
-    string qHref = string.Empty;
+    string qHref = "Question";
+    // A megszólításhoz a keresztnév (magyar névsorrend: vezetéknév keresztnév).
+    string FirstName => (user?.GivenName ?? user?.DisplayName?.Split(' ').LastOrDefault() ?? string.Empty).Trim();
     protected override async Task OnInitializedAsync()
     {
         try
@@ -127,9 +160,7 @@
                     }
                     else
                     {
-                        ToastService.ShowWarning("Nincsenek pontjaid rögzítve.");
-                        ToastService.ShowInfo($"Szerepköröd {user.PrimaryRole}");
-                        return;
+                        return;   // tanárnak általában nincs pontja – nem jelzünk hibát
                     }
                 }
                 if (data.UserGuid is Guid userGuid && !(await uService.UserExits(userGuid)))

@@ -5,23 +5,44 @@
 @inject TeszterWeb.Data.GlobalData data
 @inject ILogger<LoginDisplay> logger
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
 
 <AuthorizeView>
     <Authorized>
-        @if (string.IsNullOrEmpty(Nev))
-        {
-            <span>Hello, @context.User.Identity?.Name!</span> }
-        else
-        {
-            <span> Hello, @Nev!</span>
-        }
-        <a href="MicrosoftIdentity/Account/SignOut">Kijelentkezés</a>
+        <FluentProfileMenu ImageInitials="@Initials(DisplayName(context))" Title="Felhasználói menü">
+            <div class="profile-card">
+                <FluentAvatar Name="@DisplayName(context)" Initials="@Initials(DisplayName(context))" Size="AvatarSize.Size48" />
+                <div class="profile-card__id">
+                    <FluentText Weight="TextWeight.Semibold">@DisplayName(context)</FluentText>
+                    <FluentText Size="TextSize.Size200" Class="profile-card__mail">@context.User.Identity?.Name</FluentText>
+                </div>
+            </div>
+            <div class="profile-card__actions">
+                <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.PersonCircle())" OnClick="@(() => Navigation.NavigateTo("/profile"))">Profilom</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.SignOut())" OnClick="SignOut">Kijelentkezés</FluentButton>
+            </div>
+        </FluentProfileMenu>
     </Authorized>
     <NotAuthorized>
-        <a href="MicrosoftIdentity/Account/SignIn">Belépés</a>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SignIn">Belépés</FluentButton>
     </NotAuthorized>
 </AuthorizeView>
 @code{
+    // Megjelenített név: Graph-ból kapott név → a token "name" claimje → bejelentkezési név (UPN).
+    private string DisplayName(AuthenticationState context) =>
+        !string.IsNullOrEmpty(Nev) ? Nev
+        : context.User.FindFirst("name")?.Value ?? context.User.Identity?.Name ?? string.Empty;
+
+    // Monogram a megjelenített névből (pl. "Kovács Anna" → "KA").
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(parts.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    }
+
+    private void SignOut() => Navigation.NavigateTo("MicrosoftIdentity/Account/SignOut", forceLoad: true);
+    private void SignIn() => Navigation.NavigateTo("MicrosoftIdentity/Account/SignIn", forceLoad: true);
+
     EducationUser? user;
     private bool isAuthenticated;
 

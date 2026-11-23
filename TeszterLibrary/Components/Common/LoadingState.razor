@@ -1,0 +1,9 @@
+@* Egységes betöltésjelző. *@
+<div class="loading-state" role="status" aria-live="polite">
+    <FluentSpinner />
+    <FluentText Class="loading-state__text">@Text</FluentText>
+</div>
+
+@code {
+    [Parameter] public string Text { get; set; } = "Betöltés...";
+}

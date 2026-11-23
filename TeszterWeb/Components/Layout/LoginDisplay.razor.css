@@ -1,0 +1,28 @@
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalM);
+    padding: var(--spacingVerticalM) var(--spacingHorizontalM) var(--spacingVerticalS);
+    color: var(--colorNeutralForeground1);
+}
+
+.profile-card__id {
+    display: flex;
+    flex-direction: column;
+}
+
+::deep .profile-card__mail {
+    color: var(--colorNeutralForeground3);
+}
+
+.profile-card__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacingVerticalXS) var(--spacingHorizontalS) var(--spacingVerticalS);
+    border-top: var(--strokeWidthThin) solid var(--colorNeutralStroke2);
+}
+
+    .profile-card__actions ::deep fluent-button {
+        justify-content: flex-start;
+    }
