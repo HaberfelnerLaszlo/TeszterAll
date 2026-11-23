@@ -68,12 +68,16 @@ else
     private async Task RefreshProgress()
     {
         var earnedBefore = progress?.Badges.Where(b => b.Earned).Select(b => b.Code).ToHashSet();
+        var pendingBefore = progress?.Badges.Where(b => b.Pending).Select(b => b.Code).ToHashSet();
         var fresh = await mService.GetProgress(UserId);
         if (fresh is null) return;
         if (earnedBefore is not null)
         {
             foreach (var badge in fresh.Badges.Where(b => b.Earned && !earnedBefore.Contains(b.Code)))
                 toastService.ShowSuccess($"Új jelvény: {badge.Name}!");
+            // Megerősítésre váró jelvény: pozitív hangvétel, a jelvénysorban a jelvényre kattintva indítható.
+            foreach (var badge in fresh.Badges.Where(b => b.Pending && !pendingBefore!.Contains(b.Code)))
+                toastService.ShowInfo($"Szuper munka! A(z) „{badge.Name}” jelvény már majdnem a tiéd: kattints rá a jelvények között, és oldj meg még néhány gyors feladatot.");
             if (fresh.Level > progress!.Level)
                 toastService.ShowSuccess($"Szintet léptél: {fresh.Level}. szint!");
         }

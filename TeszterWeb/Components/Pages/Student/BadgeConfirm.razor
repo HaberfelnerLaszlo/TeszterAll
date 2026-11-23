@@ -1,0 +1,128 @@
+@page "/student/badge/{Code}"
+@implements IDisposable
+@using TeszterLibrary.Services
+@using TeszterLibrary.ViewModel
+@inject MathService mService
+
+@* Jelvény-megerősítés: néhány rövid feladat, bőséges időkerettel. A szövegek pozitívak; a csalásról nem esik szó. *@
+
+<h3>Már majdnem a tiéd!</h3>
+
+@switch (state)
+{
+    case State.Ready:
+        <p class="intro">Szuper munka! Mielőtt odaadjuk ezt a jelvényt, oldj meg még néhány gyors feladatot, hogy tényleg a tiéd legyen.</p>
+        <p class="badgeName">Bőven lesz időd: feladatonként egy perc. Ha most nem jön össze, később újra próbálhatod.</p>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Play())" Disabled="@starting" Loading="@starting" OnClick="Go">Kezdhetjük!</FluentButton>
+        break;
+
+    case State.Running:
+        <p class="badgeName">Jelvény: <strong>@start!.BadgeName</strong></p>
+        <div class="hud">
+            <span class="timer @(secondsLeft <= 15 ? "hurry" : "")" aria-live="polite">@secondsLeft mp</span>
+            <span class="progressText">@(index + 1). / @start!.Run.Operations.Count feladat</span>
+        </div>
+        @if (current is not null)
+        {
+            <MathLesson @key="current.OperationId" Assignment="current" Send="@Answer" IsChecked="false" IsFraction="current.IsFraction" />
+        }
+        break;
+
+    case State.Done:
+        <div class="result">
+            @if (result is null)
+            {
+                <p>Nem sikerült lekérni az eredményt. Próbáld újra kicsit később!</p>
+            }
+            else
+            {
+                <p class="big @(result.Passed ? "ok" : "")">@result.Message</p>
+                <p>Helyes válaszok: @result.Correct / @start!.Run.Operations.Count</p>
+            }
+            <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Primary">Vissza a feladatokhoz</FluentAnchorButton>
+        </div>
+        break;
+
+    case State.Unavailable:
+        <p>@message</p>
+        <FluentAnchorButton Href="/student/math" Appearance="ButtonAppearance.Primary">Vissza a feladatokhoz</FluentAnchorButton>
+        break;
+}
+
+@code {
+    private enum State { Ready, Running, Done, Unavailable }
+
+    [Parameter] public string Code { get; set; } = string.Empty;
+
+    private State state = State.Ready;
+    private BadgeConfirmStartView? start;
+    private BadgeConfirmResultView? result;
+    private OperationView? current;
+    private int index, secondsLeft;
+    private bool ending, starting;
+    private string message = string.Empty;
+    private System.Threading.Timer? ticker;
+
+    /// <summary>A futás csak most indul (a szerver órája ettől méri az időkeretet), hogy a bevezető olvasása ne fogyassza.</summary>
+    private async Task Go()
+    {
+        if (starting) return;
+        starting = true;
+        try
+        {
+            var (view, error) = await mService.StartBadgeConfirm(Code);
+            if (view is null || view.Run.Operations.Count == 0)
+            {
+                message = string.IsNullOrWhiteSpace(error) ? "Ehhez a jelvényhez most nincs teendőd." : error;
+                state = State.Unavailable;
+                return;
+            }
+            start = view;
+        }
+        finally
+        {
+            starting = false;
+        }
+        index = 0;
+        current = start.Run.Operations[0];
+        secondsLeft = start.Run.Seconds;   // a szerver minden válasznál visszaküldi a valós hátralévő időt
+        state = State.Running;
+        ticker = new System.Threading.Timer(_ => InvokeAsync(Tick), null, 1000, 1000);
+    }
+
+    private async Task Tick()
+    {
+        if (state != State.Running) return;
+        secondsLeft = Math.Max(0, secondsLeft - 1);
+        if (secondsLeft == 0) await End();
+        else StateHasChanged();
+    }
+
+    private async Task Answer(OperationView operation)
+    {
+        if (start is null || state != State.Running) return;
+        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = start.Run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        if (view?.Expired == true)
+        {
+            await End();
+            return;
+        }
+        if (view is not null) secondsLeft = view.SecondsLeft;
+        index++;
+        if (index < start.Run.Operations.Count) current = start.Run.Operations[index];
+        else await End();
+    }
+
+    private async Task End()
+    {
+        if (start is null || ending) return;
+        ending = true;
+        ticker?.Dispose();
+        ticker = null;
+        result = await mService.FinishBadgeConfirm(start.Run.RunId);
+        state = State.Done;
+        StateHasChanged();
+    }
+
+    public void Dispose() => ticker?.Dispose();
+}

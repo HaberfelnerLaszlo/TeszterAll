@@ -15,7 +15,14 @@
         <div class="badges">
             @foreach (var badge in Progress.Badges)
             {
-                <span class="badgeChip @(badge.Earned ? "earned" : "")" title="@badge.Description">@badge.Name</span>
+                @if (badge.Pending)
+                {
+                    <a class="badgeChip pending" href="/student/badge/@badge.Code" title="@badge.Description – még egy rövid lépés, és a tiéd!">@badge.Name: már majdnem a tiéd</a>
+                }
+                else
+                {
+                    <span class="badgeChip @(badge.Earned ? "earned" : "")" title="@badge.Description">@badge.Name</span>
+                }
             }
         </div>
 
