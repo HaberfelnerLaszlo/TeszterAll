@@ -1,0 +1,92 @@
+.hint {
+    color: var(--colorNeutralForeground3);
+    font-size: .9rem;
+}
+
+.students {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.students th,
+.students td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--colorNeutralStroke2);
+    vertical-align: middle;
+}
+
+.students tr.selected td {
+    background: var(--colorNeutralBackground2);
+}
+
+.level {
+    display: inline-block;
+    font-size: .8rem;
+    padding: 1px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--colorNeutralStroke2);
+    white-space: nowrap;
+}
+
+.level.l0 {
+    background: var(--colorPaletteGreenBackground1);
+    color: var(--colorPaletteGreenForeground1);
+}
+
+.level.l1 {
+    background: var(--colorPaletteMarigoldBackground1);
+    color: var(--colorPaletteDarkOrangeForeground2);
+}
+
+.level.l2 {
+    background: var(--colorPaletteRedBackground1);
+    color: var(--colorPaletteRedForeground1);
+}
+
+.badges,
+.signals {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.signals li {
+    border-left: 3px solid var(--colorPaletteMarigoldBorder2);
+    padding: 4px 10px;
+}
+
+.signals li.positive {
+    border-left-color: var(--colorPaletteGreenBorder2);
+}
+
+.signals li.muted {
+    opacity: .6;
+}
+
+.signalHead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: baseline;
+}
+
+.when,
+.weight {
+    color: var(--colorNeutralForeground3);
+    font-size: .85rem;
+}
+
+.tag {
+    font-size: .75rem;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: var(--colorNeutralBackground3);
+    color: var(--colorNeutralForeground3);
+}
+
+.desc {
+    margin: 2px 0 4px 0;
+}
