@@ -3,9 +3,15 @@
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
 @inject MathService mService
+@inject ClientSignalsTracker signals
 @inject IToastService toastService
 
+<HeadContent>
+    <meta name="description" content="@PracticeNotice.MetaDescription" />
+</HeadContent>
+
 <h3>Időre menő kihívás</h3>
+<PracticeNotice Compact="true" />
 
 @switch (state)
 {
@@ -95,6 +101,11 @@
 
     protected override async Task OnInitializedAsync() => await LoadTopics();
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await signals.StartAsync();   // kliensjelek (csak számok, tartalom soha)
+    }
+
     private async Task LoadTopics()
     {
         topics = await mService.GetChallengeTopics() ?? new();
@@ -108,6 +119,7 @@
         try
         {
             var started = await mService.StartChallenge(chosen.TaskId);
+            await signals.TakeAsync();   // nullázás: a futás első feladatától számít
             if (started is null || started.Operations.Count == 0)
             {
                 toastService.ShowError("Nem sikerült elindítani a kihívást.");
@@ -144,7 +156,7 @@
     private async Task Answer(OperationView operation)
     {
         if (run is null || state != State.Running) return;
-        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        var view = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result, ClientSignals = await signals.TakeAsync() });
         if (view is null)
         {
             // Ezt a feladatot nem fogadta el a szerver (pl. már megválaszolt): lépjünk tovább.

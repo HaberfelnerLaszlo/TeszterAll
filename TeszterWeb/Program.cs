@@ -69,6 +69,7 @@ builder.Services.AddScoped<TestUserServices>();
 builder.Services.AddScoped<TestQuestionServices>();
 builder.Services.AddScoped<TestQuestionUserServices>();
 builder.Services.AddScoped<MathService>();
+builder.Services.AddScoped<ClientSignalsTracker>();   // kliensoldali jelek a gyakorláshoz (csak számok; TeszterLibrary/wwwroot/JS/clientSignals.js)
 builder.Services.AddScoped<PontServices>();
 builder.Services.AddScoped<GroupsService>();
 builder.Services.AddScoped<TestLoader>();   // a tesztoldalak az URL-beli azonosító alapján töltenek (nem GlobalData-ból)

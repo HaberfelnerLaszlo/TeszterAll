@@ -2,6 +2,8 @@
 {
 	public class TaskRecive
 	{
+		/// <summary>A böngésző jelei (csak számok/logikai értékek; hiányozhat).</summary>
+		public ClientSignals? ClientSignals { get; set; }
 		public Guid StudentId { get; set; }
 		public int OperationId { get; set; }
 		/// <summary>

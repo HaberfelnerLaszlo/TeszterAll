@@ -3,6 +3,7 @@
 @using TeszterLibrary.Services
 @using TeszterLibrary.ViewModel
 @inject MathService mService
+@inject ClientSignalsTracker signals
 @inject IToastService toastService
 
 <h3>Osztály-kihívás</h3>
@@ -93,6 +94,11 @@ else
     private int secondsShown, tickCount;
     private System.Threading.Timer? ticker;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await signals.StartAsync();   // kliensjelek (csak számok, tartalom soha)
+    }
+
     protected override async Task OnInitializedAsync()
     {
         run = await mService.JoinClassChallenge(Id);
@@ -131,7 +137,7 @@ else
     private async Task Answer(OperationView operation)
     {
         if (run is null || view?.State != 1) return;
-        var answer = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result });
+        var answer = await mService.ChallengeAnswer(new ChallengeAnswerRequest { RunId = run.RunId, OperationId = operation.OperationId, Result = operation.Result, ClientSignals = await signals.TakeAsync() });
         if (answer?.Expired == true)
         {
             await Refresh();

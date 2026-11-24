@@ -25,6 +25,8 @@
 		public string Name { get; set; } = string.Empty;
 		public string Description { get; set; } = string.Empty;
 		public bool Earned { get; set; }
+		/// <summary>A feltétel teljesült, de a jelvény egy rövid megerősítő kihívásra vár (/student/badge/{Code}).</summary>
+		public bool Pending { get; set; }
 	}
 
 	public class MapStepView

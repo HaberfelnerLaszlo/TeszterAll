@@ -1,0 +1,40 @@
+.intro {
+    font-size: 1.1rem;
+    max-width: 640px;
+}
+
+.badgeName {
+    color: var(--colorNeutralForeground3);
+}
+
+.hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin: 6px 0 12px 0;
+}
+
+.timer {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+}
+
+.timer.hurry {
+    color: var(--colorPaletteDarkOrangeForeground2);
+}
+
+.progressText {
+    color: var(--colorNeutralForeground3);
+}
+
+.result .big {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.result .big.ok {
+    color: var(--colorPaletteGreenForeground1);
+}

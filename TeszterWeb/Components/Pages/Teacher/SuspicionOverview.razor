@@ -1,0 +1,196 @@
+@page "/teacher/jelzesek"
+@using TeszterLibrary.ViewModel
+@inject MathService mService
+@inject IToastService toastService
+
+@* Tanári áttekintés: szokatlan minták a matek gyakorlásban. Jelzés, nem bizonyíték – a döntés a tanáré. *@
+
+<PageHeader Title="Jelzések a matek gyakorlásban" Description="A rendszer szokatlan mintákat jelez (pl. feltűnően egyenletes vagy nagyon gyors válaszokat). Ezek jelzések, nem bizonyítékok: segítenek észrevenni, ha érdemes beszélgetni a tanulóval. A döntés a tiéd." />
+
+<FluentCard Class="section">
+    @if (classes is null)
+    {
+        <p>Csoportok betöltése...</p>
+    }
+    else if (classes.Count == 0)
+    {
+        <p>Nem találtunk csoportot.</p>
+    }
+    else
+    {
+        <FluentSelect TOption="LeaderboardClassView" TValue="string" Items="classes" Label="Csoport" Width="280px"
+                      OptionText="@(c => c?.Name ?? string.Empty)" OptionValue="@(c => c?.Id)"
+                      ValueChanged="@((string? id) => SelectClass(id))" Placeholder="Válassz csoportot..." />
+    }
+</FluentCard>
+
+@if (loadingClass)
+{
+    <p>Betöltés...</p>
+}
+else if (view is not null)
+{
+    <FluentCard Class="section">
+        <h4>@view.ClassName</h4>
+        <p class="hint">Az elmúlt @view.WindowDays nap jelzései alapján. <span class="level l0">Rendben</span> nincs teendő · <span class="level l1">Érdemes ránézni</span> csak te látod · <span class="level l2">Megerősítés</span> az új jelvényekhez a tanuló 3 rövid feladatot kap.</p>
+        <table class="students">
+            <thead>
+                <tr><th>Tanuló</th><th>Állapot</th><th>Pont</th><th>Fő jelzések</th><th>Függő jelvény</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in view.Students)
+                {
+                    <tr class="@(selected?.StudentId == s.StudentId ? "selected" : "")">
+                        <td>@s.Name</td>
+                        <td><span class="level l@(s.Level)">@LevelText(s.Level)</span></td>
+                        <td>@s.Score</td>
+                        <td>@(s.MainReasons.Count == 0 ? "–" : string.Join(", ", s.MainReasons))</td>
+                        <td>@(s.PendingBadges == 0 ? "–" : s.PendingBadges.ToString())</td>
+                        <td><FluentButton Appearance="ButtonAppearance.Subtle" OnClick="() => SelectStudent(s.StudentId)">Részletek</FluentButton></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </FluentCard>
+}
+
+@if (selected is not null)
+{
+    <FluentCard Class="section">
+        <h4>@selected.Name <span class="level l@(selected.Level)">@LevelText(selected.Level)</span></h4>
+        <p class="hint">
+            Pontszám: <strong>@selected.Score</strong> (szerveroldali: @selected.ServerScore, böngészőből: @selected.ClientScore) ·
+            „Érdemes ránézni” @selected.YellowThreshold ponttól, „Megerősítés” @selected.RedThreshold ponttól ·
+            az elmúlt @selected.WindowDays nap számít, @selected.RetentionDays nap után törlődik.
+        </p>
+
+        @if (selected.Badges.Count > 0)
+        {
+            <h5>Jelvények</h5>
+            <ul class="badges">
+                @foreach (var b in selected.Badges)
+                {
+                    <li>
+                        <strong>@b.Name</strong> – @b.StatusText@(b.DecidedByTeacher ? " (tanári döntés)" : "")
+                        @if (b.Status != 3)
+                        {
+                            <FluentButton Appearance="ButtonAppearance.Outline" Disabled="busy" OnClick="() => Decide(b.Code, true)">Megadom</FluentButton>
+                        }
+                        @if (b.Status != 4)
+                        {
+                            <FluentButton Appearance="ButtonAppearance.Subtle" Disabled="busy" OnClick="() => Decide(b.Code, false)">Most még nem adom meg</FluentButton>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+
+        <h5>Jelzések</h5>
+        @if (selected.Signals.Count == 0)
+        {
+            <p>Nincs jelzés.</p>
+        }
+        else
+        {
+            <ul class="signals">
+                @foreach (var s in selected.Signals)
+                {
+                    <li class="@(s.Counted ? "" : "muted") @(s.Weight < 0 ? "positive" : "")">
+                        <div class="signalHead">
+                            <strong>@s.Title</strong>
+                            <span class="when">@s.CreatedAt.ToLocalTime().ToString("yyyy.MM.dd. HH:mm")</span>
+                            <span class="weight">@(s.Weight > 0 ? "+" : "")@s.Weight pont</span>
+                            @if (s.IsClient) { <span class="tag">böngészőből, gyenge jelzés</span> }
+                            @if (s.Dismissed) { <span class="tag">rendben, nem számít</span> }
+                            else if (!s.Counted) { <span class="tag">lejárt</span> }
+                        </div>
+                        <div class="desc">@s.Description</div>
+                        @if (s.Weight > 0)
+                        {
+                            @if (s.Dismissed)
+                            {
+                                <FluentButton Appearance="ButtonAppearance.Subtle" Disabled="busy" OnClick="() => SetDismissed(s.Id, false)">Visszavonás</FluentButton>
+                            }
+                            else
+                            {
+                                <FluentButton Appearance="ButtonAppearance.Outline" Disabled="busy" OnClick="() => SetDismissed(s.Id, true)">Rendben, nem gond</FluentButton>
+                            }
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </FluentCard>
+}
+
+@code {
+    private List<LeaderboardClassView>? classes;
+    private SuspicionClassView? view;
+    private SuspicionStudentView? selected;
+    private string? classId;
+    private bool loadingClass, busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        classes = await mService.GetLeaderboardClasses() ?? new();
+    }
+
+    private static string LevelText(byte level) => level switch
+    {
+        2 => "Megerősítés",
+        1 => "Érdemes ránézni",
+        _ => "Rendben",
+    };
+
+    private async Task SelectClass(string? id)
+    {
+        classId = id;
+        selected = null;
+        view = null;
+        if (string.IsNullOrEmpty(id)) return;
+        loadingClass = true;
+        view = await mService.GetSuspicionClass(id);
+        loadingClass = false;
+        if (view is null) toastService.ShowError("A csoport adatai most nem érhetők el.");
+    }
+
+    private async Task SelectStudent(Guid studentId)
+    {
+        selected = await mService.GetSuspicionStudent(studentId);
+        if (selected is null) toastService.ShowError("A tanuló adatai most nem érhetők el.");
+    }
+
+    private async Task SetDismissed(int signalId, bool dismissed)
+    {
+        await Update(() => dismissed ? mService.DismissSignal(signalId) : mService.RestoreSignal(signalId));
+    }
+
+    private async Task Decide(string code, bool confirm)
+    {
+        if (selected is null) return;
+        var studentId = selected.StudentId;
+        await Update(() => mService.DecideBadge(studentId, code, confirm));
+    }
+
+    /// <summary>Tanári művelet; utána a tanuló részletei és a csoportlista is frissül.</summary>
+    private async Task Update(Func<Task<SuspicionStudentView?>> action)
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            var updated = await action();
+            if (updated is null)
+            {
+                toastService.ShowError("Nem sikerült menteni.");
+                return;
+            }
+            selected = updated;
+            if (classId is not null) view = await mService.GetSuspicionClass(classId) ?? view;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

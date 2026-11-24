@@ -31,6 +31,20 @@ namespace TeszterLibrary.Services
 			var saved = await _service.PostAs<TopicEditView>("Math/Topics", topic);
 			return (saved, saved is null ? _service.ErrorMessage : string.Empty);
 		}
+		/// <summary>Jelvény-megerősítő kihívás indítása; ha nem indítható, a szerver (barátságos) indoklása.</summary>
+		public async Task<(BadgeConfirmStartView? View, string Error)> StartBadgeConfirm(string code)
+		{
+			var view = await _service.PostAs<BadgeConfirmStartView>($"Math/BadgeConfirm/{Uri.EscapeDataString(code)}");
+			return (view, view is null ? _service.ErrorMessage : string.Empty);
+		}
+		public async Task<BadgeConfirmResultView?> FinishBadgeConfirm(int runId) => await _service.PostAs<BadgeConfirmResultView>($"Math/BadgeConfirm/Finish/{runId}");
+		// ---- Gyanújelzések (tanár) ----
+		public async Task<SuspicionClassView?> GetSuspicionClass(string classId) => await _service.Get<SuspicionClassView>($"Math/Suspicion/Class/{Uri.EscapeDataString(classId)}");
+		public async Task<SuspicionStudentView?> GetSuspicionStudent(Guid studentId) => await _service.Get<SuspicionStudentView>($"Math/Suspicion/Student/{studentId}");
+		public async Task<SuspicionStudentView?> DismissSignal(int id) => await _service.PostAs<SuspicionStudentView>($"Math/Suspicion/Signal/{id}/Dismiss");
+		public async Task<SuspicionStudentView?> RestoreSignal(int id) => await _service.PostAs<SuspicionStudentView>($"Math/Suspicion/Signal/{id}/Restore");
+		public async Task<SuspicionStudentView?> DecideBadge(Guid studentId, string code, bool confirm) =>
+			await _service.PostAs<SuspicionStudentView>($"Math/Suspicion/Student/{studentId}/Badge/{Uri.EscapeDataString(code)}/{(confirm ? "Confirm" : "Reject")}");
 		public async Task<List<Guid>?> GetGroups() => await _service.Get<List<Guid>>("Math/Groups");
 		public async Task<StudentProgressView?> GetProgress(Guid id) => await _service.Get<StudentProgressView>($"Math/Progress/{id}");
 		public async Task<List<LeaderboardClassView>?> GetLeaderboardClasses() => await _service.Get<List<LeaderboardClassView>>("Math/Leaderboard");

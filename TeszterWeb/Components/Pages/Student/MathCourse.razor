@@ -3,12 +3,18 @@
 @using TeszterLibrary.Services;
 @using TeszterLibrary.ViewModel
 @inject MathService mService
+@inject ClientSignalsTracker signals
 @inject GraphService graphService
 @inject GlobalData data
 @inject IToastService toastService
 @inject ILogger<MathCourse> _logger
 
+<HeadContent>
+    <meta name="description" content="@PracticeNotice.MetaDescription" />
+</HeadContent>
+
 <h3>Kitűzött matematika feladat</h3>
+<PracticeNotice />
 <FluentAnchorButton Href="/student/challenge" Appearance="ButtonAppearance.Outline" IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Timer())" Class="challengeLink">Időre menő kihívás</FluentAnchorButton>
 @foreach (var cc in classChallenges)
 {
@@ -28,7 +34,6 @@
 }
 @if (currentOperation is not null && currentOperation.OperationId != 0)
 {
-    <p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>
     <MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction" />
     @if (IsChecked && taskRecive.Score > 0)
     {
@@ -68,12 +73,16 @@ else
     private async Task RefreshProgress()
     {
         var earnedBefore = progress?.Badges.Where(b => b.Earned).Select(b => b.Code).ToHashSet();
+        var pendingBefore = progress?.Badges.Where(b => b.Pending).Select(b => b.Code).ToHashSet();
         var fresh = await mService.GetProgress(UserId);
         if (fresh is null) return;
         if (earnedBefore is not null)
         {
             foreach (var badge in fresh.Badges.Where(b => b.Earned && !earnedBefore.Contains(b.Code)))
                 toastService.ShowSuccess($"Új jelvény: {badge.Name}!");
+            // Megerősítésre váró jelvény: pozitív hangvétel, a jelvénysorban a jelvényre kattintva indítható.
+            foreach (var badge in fresh.Badges.Where(b => b.Pending && !pendingBefore!.Contains(b.Code)))
+                toastService.ShowInfo($"Szuper munka! A(z) „{badge.Name}” jelvény már majdnem a tiéd: kattints rá a jelvények között, és oldj meg még néhány gyors feladatot.");
             if (fresh.Level > progress!.Level)
                 toastService.ShowSuccess($"Szintet léptél: {fresh.Level}. szint!");
         }
@@ -122,6 +131,7 @@ else
                 return;
             }
             UserId = userGuid;
+            await signals.StartAsync();   // kliensjelek (csak számok, tartalom soha)
             await RefreshProgress();
             await PollClassChallenges();
             challengePoll = new System.Threading.Timer(_ => InvokeAsync(PollClassChallenges), null, 10000, 10000);
@@ -144,7 +154,7 @@ else
     private async Task Next(OperationView operation)
     {
         timer.Stop();
-        TaskRecive recive = new() { OperationId = operation.OperationId, IsTipp = false, Result = operation.Result, Step = 0, StudentId = UserId, Time = time, TaskId = taskView.TaskId };
+        TaskRecive recive = new() { OperationId = operation.OperationId, IsTipp = false, Result = operation.Result, Step = 0, StudentId = UserId, Time = time, TaskId = taskView.TaskId, ClientSignals = await signals.TakeAsync() };
         var response = await mService.Result(recive);
         if (response is null)
         {

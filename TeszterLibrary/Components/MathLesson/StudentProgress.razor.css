@@ -72,6 +72,18 @@
     cursor: default;
 }
 
+.badgeChip.pending {
+    background: var(--colorBrandBackground2);
+    color: var(--colorBrandForeground1);
+    border: 1px solid var(--colorBrandStroke1);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.badgeChip.pending:hover {
+    text-decoration: underline;
+}
+
 .badgeChip.earned {
     background: var(--colorPaletteMarigoldBackground1);
     color: var(--colorPaletteDarkOrangeForeground2);

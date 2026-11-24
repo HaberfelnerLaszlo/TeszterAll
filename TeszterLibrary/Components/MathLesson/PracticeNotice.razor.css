@@ -1,0 +1,43 @@
+.practiceNotice {
+    margin: 8px 0 14px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--colorBrandBackground2);
+    color: var(--colorNeutralForeground1);
+    border: 1px solid var(--colorBrandStroke2);
+    max-width: 900px;
+    font-size: .95rem;
+}
+
+.practiceNotice p {
+    margin: 0;
+}
+
+.practiceNotice p + p {
+    margin-top: 6px;
+}
+
+.practiceNotice.compact {
+    font-size: .85rem;
+    padding: 6px 10px;
+}
+
+.transparency {
+    color: var(--colorNeutralForeground2);
+    font-size: .9rem;
+}
+
+.noticeActions {
+    margin-top: 8px;
+}
+
+.noticeToggle {
+    margin: 4px 0 10px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--colorBrandForeground1);
+    font-size: .85rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
