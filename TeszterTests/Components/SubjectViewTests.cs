@@ -61,7 +61,7 @@ namespace TeszterTests.Components
             var cut = Render<SubjectView>();
             // A renderelt gombokra várunk (nem csak a mezőre): a lista beállítása és a renderelés között versenyhelyzet volt.
             var deleteButtons = cut.FindAll("fluent-button").ToList();
-            cut.WaitForAssertion(() =>
+            await cut.WaitForAssertionAsync(() =>
             {
                 deleteButtons = cut.FindAll("fluent-button").Where(b => b.TextContent.Trim() == "Törlés").ToList();
                 Assert.Equal(2, deleteButtons.Count);
@@ -80,7 +80,7 @@ namespace TeszterTests.Components
         {
             Respond(HttpStatusCode.Conflict);
             var cut = Render<SubjectView>();
-            cut.WaitForState(() => Subjects(cut).Count == 2);
+            await cut.WaitForStateAsync(() => Subjects(cut).Count == 2);
 
             await Delete(cut, Subjects(cut).Single(s => s.Id == 2));
 
@@ -89,12 +89,12 @@ namespace TeszterTests.Components
         }
 
         [Fact]
-        public void An_unavailable_api_leaves_an_empty_list_instead_of_crashing()
+        public async Task An_unavailable_api_leaves_an_empty_list_instead_of_crashing()
         {
             _http.Respond = _ => new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
             var cut = Render<SubjectView>();
-            cut.WaitForAssertion(() => Assert.Contains("ShowInfo:Nincs tantárgy", _toasts.Messages));
+            await cut.WaitForAssertionAsync(() => Assert.Contains("ShowInfo:Nincs tantárgy", _toasts.Messages));
 
             Assert.Empty(Subjects(cut));
             Assert.Contains("Tárolt tantárgyak", cut.Markup);

@@ -51,19 +51,19 @@ namespace TeszterTests.Components
 		}
 
 		[Fact]
-		public void Enter_sends_the_typed_answer_and_shows_the_next_task()
+		public async Task Enter_sends_the_typed_answer_and_shows_the_next_task()
 		{
 			var cut = Render<MathChallenge>();
-			cut.WaitForAssertion(() => Assert.Contains("Összeadás", cut.Markup), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains("Összeadás", cut.Markup), TimeSpan.FromSeconds(5));
 			cut.FindAll("fluent-button").First(b => b.TextContent.Contains("Összeadás")).Click();
-			cut.WaitForAssertion(() => Assert.Contains("3 + 4", cut.Markup), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains("3 + 4", cut.Markup), TimeSpan.FromSeconds(5));
 
 			var input = cut.Find("input.valasz");
 			input.Input("7");
 			input.KeyDown(new KeyboardEventArgs { Code = "Enter", Key = "Enter" });
 
-			cut.WaitForAssertion(() => Assert.Contains(_http.Requests, r => r.Uri.EndsWith("/Math/Challenge/Answer") && r.Body.Contains("\"result\":\"7\"")), TimeSpan.FromSeconds(5));
-			cut.WaitForAssertion(() => Assert.Contains("5 + 1", cut.Markup), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains(_http.Requests, r => r.Uri.EndsWith("/Math/Challenge/Answer") && r.Body.Contains("\"result\":\"7\"")), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains("5 + 1", cut.Markup), TimeSpan.FromSeconds(5));
 			Assert.DoesNotContain("Ne hagyd üresen", cut.Markup);
 		}
 	}

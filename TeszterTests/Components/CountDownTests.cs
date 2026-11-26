@@ -31,7 +31,7 @@ namespace TeszterTests.Components
 
             await Task.Delay(1500);
             cut.Render(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(3)));   // a szülő újrarenderel: ugyanaz az érték
-            cut.WaitForState(() => Volatile.Read(ref ended) > 0, TimeSpan.FromSeconds(8));
+            await cut.WaitForStateAsync(() => Volatile.Read(ref ended) > 0, TimeSpan.FromSeconds(8));
             var seconds = stopwatch.Elapsed.TotalSeconds;
             await Task.Delay(2500);                                                                    // ne hívja meg másodszor
 
@@ -54,15 +54,15 @@ namespace TeszterTests.Components
         }
 
         [Fact]
-        public void A_changed_initial_value_restarts_the_countdown()
+        public async Task A_changed_initial_value_restarts_the_countdown()
         {
             var ended = 0;
             var cut = Render(TimeSpan.FromSeconds(1), _ => Interlocked.Increment(ref ended));
-            cut.WaitForState(() => Volatile.Read(ref ended) == 1, TimeSpan.FromSeconds(4));
+            await cut.WaitForStateAsync(() => Volatile.Read(ref ended) == 1, TimeSpan.FromSeconds(4));
 
             cut.Render(p => p.Add(c => c._remainingTime, TimeSpan.FromSeconds(2)));
 
-            cut.WaitForState(() => Volatile.Read(ref ended) == 2, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => Volatile.Read(ref ended) == 2, TimeSpan.FromSeconds(5));
         }
     }
 }

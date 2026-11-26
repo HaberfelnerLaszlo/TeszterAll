@@ -86,7 +86,7 @@ namespace TeszterTests.Components
         }
 
         [Fact]
-        public void Groups_reported_by_the_api_are_marked_and_offered()
+        public async Task Groups_reported_by_the_api_are_marked_and_offered()
         {
             var apiOnly = new Group(Guid.NewGuid(), "8.c", null);              // a helyi nyilvántartásban még nincs jelölve
             var noLessons = new Group(Guid.NewGuid(), "8.d", null);
@@ -96,7 +96,7 @@ namespace TeszterTests.Components
                 : new HttpResponseMessage(HttpStatusCode.NotFound);
 
             var cut = Render(teacher: false);
-            cut.WaitForState(() => Field<List<Group>>(cut, "Groups").Count == 3, TimeSpan.FromSeconds(5));   // az API-hívás után bővül
+            await cut.WaitForStateAsync(() => Field<List<Group>>(cut, "Groups").Count == 3, TimeSpan.FromSeconds(5));   // az API-hívás után bővül
 
             var offered = Field<List<Group>>(cut, "Groups").Select(g => g.Name).Order();
             Assert.Equal(["8.a", "8.b", "8.c"], offered);                    // régen a jelölő ciklus halott kód volt, a 8.c kimaradt

@@ -179,37 +179,37 @@ namespace TeszterTests.Services
         }
 
         [Fact]
-        public void After_a_refresh_the_test_page_still_shows_the_timer_and_settings()
+        public async Task After_a_refresh_the_test_page_still_shows_the_timer_and_settings()
         {
             Arrange();
 
             var cut = Render<TestRuning>(p => p.Add(c => c.Id, 41));
 
-            cut.WaitForAssertion(() => Assert.Contains("A teszt elkezdése", cut.Markup));
+            await cut.WaitForAssertionAsync(() => Assert.Contains("A teszt elkezdése", cut.Markup));
             Assert.Contains("Törtek", cut.Markup);
             Assert.Contains("1 p : 30 mp", cut.Markup);                       // régen: időzítő nélkül indult
             Assert.Contains("ellenőrizheted a válaszaidat", cut.Markup);
         }
 
         [Fact]
-        public void A_foreign_test_page_shows_an_error_instead_of_the_test()
+        public async Task A_foreign_test_page_shows_an_error_instead_of_the_test()
         {
             Arrange();
 
             var cut = Render<TestRuning>(p => p.Add(c => c.Id, 99));
 
-            cut.WaitForAssertion(() => Assert.Contains(TestLoader.NotYours, cut.Markup));
+            await cut.WaitForAssertionAsync(() => Assert.Contains(TestLoader.NotYours, cut.Markup));
             Assert.DoesNotContain("A teszt elkezdése", cut.Markup);
         }
 
         [Fact]
-        public void After_a_refresh_the_teacher_result_page_still_loads_the_test()
+        public async Task After_a_refresh_the_teacher_result_page_still_loads_the_test()
         {
             Arrange();
 
             var cut = Render<ResultTest>(p => p.Add(c => c.TestId, 7));
 
-            cut.WaitForAssertion(() => Assert.Contains("Dolgozat teszt eredményei", cut.Markup));
+            await cut.WaitForAssertionAsync(() => Assert.Contains("Dolgozat teszt eredményei", cut.Markup));
             Assert.Contains(_http.Requests, r => r.Uri.EndsWith("/Tq/Test/7"));
         }
 

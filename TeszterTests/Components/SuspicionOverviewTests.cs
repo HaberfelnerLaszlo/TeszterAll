@@ -82,12 +82,12 @@ namespace TeszterTests.Components
 			Assert.Contains("Megerősítésre vár", cut.Markup);
 
 			cut.FindAll("fluent-button").First(b => b.TextContent.Contains("Rendben, nem gond")).Click();
-			cut.WaitForAssertion(() => Assert.Contains(_http.Requests, r => r.Method == "POST" && r.Uri.EndsWith("/Math/Suspicion/Signal/5/Dismiss")), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains(_http.Requests, r => r.Method == "POST" && r.Uri.EndsWith("/Math/Suspicion/Signal/5/Dismiss")), TimeSpan.FromSeconds(5));
 			// A művelet a csoportlistát is frissíti; amíg tart (busy), az oldal szándékosan nem fogad újabb műveletet.
-			cut.WaitForState(() => !Busy(cut), TimeSpan.FromSeconds(5));
+			await cut.WaitForStateAsync(() => !Busy(cut), TimeSpan.FromSeconds(5));
 
 			cut.FindAll("fluent-button").First(b => b.TextContent.Contains("Megadom")).Click();
-			cut.WaitForAssertion(() => Assert.Contains(_http.Requests, r => r.Method == "POST" && r.Uri.EndsWith($"/Math/Suspicion/Student/{Anna}/Badge/villam/Confirm")), TimeSpan.FromSeconds(5));
+			await cut.WaitForAssertionAsync(() => Assert.Contains(_http.Requests, r => r.Method == "POST" && r.Uri.EndsWith($"/Math/Suspicion/Student/{Anna}/Badge/villam/Confirm")), TimeSpan.FromSeconds(5));
 
 			Assert.DoesNotContain("csal", cut.Markup, StringComparison.OrdinalIgnoreCase);
 		}

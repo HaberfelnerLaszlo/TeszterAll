@@ -64,14 +64,14 @@ namespace TeszterTests.Components
 		}
 
 		[Fact]
-		public void A_previously_dismissed_notice_starts_collapsed()
+		public async Task A_previously_dismissed_notice_starts_collapsed()
 		{
 			JSInterop.Mode = JSRuntimeMode.Strict;
 			var module = JSInterop.SetupModule(PracticeNotice.ModulePath);
 			module.Setup<bool>("isDismissed").SetResult(true);
 
 			var cut = Render<PracticeNotice>();
-			cut.WaitForAssertion(() => Assert.Single(cut.FindAll("button.noticeToggle")));
+			await cut.WaitForAssertionAsync(() => Assert.Single(cut.FindAll("button.noticeToggle")));
 			Assert.Empty(cut.FindAll("aside.practiceNotice"));
 		}
 

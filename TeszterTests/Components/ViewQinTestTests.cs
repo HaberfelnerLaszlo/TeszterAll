@@ -57,13 +57,13 @@ namespace TeszterTests.Components
             => ((List<QuestionView>)typeof(ViewQinTest).GetField("questions", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(cut.Instance)!).Count;
 
         [Fact]
-        public void The_time_limit_advances_the_whole_test_by_itself()
+        public async Task The_time_limit_advances_the_whole_test_by_itself()
         {
             var ended = new List<List<QuestionView>>();
             var stopwatch = Stopwatch.StartNew();
             var cut = Render(timer: true, onEnd: ended.Add);
 
-            cut.WaitForState(() => ended.Count > 0, TimeSpan.FromSeconds(15));
+            await cut.WaitForStateAsync(() => ended.Count > 0, TimeSpan.FromSeconds(15));
 
             Assert.Single(ended);
             Assert.Equal(3, ended[0].Count);
@@ -77,7 +77,7 @@ namespace TeszterTests.Components
         {
             _api.LatencyMs = 150;
             var cut = Render(timer: false);
-            cut.WaitForState(() => _api.Gets == 1 && RemainingQuestions(cut) == 3, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 1 && RemainingQuestions(cut) == 3, TimeSpan.FromSeconds(5));
 
             await Task.WhenAll(Call(cut, "Next"), Call(cut, "Next"), Call(cut, "Next"));
 
@@ -90,7 +90,7 @@ namespace TeszterTests.Components
         {
             _api.QuestionTime = 30;
             var cut = Render(timer: true);
-            cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
             await Task.Delay(1300);
 
             await Call(cut, "Next");
@@ -103,7 +103,7 @@ namespace TeszterTests.Components
         {
             _api.QuestionTime = 30;
             var cut = Render(timer: false);
-            cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
             await Call(cut, "Next");
 
             cut.Render(p => p.Add(c => c.Id, 7));
@@ -114,7 +114,7 @@ namespace TeszterTests.Components
             Assert.Equal(2, RemainingQuestions(cut));
 
             cut.Render(p => p.Add(c => c.Id, 8));
-            cut.WaitForState(() => _api.Gets == 2, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 2, TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -122,7 +122,7 @@ namespace TeszterTests.Components
         {
             var ended = 0;
             var cut = Render(timer: true, onEnd: _ => ended++);
-            cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
             await Task.Delay(500);
 
             await DisposeComponentsAsync();                  // mintha elnavigált volna a felhasználó
@@ -137,7 +137,7 @@ namespace TeszterTests.Components
         {
             _api.QuestionTime = 30;
             var cut = Render(timer: false);
-            cut.WaitForState(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
+            await cut.WaitForStateAsync(() => _api.Gets == 1, TimeSpan.FromSeconds(5));
 
             await Call(cut, "Check");
             await Call(cut, "Next");
