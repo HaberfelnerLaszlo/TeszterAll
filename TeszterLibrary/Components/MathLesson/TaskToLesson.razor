@@ -37,14 +37,22 @@ else
     </FluentStack>
     <FluentStack Orientation="Orientation.Vertical">
         <h5>A tanuló feladatai:</h5>
-        @if (completLessons.Count > 0)
-        {
-            <FluentListbox TOption="ListTask" TValue="ListTask" Items="completLessons" />
-        }
+        <FluentAccordion>
+            @if (completLessons.Count > 0)
+            {
+                <FluentAccordionItem Header="A teljesített feladatok.">
+                <FluentListbox TOption="ListTask" TValue="ListTask" OptionText="t => t.Description" Items="completLessons" />
+            </FluentAccordionItem>
+            }
+            <FluentAccordionItem Header="A feladatok sorrendje a teljesítettek után, 1-től kezdődik.">
+                <FluentText Block="true">A feladatok sorrendjét a feladatlistában lehet változtatni, a feladatok áthúzásával.</FluentText>
+                <FluentText Block="true">A sorrend mentéséhez kattintson a "Mentés" gombra.</FluentText>
         <FluentSortableList Id="sharedTask2" Group="sharedTaskLists" OnUpdate="@SortList2" OnRemove="@List2Remove" Items="@lessons" Context="lesson" Drop="IsLessonSave">
             <ItemTemplate>@lesson.Description</ItemTemplate>
         </FluentSortableList>
-    </FluentStack>
+            </FluentAccordionItem>
+        </FluentAccordion>
+        </FluentStack>
 </FluentStack>
 
 @code {

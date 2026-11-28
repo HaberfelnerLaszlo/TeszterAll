@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "TeszterWeb",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "TeszterWeb", "--launch-profile", "https", "--no-build"],
+      "port": 8081,
+      "url": "https://localhost:8081"
+    }
+  ]
+}
